@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260629-105319">
+<meta name="version" content="v20260629-112935">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-105319</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-112935</span></div>
     </div>
   </div>
 </div>
@@ -3552,6 +3552,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   migratePasswords(); // Hash any plain-text passwords from older versions
   applySettings();
+  // One-time clear of demo data — remove fake HN-001 to HN-010 patients
+  const demoHNs = ['HN-001','HN-002','HN-003','HN-004','HN-005','HN-006','HN-007','HN-008','HN-009','HN-010'];
+  const hadDemo = DB.patients.some(p => demoHNs.includes(p.hospitalNumber) && p.nationality === 'Maldivian' && p.island === 'Main Island');
+  if (hadDemo) {
+    DB.patients = DB.patients.filter(p => !demoHNs.includes(p.hospitalNumber) || p.island !== 'Main Island');
+    DB.chemo = DB.chemo.filter(c => !['HN-001','HN-003'].includes(c.hospitalNumber) || c.patientName !== 'Aminath Shiyama' && c.patientName !== 'Fathimath Nisha');
+    DB.adr = DB.adr.filter(a => a.hospitalNumber !== 'HN-001' || a.drugName !== 'Cyclophosphamide');
+    DB.spill = DB.spill.filter(s => s.location !== 'Chemotherapy Unit - Bay 2' || s.drugName !== 'Doxorubicin');
+    Object.keys(DB).forEach(k => save(k));
+    console.log('Demo data cleared automatically');
+  }
   if (AUTH.session) {
     const user = AUTH.users.find(u => u.id === AUTH.session.userId && u.status === 'Active');
     if (user) {
