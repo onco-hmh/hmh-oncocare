@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260629-133120">
+<meta name="version" content="v20260629-140542">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-133120</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-140542</span></div>
     </div>
   </div>
 </div>
@@ -3553,16 +3553,17 @@ document.addEventListener('DOMContentLoaded', () => {
   migratePasswords(); // Hash any plain-text passwords from older versions
   applySettings();
   // Version-based one-time clear of all demo data
-  const CLEAN_VERSION = 'cleaned_v3';
+  const CLEAN_VERSION = 'cleaned_v5';
   if (localStorage.getItem('oms_data_cleaned') !== CLEAN_VERSION) {
-    // Clear ALL clinical data from localStorage - will reload fresh from Google Sheets
+    // Clear ALL clinical data and cache — forces fresh load from Google Sheets
     ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'].forEach(k => {
       localStorage.removeItem('oms_' + k);
       DB[k] = [];
     });
     localStorage.removeItem('oms_last_sync');
+    localStorage.removeItem('oms_cache_ts');
     localStorage.setItem('oms_data_cleaned', CLEAN_VERSION);
-    console.log('Data storage cleared — will sync fresh from Google Sheets');
+    console.log('✓ Local data cleared — loading fresh from Google Sheets');
   }
   if (AUTH.session) {
     const user = AUTH.users.find(u => u.id === AUTH.session.userId && u.status === 'Active');
