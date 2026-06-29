@@ -637,6 +637,12 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <i class="fas fa-clipboard-list"></i><span class="nav-label">Incident Log</span>
       </div>
     </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Outpatient</div>
+      <div class="nav-item" onclick="navigate('opinjection')">
+        <i class="fas fa-prescription-bottle-alt"></i><span class="nav-label">OP Injection</span>
+      </div>
+    </div>
     <div class="nav-section" id="adminNavSection" style="display:none">
       <div class="nav-section-title">System</div>
       <div class="nav-item" id="adminNavItem" onclick="navigate('admin')">
@@ -722,6 +728,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div class="chart-card"><div class="chart-title">Patients by Age Group</div><div class="chart-container"><canvas id="chartAge"></canvas></div></div>
     <div class="chart-card"><div class="chart-title">Monthly Registrations</div><div class="chart-container"><canvas id="chartMonthly"></canvas></div></div>
     <div class="chart-card"><div class="chart-title">Patient Status Distribution</div><div class="chart-container"><canvas id="chartStatus"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Patients by Island</div><div class="chart-container"><canvas id="chartIsland"></canvas></div></div>
   </div>
 </div>
 
@@ -1194,6 +1201,126 @@ body.dark .login-input:focus { background: var(--card-bg); }
   </div>
 </div>
 
+
+<!-- ==================== OP INJECTION REGISTER ==================== -->
+<div class="page" id="page-opinjection">
+  <div class="page-header flex justify-between items-center">
+    <div>
+      <h1>OP Injection Register</h1>
+      <p>Outpatient injection scheduling and tracking</p>
+    </div>
+    <div class="flex gap-2 no-print">
+      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="exportOPData()"><i class="fas fa-file-export"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- OP Sub-tabs -->
+  <div class="section-tabs" id="opTabs">
+    <div class="section-tab active" onclick="switchOPTab('register')"><i class="fas fa-list"></i> Register</div>
+    <div class="section-tab" onclick="switchOPTab('schedule')"><i class="fas fa-calendar-alt"></i> Treatment Schedule</div>
+    <div class="section-tab" onclick="switchOPTab('ongoing')"><i class="fas fa-user-check"></i> Ongoing Patients</div>
+    <div class="section-tab" onclick="switchOPTab('dashboard')"><i class="fas fa-chart-bar"></i> OP Dashboard</div>
+  </div>
+
+  <!-- Register Tab -->
+  <div id="opTab_register">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search patients…" oninput="filterOPRegister(this.value)"></div>
+      <select class="filter-select" onchange="filterOPRegister(null,'status',this.value)">
+        <option value="">All Statuses</option>
+        <option>Ongoing</option><option>Stopped</option><option>Completed</option><option>Expired</option><option>Chemo Started</option><option>On Hold</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openOPPatientModal()"><i class="fas fa-plus"></i> Add Patient</button>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="opRegisterTable">
+          <thead><tr>
+            <th>#</th>
+            <th>Hospital No</th>
+            <th>Patient Name</th>
+            <th>Gender</th>
+            <th>Age</th>
+            <th>ID/PP Number</th>
+            <th>Contact</th>
+            <th>Diagnosis</th>
+            <th>Injections</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="opRegisterTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="opRegisterPagination"></div>
+    </div>
+  </div>
+
+  <!-- Treatment Schedule Tab -->
+  <div id="opTab_schedule" style="display:none">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search patients…" oninput="filterOPSchedule(this.value)"></div>
+      <select class="filter-select" id="opYearSelect" onchange="renderOPSchedule()">
+        <option>2024</option><option selected>2025</option><option>2026</option><option>2027</option><option>2028</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openScheduleModal()"><i class="fas fa-plus"></i> Add Treatment</button>
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table id="opScheduleTable" style="min-width:1400px">
+        <thead><tr id="opScheduleHeader"></tr></thead>
+        <tbody id="opScheduleTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Ongoing Patients Tab -->
+  <div id="opTab_ongoing" style="display:none">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search…" oninput="filterOPOngoing(this.value)"></div>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="opOngoingTable">
+          <thead><tr>
+            <th>#</th>
+            <th>Hospital No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Injection</th>
+            <th>Dosage</th>
+            <th>Periodicity</th>
+            <th>Last Given</th>
+            <th>Next Due</th>
+            <th>Total Doses</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="opOngoingTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP Dashboard Tab -->
+  <div id="opTab_dashboard" style="display:none">
+    <div class="kpi-grid" id="opKpiGrid"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;margin-top:20px">
+      <div class="card">
+        <div class="chart-title">📅 This Month's Schedule</div>
+        <div id="opThisMonth" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="chart-title">⚠️ Overdue / Upcoming (7 days)</div>
+        <div id="opUpcoming" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="chart-title"><i class="fas fa-chart-pie" style="color:var(--primary)"></i> By Periodicity</div>
+        <div class="chart-container"><canvas id="opPeriodicityChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- ==================== MODALS ==================== -->
@@ -1544,6 +1671,122 @@ body.dark .login-input:focus { background: var(--card-bg); }
   </div>
 </div>
 
+<!-- OP Patient Modal -->
+<div class="modal-overlay" id="opPatientModal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="opPatientModalTitle">Add OP Injection Patient</span>
+      <button class="modal-close" onclick="closeModal('opPatientModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Hospital Number <span class="req">*</span></label>
+          <input class="form-control" id="op_hospitalNumber" placeholder="Enter Hospital No" oninput="lookupOPPatient(this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label><input class="form-control" id="op_patientName" placeholder="Auto-filled or enter manually"></div>
+        <div class="form-group"><label class="form-label">Gender</label>
+          <select class="form-control" id="op_gender"><option value="">Select</option><option>Male</option><option>Female</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="op_dob" oninput="calcOPAge()"></div>
+        <div class="form-group"><label class="form-label">Age</label><input class="form-control" id="op_age" placeholder="Auto-calculated"></div>
+        <div class="form-group"><label class="form-label">ID / Passport Number</label><input class="form-control" id="op_idNumber"></div>
+        <div class="form-group"><label class="form-label">Contact Number</label><input class="form-control" id="op_contact"></div>
+        <div class="form-group"><label class="form-label">Diagnosis</label><input class="form-control" id="op_diagnosis" placeholder="Auto-filled or enter manually"></div>
+        <div class="form-group"><label class="form-label">Status <span class="req">*</span></label>
+          <select class="form-control" id="op_status">
+            <option value="">Select</option>
+            <option>Ongoing</option><option>Stopped</option><option>Completed</option>
+            <option>Expired</option><option>Chemo Started</option><option>On Hold</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Injections Given <span style="font-size:11px;color:var(--text-muted)">(list injection names)</span></label>
+          <input class="form-control" id="op_injections" placeholder="e.g. Zoledronic Acid, Denosumab">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="op_remarks" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('opPatientModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveOPPatient()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" id="opScheduleModal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="opScheduleModalTitle">Add Treatment Plan</span>
+      <button class="modal-close" onclick="closeModal('opScheduleModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Hospital Number <span class="req">*</span></label>
+          <input class="form-control" id="ops_hospitalNumber" oninput="lookupOPSchedulePatient(this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label><input class="form-control" id="ops_patientName" readonly placeholder="Auto-filled"></div>
+        <div class="form-group"><label class="form-label">Gender</label><input class="form-control" id="ops_gender" readonly placeholder="Auto-filled"></div>
+        <div class="form-group"><label class="form-label">Age</label><input class="form-control" id="ops_age" readonly placeholder="Auto-filled"></div>
+        <div class="form-group"><label class="form-label">ID / PP Number</label><input class="form-control" id="ops_idNumber" readonly placeholder="Auto-filled"></div>
+        <div class="form-group"><label class="form-label">Diagnosis</label><input class="form-control" id="ops_diagnosis" readonly placeholder="Auto-filled"></div>
+        <div class="form-group"><label class="form-label">Injection Name <span class="req">*</span></label><input class="form-control" id="ops_injectionName" placeholder="e.g. Zoledronic Acid"></div>
+        <div class="form-group"><label class="form-label">Dosage <span class="req">*</span></label><input class="form-control" id="ops_dosage" placeholder="e.g. 4mg IV"></div>
+        <div class="form-group"><label class="form-label">Periodicity <span class="req">*</span></label>
+          <select class="form-control" id="ops_periodicity">
+            <option value="">Select</option>
+            <option>Weekly</option><option>2 Weekly</option><option>3 Weekly</option>
+            <option>Monthly</option><option>2 Monthly</option><option>3 Monthly</option>
+            <option>6 Monthly</option><option>Yearly</option>
+            <option>12 Weeks</option>
+            <option>Once a year for 2 years, then 5 Yearly</option>
+            <option>Custom</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="ops_startDate"></div>
+        <div class="form-group"><label class="form-label">First Dose Number</label><input type="number" class="form-control" id="ops_firstDose" placeholder="e.g. 1" value="1" min="1"></div>
+        <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="ops_remarks" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('opScheduleModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveOPSchedule()"><i class="fas fa-save"></i> Save Treatment Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dose Entry Modal -->
+<div class="modal-overlay" id="opDoseModal" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title" id="opDoseModalTitle">Record Dose</span>
+      <button class="modal-close" onclick="closeModal('opDoseModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="opDosePatientInfo" style="background:var(--primary-bg);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px"></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Date Given</label><input type="date" class="form-control" id="opd_date"></div>
+        <div class="form-group"><label class="form-label">Dose Number</label><input type="number" class="form-control" id="opd_doseNumber" min="1"></div>
+        <div class="form-group full"><label class="form-label">Entry Type</label>
+          <select class="form-control" id="opd_type" onchange="toggleDoseFields()">
+            <option value="given">Given ✅</option>
+            <option value="scheduled">Scheduled 📅</option>
+            <option value="expired">Expired ❌</option>
+            <option value="stopped">Stopped ⛔</option>
+            <option value="chemo">Chemo Started 💉</option>
+            <option value="missed">Missed ⚠️</option>
+            <option value="onhold">On Hold ⏸️</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Notes</label><input class="form-control" id="opd_notes" placeholder="Optional notes"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('opDoseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDoseEntry()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Backup Modal -->
 <div class="modal-overlay" id="backupModal" style="display:none">
   <div class="modal modal-sm">
@@ -1609,6 +1852,8 @@ const DB = {
   extravasation: JSON.parse(localStorage.getItem('oms_extravasation') || '[]'),
   spill: JSON.parse(localStorage.getItem('oms_spill') || '[]'),
   incident: JSON.parse(localStorage.getItem('oms_incident') || '[]'),
+  opPatients: JSON.parse(localStorage.getItem('oms_opPatients') || '[]'),
+  opSchedule: JSON.parse(localStorage.getItem('oms_opSchedule') || '[]'),
 };
 
 // Always save locally (instant) AND push to Google Sheets (async)
@@ -1818,7 +2063,7 @@ const state = {
 const PAGE_SIZE = 10;
 
 // ==================== NAVIGATION ====================
-const pageLabels = { dashboard:'Dashboard', patients:'Patient Registry', chemo:'Chemotherapy', adr:'ADR Register', extravasation:'Extravasation', spill:'Cytotoxic Spill', incident:'Incident Log', admin:'Admin Panel' };
+const pageLabels = { dashboard:'Dashboard', patients:'Patient Registry', chemo:'Chemotherapy', adr:'ADR Register', extravasation:'Extravasation', spill:'Cytotoxic Spill', incident:'Incident Log', opinjection:'OP Injection Register', admin:'Admin Panel' };
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pageEl = document.getElementById('page-' + page);
@@ -1828,6 +2073,9 @@ function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('active'); });
   document.getElementById('topbarPageTitle').textContent = pageLabels[page] || page;
   if (page === 'dashboard') refreshDashboard();
+  else if (page === 'opinjection') {
+    renderOPRegister();
+  }
   else if (page === 'admin') {
     const isSA = isSuperAdmin();
     // Settings and Security tabs only for superadmin
@@ -2308,37 +2556,134 @@ function refreshDashboard() {
       <div class="kpi-value">${k.value}</div>
       <div class="kpi-label">${k.label}</div>
     </div>`).join('');
-  // Charts
+
   const isDark = document.body.classList.contains('dark');
   Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
   Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
-  const buildChart = (id, type, labels, data, opts = {}) => {
+  const COLORS = ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1','#14b8a6','#f97316','#06b6d4','#84cc16'];
+
+  const buildChart = (id, type, labels, data, extraOpts = {}) => {
     if (chartInstances[id]) chartInstances[id].destroy();
     const ctx = document.getElementById(id);
     if (!ctx) return;
+    // Filter out empty/undefined labels
+    const validPairs = labels.map((l,i) => [l||'Unknown', data[i]]).filter(([l,v]) => v > 0);
+    if (!validPairs.length) return;
+    const cleanLabels = validPairs.map(([l]) => l);
+    const cleanData = validPairs.map(([,v]) => v);
+    const isLinear = type === 'line' || type === 'bar';
     chartInstances[id] = new Chart(ctx, {
       type,
-      data: { labels, datasets: [{ data, backgroundColor: opts.colors || ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1','#14b8a6','#f97316'], borderWidth: type === 'line' ? 2 : 0, fill: type === 'line', tension: 0.4, borderColor: '#0F766E', backgroundColor: type === 'line' ? 'rgba(15,118,110,0.1)' : (opts.colors || ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1','#14b8a6','#f97316']) }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: opts.legendPos || 'bottom', labels: { boxWidth: 12, padding: 10 } } }, scales: type !== 'pie' && type !== 'doughnut' ? { x: { grid: { display: false } }, y: { grid: { color: isDark ? '#1e293b' : '#f1f5f9' }, beginAtZero: true } } : {} }
+      data: {
+        labels: cleanLabels,
+        datasets: [{
+          label: extraOpts.label || '',
+          data: cleanData,
+          backgroundColor: type === 'line' ? 'rgba(15,118,110,0.1)' : cleanLabels.map((_,i) => COLORS[i % COLORS.length]),
+          borderColor: type === 'line' ? '#0F766E' : cleanLabels.map((_,i) => COLORS[i % COLORS.length]),
+          borderWidth: type === 'line' ? 2 : 0,
+          fill: type === 'line',
+          tension: 0.4,
+          pointBackgroundColor: '#0F766E',
+          pointRadius: type === 'line' ? 3 : 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: type === 'doughnut' || type === 'pie',
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 10, filter: item => item.text !== '' }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw} patient${ctx.raw !== 1 ? 's' : ''}`
+            }
+          }
+        },
+        scales: isLinear ? {
+          x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+          y: { grid: { color: isDark ? '#1e293b' : '#f1f5f9' }, beginAtZero: true, ticks: { precision: 0 } }
+        } : {}
+      }
     });
   };
-  const count = (arr, key) => arr.reduce((acc, v) => { const k = v[key]||'Unknown'; acc[k] = (acc[k]||0)+1; return acc; }, {});
+
+  // Helper: count by field, skip blanks
+  const count = (arr, key) => arr.reduce((acc, v) => {
+    const k = (v[key] || '').toString().trim();
+    if (k) acc[k] = (acc[k]||0)+1;
+    return acc;
+  }, {});
+
+  // Patients by Diagnosis
   const diagCount = count(pts, 'diagnosis');
-  buildChart('chartDiagnosis', 'bar', Object.keys(diagCount), Object.values(diagCount));
+  buildChart('chartDiagnosis', 'bar', Object.keys(diagCount), Object.values(diagCount), { label: 'Patients' });
+
+  // Patients by Atoll
   const atollCount = count(pts, 'atoll');
-  buildChart('chartAtoll', 'bar', Object.keys(atollCount), Object.values(atollCount));
+  buildChart('chartAtoll', 'bar', Object.keys(atollCount), Object.values(atollCount), { label: 'Patients' });
+
+  // Patients by Gender
   const genderCount = count(pts, 'gender');
   buildChart('chartGender', 'doughnut', Object.keys(genderCount), Object.values(genderCount));
-  const ageCount = count(pts, 'ageGroup');
-  buildChart('chartAge', 'bar', Object.keys(ageCount), Object.values(ageCount));
-  // Monthly
+
+  // Patients by Age Group - use defined groups
+  const ageGroups = { '0-14 (Pediatric)':0, '15-24 (Young Adult)':0, '25-44 (Adult)':0, '45-64 (Middle Age)':0, '65+ (Elderly)':0 };
+  pts.forEach(p => {
+    // Recalculate from age if ageGroup missing
+    let group = p.ageGroup;
+    if (!group && p.age) {
+      const age = parseInt(p.age);
+      if (age < 15) group = '0-14 (Pediatric)';
+      else if (age < 25) group = '15-24 (Young Adult)';
+      else if (age < 45) group = '25-44 (Adult)';
+      else if (age < 65) group = '45-64 (Middle Age)';
+      else group = '65+ (Elderly)';
+    }
+    if (group && ageGroups[group] !== undefined) ageGroups[group]++;
+  });
+  const ageLabels = Object.keys(ageGroups).filter(k => ageGroups[k] > 0);
+  const ageData = ageLabels.map(k => ageGroups[k]);
+  buildChart('chartAge', 'bar', ageLabels, ageData, { label: 'Patients' });
+
+  // Monthly Registrations - fix Invalid Date
   const monthly = {};
-  pts.forEach(p => { if (p.registrationDate) { const m = p.registrationDate.substring(0,7); monthly[m] = (monthly[m]||0)+1; } });
+  pts.forEach(p => {
+    if (!p.registrationDate) return;
+    // Handle different date formats
+    let dateStr = p.registrationDate.toString().trim();
+    let d;
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      d = new Date(dateStr.slice(0,10));
+    } else if (/^\d{2}\/\d{2}\/\d{4}/.test(dateStr)) {
+      const [day,mo,yr] = dateStr.split('/');
+      d = new Date(yr, parseInt(mo)-1, day);
+    } else {
+      d = new Date(dateStr);
+    }
+    if (isNaN(d.getTime())) return; // skip invalid dates
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    monthly[key] = (monthly[key]||0) + 1;
+  });
   const mKeys = Object.keys(monthly).sort().slice(-12);
-  buildChart('chartMonthly', 'line', mKeys.map(m => { const [y,mo] = m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }), mKeys.map(k => monthly[k]));
+  const mLabels = mKeys.map(m => {
+    const [y, mo] = m.split('-');
+    return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleString('default', { month: 'short', year: '2-digit' });
+  });
+  buildChart('chartMonthly', 'line', mLabels, mKeys.map(k => monthly[k]), { label: 'Registrations' });
+
+  // Patient Status Distribution
   const statusCount = count(pts, 'status');
   buildChart('chartStatus', 'doughnut', Object.keys(statusCount), Object.values(statusCount));
+
+  // Patients by Island
+  const islandCount = count(pts, 'island');
+  buildChart('chartIsland', 'bar', Object.keys(islandCount), Object.values(islandCount), { label: 'Patients' });
 }
+
 
 // ==================== GLOBAL SEARCH ====================
 function globalSearchFn(q) {
@@ -3335,6 +3680,522 @@ function calcSurvival(p) {
   const months = Math.floor((diff % (365.25 * 24 * 3600 * 1000)) / (30.44 * 24 * 3600 * 1000));
   if (years === 0) return months + ' month' + (months !== 1 ? 's' : '');
   return years + ' yr' + (years !== 1 ? 's' : '') + (months > 0 ? ' ' + months + ' mo' : '');
+}
+
+
+// ==================== OP INJECTION REGISTER ====================
+
+function save_op(key) {
+  localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+  if (GS_ENABLED) DB[key].forEach(r => gsSaveRecord(key, r));
+}
+
+const PERIODICITY_DAYS = {
+  'Weekly': 7, '2 Weekly': 14, '3 Weekly': 21, 'Monthly': 30,
+  '2 Monthly': 60, '3 Monthly': 91, '6 Monthly': 182, 'Yearly': 365,
+  '12 Weeks': 84, 'Once a year for 2 years, then 5 Yearly': 365,
+};
+
+function calcNextDue(lastDate, periodicity) {
+  if (!lastDate || !periodicity) return null;
+  const days = PERIODICITY_DAYS[periodicity];
+  if (!days) return null;
+  const d = new Date(lastDate);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function switchOPTab(tab) {
+  document.querySelectorAll('#opTabs .section-tab').forEach(t => t.classList.remove('active'));
+  ['register','schedule','ongoing','dashboard'].forEach(t => {
+    const el = document.getElementById('opTab_' + t);
+    if (el) el.style.display = 'none';
+  });
+  const activeTab = document.querySelector(`#opTabs .section-tab:nth-child(${['register','schedule','ongoing','dashboard'].indexOf(tab)+1})`);
+  if (activeTab) activeTab.classList.add('active');
+  const panel = document.getElementById('opTab_' + tab);
+  if (panel) panel.style.display = '';
+  if (tab === 'register') renderOPRegister();
+  if (tab === 'schedule') renderOPSchedule();
+  if (tab === 'ongoing') renderOPOngoing();
+  if (tab === 'dashboard') renderOPDashboard();
+}
+
+// ── REGISTER ──────────────────────────────────────────────────
+function openOPPatientModal(id = null) {
+  state.editId = id;
+  ['hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'].forEach(f => {
+    const el = document.getElementById('op_' + f);
+    if (el) el.value = '';
+  });
+  document.getElementById('opPatientModalTitle').textContent = id ? 'Edit OP Patient' : 'Add OP Injection Patient';
+  if (id) {
+    const r = DB.opPatients.find(x => x.id === id);
+    if (r) Object.keys(r).forEach(k => { const el = document.getElementById('op_' + k); if (el) el.value = r[k]||''; });
+  }
+  openModal('opPatientModal');
+}
+
+function lookupOPPatient(hn) {
+  const p = DB.patients.find(x => x.hospitalNumber === hn);
+  if (p) {
+    document.getElementById('op_patientName').value = p.fullName||'';
+    document.getElementById('op_gender').value = p.gender||'';
+    document.getElementById('op_dob').value = p.dob||'';
+    document.getElementById('op_age').value = p.age||'';
+    document.getElementById('op_idNumber').value = p.nationalId||'';
+    document.getElementById('op_contact').value = p.contactNumber||'';
+    document.getElementById('op_diagnosis').value = p.diagnosis||'';
+  }
+}
+
+function calcOPAge() {
+  const dob = document.getElementById('op_dob').value;
+  if (!dob) return;
+  const age = Math.floor((Date.now() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
+  document.getElementById('op_age').value = age;
+}
+
+function saveOPPatient() {
+  const hn = document.getElementById('op_hospitalNumber').value.trim();
+  const status = document.getElementById('op_status').value;
+  if (!hn || !status) { toast('Hospital Number and Status are required', 'error'); return; }
+  const serial = state.editId ? DB.opPatients.find(x => x.id === state.editId)?.serial : (DB.opPatients.length + 1);
+  const obj = {
+    id: state.editId || genId('OPP'), serial,
+    hospitalNumber: hn,
+    patientName: document.getElementById('op_patientName').value,
+    gender: document.getElementById('op_gender').value,
+    dob: document.getElementById('op_dob').value,
+    age: document.getElementById('op_age').value,
+    idNumber: document.getElementById('op_idNumber').value,
+    contact: document.getElementById('op_contact').value,
+    diagnosis: document.getElementById('op_diagnosis').value,
+    status,
+    injections: document.getElementById('op_injections').value,
+    remarks: document.getElementById('op_remarks').value,
+  };
+  if (state.editId) { const idx = DB.opPatients.findIndex(x => x.id === state.editId); DB.opPatients[idx] = obj; toast('Patient updated'); }
+  else { DB.opPatients.push(obj); toast('Patient added'); }
+  save_op('opPatients'); closeModal('opPatientModal'); renderOPRegister();
+}
+
+let opRegisterFilter = '', opRegisterStatusFilter = '';
+function filterOPRegister(val, field, fieldVal) {
+  if (val !== null && val !== undefined) opRegisterFilter = val;
+  if (field === 'status') opRegisterStatusFilter = fieldVal || '';
+  renderOPRegister();
+}
+
+function renderOPRegister() {
+  let data = [...DB.opPatients];
+  if (opRegisterFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opRegisterFilter.toLowerCase())));
+  if (opRegisterStatusFilter) data = data.filter(r => r.status === opRegisterStatusFilter);
+  const tbody = document.getElementById('opRegisterTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon"><i class="fas fa-prescription-bottle-alt"></i></div><div class="empty-title">No patients registered</div><div class="empty-text">Add OP injection patients to get started</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map((r, i) => `<tr>
+    <td>${r.serial || i+1}</td>
+    <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
+    <td style="font-weight:500">${r.patientName||'—'}</td>
+    <td>${r.gender||'—'}</td>
+    <td>${r.age||'—'}</td>
+    <td>${r.idNumber||'—'}</td>
+    <td>${r.contact||'—'}</td>
+    <td>${r.diagnosis||'—'}</td>
+    <td><span style="font-size:12px">${r.injections||'—'}</span></td>
+    <td>${statusBadge(r.status||'—')}</td>
+    <td style="font-size:12px;color:var(--text-muted)">${r.remarks||'—'}</td>
+    <td class="no-print"><div class="flex gap-2">
+      <button class="btn btn-xs btn-outline" onclick="openOPPatientModal('${r.id}')"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-xs btn-danger" onclick="deleteOPPatient('${r.id}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function deleteOPPatient(id) {
+  if (!confirm('Delete this patient from OP register?')) return;
+  DB.opPatients = DB.opPatients.filter(x => x.id !== id);
+  save_op('opPatients'); renderOPRegister(); toast('Patient removed');
+}
+
+// ── SCHEDULE ──────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function openScheduleModal(id = null) {
+  state.editId = id;
+  ['hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','periodicity','startDate','remarks'].forEach(f => {
+    const el = document.getElementById('ops_' + f);
+    if (el) el.value = '';
+  });
+  document.getElementById('ops_firstDose').value = '1';
+  document.getElementById('opScheduleModalTitle').textContent = id ? 'Edit Treatment Plan' : 'Add Treatment Plan';
+  if (id) {
+    const r = DB.opSchedule.find(x => x.id === id);
+    if (r) {
+      ['hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','periodicity','startDate','remarks'].forEach(f => {
+        const el = document.getElementById('ops_' + f);
+        if (el) el.value = r[f]||'';
+      });
+      document.getElementById('ops_firstDose').value = r.firstDose||'1';
+    }
+  }
+  openModal('opScheduleModal');
+}
+
+function lookupOPSchedulePatient(hn) {
+  // Try OP patients first, then main registry
+  const op = DB.opPatients.find(x => x.hospitalNumber === hn);
+  const p = op || DB.patients.find(x => x.hospitalNumber === hn);
+  if (p) {
+    document.getElementById('ops_patientName').value = p.patientName || p.fullName || '';
+    document.getElementById('ops_gender').value = p.gender||'';
+    document.getElementById('ops_age').value = p.age||'';
+    document.getElementById('ops_idNumber').value = p.idNumber || p.nationalId||'';
+    document.getElementById('ops_diagnosis').value = p.diagnosis||'';
+  }
+}
+
+function saveOPSchedule() {
+  const hn = document.getElementById('ops_hospitalNumber').value.trim();
+  const inj = document.getElementById('ops_injectionName').value.trim();
+  const dosage = document.getElementById('ops_dosage').value.trim();
+  const period = document.getElementById('ops_periodicity').value;
+  if (!hn || !inj || !dosage || !period) { toast('Please fill required fields', 'error'); return; }
+  const obj = {
+    id: state.editId || genId('OPS'),
+    hospitalNumber: hn,
+    patientName: document.getElementById('ops_patientName').value,
+    gender: document.getElementById('ops_gender').value,
+    age: document.getElementById('ops_age').value,
+    idNumber: document.getElementById('ops_idNumber').value,
+    diagnosis: document.getElementById('ops_diagnosis').value,
+    injectionName: inj,
+    dosage,
+    periodicity: period,
+    startDate: document.getElementById('ops_startDate').value,
+    firstDose: parseInt(document.getElementById('ops_firstDose').value) || 1,
+    remarks: document.getElementById('ops_remarks').value,
+    doses: state.editId ? (DB.opSchedule.find(x => x.id === state.editId)?.doses || {}) : {},
+  };
+  if (state.editId) { const idx = DB.opSchedule.findIndex(x => x.id === state.editId); DB.opSchedule[idx] = obj; toast('Treatment plan updated'); }
+  else { DB.opSchedule.push(obj); toast('Treatment plan added'); }
+  save_op('opSchedule'); closeModal('opScheduleModal'); renderOPSchedule();
+}
+
+let opScheduleFilter = '';
+function filterOPSchedule(val) { opScheduleFilter = val; renderOPSchedule(); }
+
+function renderOPSchedule() {
+  const year = parseInt(document.getElementById('opYearSelect')?.value || new Date().getFullYear());
+  const header = document.getElementById('opScheduleHeader');
+  const tbody = document.getElementById('opScheduleTbody');
+  if (!header || !tbody) return;
+
+  // Build header
+  header.innerHTML = `
+    <th style="position:sticky;left:0;background:var(--bg);z-index:2;min-width:40px">#</th>
+    <th style="position:sticky;left:40px;background:var(--bg);z-index:2;min-width:110px">Hospital No</th>
+    <th style="min-width:140px">Patient Name</th>
+    <th style="min-width:80px">Gender</th>
+    <th style="min-width:50px">Age</th>
+    <th style="min-width:110px">ID/PP No</th>
+    <th style="min-width:140px">Diagnosis</th>
+    <th style="min-width:160px">Injection</th>
+    <th style="min-width:90px">Dosage</th>
+    <th style="min-width:110px">Periodicity</th>
+    ${MONTHS.map(m => `<th style="min-width:130px;text-align:center">${m} ${year}</th>`).join('')}
+    <th class="no-print" style="min-width:80px">Actions</th>`;
+
+  let data = [...DB.opSchedule];
+  if (opScheduleFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opScheduleFilter.toLowerCase())));
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="23"><div class="empty-state"><div class="empty-icon"><i class="fas fa-calendar-alt"></i></div><div class="empty-title">No treatment plans</div><div class="empty-text">Add treatment plans to see the schedule</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map((r, idx) => {
+    const monthCells = MONTHS.map((m, mi) => {
+      const key = `${year}-${String(mi+1).padStart(2,'0')}`;
+      const dose = r.doses && r.doses[key];
+      if (dose) {
+        const typeColors = { given:'#d1fae5', scheduled:'#dbeafe', expired:'#fee2e2', stopped:'#f3f4f6', chemo:'#ede9fe', missed:'#fef3c7', onhold:'#f1f5f9' };
+        const typeIcons = { given:'✅', scheduled:'📅', expired:'❌', stopped:'⛔', chemo:'💉', missed:'⚠️', onhold:'⏸️' };
+        const bg = typeColors[dose.type] || '#f9fafb';
+        const icon = typeIcons[dose.type] || '';
+        return `<td style="background:${bg};cursor:pointer;text-align:center;padding:6px 4px;font-size:11px" onclick="openDoseEntry('${r.id}','${key}')">
+          <div style="font-weight:600">${icon} ${dose.date ? new Date(dose.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : ''}</div>
+          ${dose.doseNumber ? `<div style="color:var(--text-muted)">Dose ${dose.doseNumber}</div>` : ''}
+          ${dose.notes ? `<div style="color:var(--text-muted);font-size:10px">${dose.notes}</div>` : ''}
+        </td>`;
+      }
+      // Check if this month has a suggested date
+      const suggested = getSuggestedDate(r, year, mi);
+      return `<td style="cursor:pointer;text-align:center;padding:6px 4px" onclick="openDoseEntry('${r.id}','${key}')" title="Click to record dose">
+        ${suggested ? `<div style="font-size:11px;color:var(--text-muted);border:1px dashed var(--border);border-radius:4px;padding:2px 4px">${suggested}</div>` : '<div style="color:var(--border);font-size:18px">+</div>'}
+      </td>`;
+    }).join('');
+
+    return `<tr>
+      <td style="position:sticky;left:0;background:var(--card-bg);z-index:1">${idx+1}</td>
+      <td style="position:sticky;left:40px;background:var(--card-bg);z-index:1;font-weight:600;color:var(--primary)">${r.hospitalNumber}</td>
+      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td>${r.gender||'—'}</td>
+      <td>${r.age||'—'}</td>
+      <td style="font-size:12px">${r.idNumber||'—'}</td>
+      <td>${r.diagnosis||'—'}</td>
+      <td style="font-weight:500;color:var(--primary)">${r.injectionName}</td>
+      <td style="font-size:12px">${r.dosage}</td>
+      <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
+      ${monthCells}
+      <td class="no-print"><div class="flex gap-2">
+        <button class="btn btn-xs btn-outline" onclick="openScheduleModal('${r.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="deleteOPSchedule('${r.id}')"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function getSuggestedDate(record, year, monthIdx) {
+  if (!record.periodicity || !record.doses) return null;
+  const days = PERIODICITY_DAYS[record.periodicity];
+  if (!days) return null;
+  // Find last given dose before this month
+  const allDoses = Object.entries(record.doses)
+    .filter(([k, v]) => v.type === 'given' && v.date)
+    .sort(([a],[b]) => a.localeCompare(b));
+  if (!allDoses.length && record.startDate) {
+    const next = calcNextDue(record.startDate, record.periodicity);
+    if (next) {
+      const nd = new Date(next);
+      if (nd.getFullYear() === year && nd.getMonth() === monthIdx) {
+        return nd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+      }
+    }
+    return null;
+  }
+  const last = allDoses[allDoses.length - 1];
+  if (!last) return null;
+  const next = calcNextDue(last[1].date, record.periodicity);
+  if (!next) return null;
+  const nd = new Date(next);
+  if (nd.getFullYear() === year && nd.getMonth() === monthIdx) {
+    return nd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  }
+  return null;
+}
+
+function deleteOPSchedule(id) {
+  if (!confirm('Delete this treatment plan?')) return;
+  DB.opSchedule = DB.opSchedule.filter(x => x.id !== id);
+  save_op('opSchedule'); renderOPSchedule(); toast('Treatment plan deleted');
+}
+
+// ── DOSE ENTRY ────────────────────────────────────────────────
+let currentDoseRecord = null, currentDoseKey = null;
+
+function openDoseEntry(scheduleId, monthKey) {
+  const r = DB.opSchedule.find(x => x.id === scheduleId);
+  if (!r) return;
+  currentDoseRecord = r;
+  currentDoseKey = monthKey;
+  const existing = r.doses && r.doses[monthKey];
+  const [yr, mo] = monthKey.split('-');
+  document.getElementById('opDoseModalTitle').textContent = `Record Dose — ${MONTHS[parseInt(mo)-1]} ${yr}`;
+  document.getElementById('opDosePatientInfo').innerHTML = `
+    <strong>${r.patientName}</strong> · ${r.hospitalNumber}<br>
+    <span style="color:var(--primary)">${r.injectionName}</span> · ${r.dosage} · <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>`;
+  // Pre-fill
+  if (existing) {
+    document.getElementById('opd_date').value = existing.date||'';
+    document.getElementById('opd_doseNumber').value = existing.doseNumber||'';
+    document.getElementById('opd_type').value = existing.type||'given';
+    document.getElementById('opd_notes').value = existing.notes||'';
+  } else {
+    // Auto-suggest date and dose number
+    const suggested = getSuggestedDate(r, parseInt(yr), parseInt(mo)-1);
+    document.getElementById('opd_date').value = suggested ? new Date(`${suggested} ${yr}`).toISOString().slice(0,10) : '';
+    document.getElementById('opd_doseNumber').value = getNextDoseNumber(r);
+    document.getElementById('opd_type').value = 'given';
+    document.getElementById('opd_notes').value = '';
+  }
+  openModal('opDoseModal');
+}
+
+function getNextDoseNumber(record) {
+  const givenDoses = Object.values(record.doses || {}).filter(d => d.type === 'given' && d.doseNumber);
+  if (!givenDoses.length) return record.firstDose || 1;
+  return Math.max(...givenDoses.map(d => parseInt(d.doseNumber)||0)) + 1;
+}
+
+function saveDoseEntry() {
+  if (!currentDoseRecord || !currentDoseKey) return;
+  const date = document.getElementById('opd_date').value;
+  const doseNumber = document.getElementById('opd_doseNumber').value;
+  const type = document.getElementById('opd_type').value;
+  const notes = document.getElementById('opd_notes').value;
+  if (!currentDoseRecord.doses) currentDoseRecord.doses = {};
+  currentDoseRecord.doses[currentDoseKey] = { date, doseNumber: parseInt(doseNumber)||null, type, notes };
+  const idx = DB.opSchedule.findIndex(x => x.id === currentDoseRecord.id);
+  if (idx >= 0) DB.opSchedule[idx] = currentDoseRecord;
+  save_op('opSchedule'); closeModal('opDoseModal'); renderOPSchedule();
+  toast(type === 'given' ? '✅ Dose recorded' : 'Entry saved');
+}
+
+function toggleDoseFields() {}
+
+// ── ONGOING ───────────────────────────────────────────────────
+let opOngoingFilter = '';
+function filterOPOngoing(val) { opOngoingFilter = val; renderOPOngoing(); }
+
+function renderOPOngoing() {
+  const tbody = document.getElementById('opOngoingTbody');
+  if (!tbody) return;
+  let data = DB.opSchedule.filter(r => {
+    const pat = DB.opPatients.find(p => p.hospitalNumber === r.hospitalNumber);
+    return !pat || pat.status === 'Ongoing';
+  });
+  if (opOngoingFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opOngoingFilter.toLowerCase())));
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon"><i class="fas fa-user-check"></i></div><div class="empty-title">No ongoing patients</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map((r, i) => {
+    const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
+    const lastEntry = givenDoses[0];
+    const lastDate = lastEntry ? lastEntry[1].date : r.startDate;
+    const nextDue = calcNextDue(lastDate, r.periodicity);
+    const totalDoses = givenDoses.length;
+    const today = new Date();
+    const nextDate = nextDue ? new Date(nextDue) : null;
+    const isOverdue = nextDate && nextDate < today;
+    const isDueSoon = nextDate && !isOverdue && (nextDate - today) < 7 * 24 * 3600 * 1000;
+    return `<tr>
+      <td>${i+1}</td>
+      <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
+      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td>${r.diagnosis||'—'}</td>
+      <td style="color:var(--primary);font-weight:500">${r.injectionName}</td>
+      <td>${r.dosage}</td>
+      <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
+      <td>${lastDate ? fmtDate(lastDate) : '—'}</td>
+      <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '—'}${isOverdue?' ⚠️':isDueSoon?' 🔔':''}</td>
+      <td><span class="badge badge-info">${totalDoses} doses</span></td>
+      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTab('schedule')"><i class="fas fa-calendar"></i> Schedule</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── OP DASHBOARD ──────────────────────────────────────────────
+function renderOPDashboard() {
+  const today = new Date();
+  const thisMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+
+  // KPIs
+  const totalPatients = DB.opPatients.length;
+  const ongoingPatients = DB.opPatients.filter(p => p.status === 'Ongoing').length;
+  const thisMonthScheduled = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth]).length;
+  const thisMonthGiven = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth] && r.doses[thisMonth].type === 'given').length;
+
+  const kpiGrid = document.getElementById('opKpiGrid');
+  if (kpiGrid) {
+    kpiGrid.innerHTML = [
+      { label:'Total OP Patients', value:totalPatients, icon:'fa-users', color:'#0F766E', bg:'#f0fdfa' },
+      { label:'Ongoing', value:ongoingPatients, icon:'fa-user-check', color:'#10B981', bg:'#d1fae5' },
+      { label:'This Month Scheduled', value:thisMonthScheduled, icon:'fa-calendar-check', color:'#3B82F6', bg:'#dbeafe' },
+      { label:'This Month Given', value:thisMonthGiven, icon:'fa-syringe', color:'#8B5CF6', bg:'#ede9fe' },
+    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
+      <div class="kpi-icon"><i class="fas ${k.icon}"></i></div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+  }
+
+  // This month's list
+  const monthEl = document.getElementById('opThisMonth');
+  if (monthEl) {
+    const list = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth]);
+    if (!list.length) { monthEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">No entries this month</p>'; }
+    else monthEl.innerHTML = list.map(r => {
+      const d = r.doses[thisMonth];
+      const typeColors = { given:'badge-success', scheduled:'badge-info', expired:'badge-danger', stopped:'badge-secondary', chemo:'badge-purple', missed:'badge-warning' };
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · ${d.date ? fmtDate(d.date) : 'No date'}</div></div>
+        <span class="badge ${typeColors[d.type]||'badge-secondary'}">${d.type||'—'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Upcoming / overdue
+  const upcomingEl = document.getElementById('opUpcoming');
+  if (upcomingEl) {
+    const upcoming = DB.opSchedule.map(r => {
+      const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
+      const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
+      const nextDue = calcNextDue(lastDate, r.periodicity);
+      if (!nextDue) return null;
+      const nd = new Date(nextDue);
+      const diff = nd - today;
+      const isOverdue = diff < 0;
+      const isDueSoon = !isOverdue && diff < 7 * 24 * 3600 * 1000;
+      if (!isOverdue && !isDueSoon) return null;
+      return { ...r, nextDue, isOverdue, diff };
+    }).filter(Boolean).sort((a,b) => a.diff - b.diff);
+
+    if (!upcoming.length) { upcomingEl.innerHTML = '<p style="color:var(--success);font-size:13px;text-align:center;padding:20px">✅ No overdue or upcoming injections</p>'; }
+    else upcomingEl.innerHTML = upcoming.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · Due: ${fmtDate(r.nextDue)}</div></div>
+        <span class="badge ${r.isOverdue?'badge-danger':'badge-warning'}">${r.isOverdue?'Overdue':'Due Soon'}</span>
+      </div>`).join('');
+  }
+
+  // Periodicity chart
+  const periodicityCount = {};
+  DB.opSchedule.forEach(r => { periodicityCount[r.periodicity] = (periodicityCount[r.periodicity]||0)+1; });
+  const ctx = document.getElementById('opPeriodicityChart');
+  if (ctx && Object.keys(periodicityCount).length) {
+    if (window._opPeriodicityChart) window._opPeriodicityChart.destroy();
+    window._opPeriodicityChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: Object.keys(periodicityCount), datasets: [{ data: Object.values(periodicityCount), backgroundColor: ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1'], borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+    });
+  }
+}
+
+function exportOPData() {
+  const wb = XLSX.utils.book_new();
+  // Register sheet
+  if (DB.opPatients.length) {
+    const ws1 = XLSX.utils.json_to_sheet(DB.opPatients);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Register');
+  }
+  // Schedule sheet
+  if (DB.opSchedule.length) {
+    const year = parseInt(document.getElementById('opYearSelect')?.value || new Date().getFullYear());
+    const rows = DB.opSchedule.map(r => {
+      const row = { 'Hospital No': r.hospitalNumber, 'Patient Name': r.patientName, 'Gender': r.gender, 'Age': r.age, 'ID/PP No': r.idNumber, 'Diagnosis': r.diagnosis, 'Injection': r.injectionName, 'Dosage': r.dosage, 'Periodicity': r.periodicity };
+      MONTHS.forEach((m, mi) => {
+        const key = `${year}-${String(mi+1).padStart(2,'0')}`;
+        const dose = r.doses && r.doses[key];
+        row[`${m} ${year}`] = dose ? `${dose.date||''} ${dose.doseNumber?'(Dose '+dose.doseNumber+')':''} ${dose.type!=='given'?'['+dose.type+']':''} ${dose.notes||''}`.trim() : '';
+      });
+      return row;
+    });
+    const ws2 = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws2, `Schedule ${year}`);
+  }
+  XLSX.writeFile(wb, `OncoCare_OP_Injection_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('OP Injection data exported');
 }
 
 // Login helpers
