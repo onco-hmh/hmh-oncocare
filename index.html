@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260629-140542">
+<meta name="version" content="v20260629-142251">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-140542</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-142251</span></div>
     </div>
   </div>
 </div>
@@ -3100,11 +3100,39 @@ function restoreData(input) {
   };
   reader.readAsText(file);
 }
-function clearAllData() {
-  if (!confirm('Are you sure? This will permanently delete ALL data.')) return;
-  Object.keys(DB).forEach(k => { DB[k] = []; save(k); });
-  closeModal('backupModal'); refreshDashboard();
-  toast('All data cleared', 'warning');
+async function clearAllData() {
+  if (!confirm('Are you sure? This will permanently delete ALL data from the app AND Google Sheets?')) return;
+
+  // Stop background sync during clearing
+  stopSyncInterval();
+  GS_ENABLED = false;
+
+  // Clear all local data
+  const keys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
+  keys.forEach(k => { DB[k] = []; localStorage.removeItem('oms_' + k); });
+  localStorage.removeItem('oms_last_sync');
+
+  closeModal('backupModal');
+  showSyncOverlay('Clearing all data from Google Sheets…');
+
+  // Delete all records from Google Sheets
+  try {
+    await gsPost({ action: 'restoreAll', payload: {
+      patients:[], chemo:[], adr:[], extravasation:[],
+      spill:[], incident:[], opPatients:[], opSchedule:[]
+    }});
+    hideSyncOverlay();
+    toast('All data cleared from app and Google Sheets ✅', 'warning');
+  } catch(e) {
+    hideSyncOverlay();
+    toast('Local data cleared. Could not reach Google Sheets.', 'warning');
+  }
+
+  // Re-enable sync after clearing
+  GS_ENABLED = true;
+  startSyncInterval();
+  refreshDashboard();
+  Object.keys(tableConfigs).forEach(t => renderTable(t));
 }
 
 // ==================== SEED DATA ====================
