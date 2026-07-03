@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260703-133048">
+<meta name="version" content="v20260703-134251">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-133048</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-134251</span></div>
     </div>
   </div>
 </div>
@@ -791,19 +791,53 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <p>Oncology department overview — <span id="dashDate"></span></p>
     </div>
     <div class="flex gap-2 no-print">
-      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
       <button class="btn btn-outline btn-sm" onclick="refreshDashboard()"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
   </div>
-  <div class="kpi-grid" id="kpiGrid"></div>
-  <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">Patients by Diagnosis</div><div class="chart-container"><canvas id="chartDiagnosis"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Patients by Atoll</div><div class="chart-container"><canvas id="chartAtoll"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Patients by Gender</div><div class="chart-container"><canvas id="chartGender"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Patients by Age Group</div><div class="chart-container"><canvas id="chartAge"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Monthly Registrations</div><div class="chart-container"><canvas id="chartMonthly"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Patient Status Distribution</div><div class="chart-container"><canvas id="chartStatus"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Patients by Island</div><div class="chart-container"><canvas id="chartIsland"></canvas></div></div>
+
+  <!-- Dashboard Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:12px;padding:4px;width:fit-content;border:1px solid var(--border)">
+    <button id="dashTab_cancer" onclick="switchDashTab('cancer')" style="padding:8px 20px;border-radius:9px;border:none;background:var(--primary);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-ribbon"></i> Cancer Registry</button>
+    <button id="dashTab_chemo" onclick="switchDashTab('chemo')" style="padding:8px 20px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-syringe"></i> Chemotherapy</button>
+    <button id="dashTab_op" onclick="switchDashTab('op')" style="padding:8px 20px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-prescription-bottle-alt"></i> OP Injection</button>
+  </div>
+
+  <!-- Cancer Registry Dashboard -->
+  <div id="dashPanel_cancer">
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Patients by Diagnosis</div><div class="chart-container"><canvas id="chartDiagnosis"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Patients by Atoll</div><div class="chart-container"><canvas id="chartAtoll"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Patients by Gender</div><div class="chart-container"><canvas id="chartGender"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Patients by Age Group</div><div class="chart-container"><canvas id="chartAge"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Monthly Registrations</div><div class="chart-container"><canvas id="chartMonthly"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Patient Status Distribution</div><div class="chart-container"><canvas id="chartStatus"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Patients by Island</div><div class="chart-container"><canvas id="chartIsland"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Chemotherapy Dashboard -->
+  <div id="dashPanel_chemo" style="display:none">
+    <div class="kpi-grid" id="chemoKpiGrid"></div>
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Chemo Status Distribution</div><div class="chart-container"><canvas id="chartChemoStatus"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Chemo by Diagnosis</div><div class="chart-container"><canvas id="chartChemoDiagnosis"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">ADR by Severity</div><div class="chart-container"><canvas id="chartADRSeverity"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">ADR by Drug Category</div><div class="chart-container"><canvas id="chartADRDrug"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Monthly Chemo Starts</div><div class="chart-container"><canvas id="chartChemoMonthly"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Blood Group Distribution</div><div class="chart-container"><canvas id="chartBloodGroup"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- OP Injection Dashboard -->
+  <div id="dashPanel_op" style="display:none">
+    <div class="kpi-grid" id="opDashKpiGrid"></div>
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">By Injection Type</div><div class="chart-container"><canvas id="chartOPInjection"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">By Periodicity</div><div class="chart-container"><canvas id="chartOPPeriodicity"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Monthly Doses Given</div><div class="chart-container"><canvas id="chartOPMonthly"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">OP Patient Status</div><div class="chart-container"><canvas id="chartOPStatus"></canvas></div></div>
+    </div>
   </div>
 </div>
 
@@ -2563,10 +2597,9 @@ const tableConfigs = {
       <td>${p.registryNumber||'—'}</td>
       <td style="font-weight:500">${p.fullName||'—'}</td>
       <td>${p.gender||'—'}</td>
+      <td>${p.age||'—'}</td>
       <td>${p.diagnosis||'—'}</td>
-      <td>${p.atoll||'—'}</td>
       <td>${statusBadge(p.status||'—')}</td>
-      <td>${fmtDate(p.registrationDate)}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="viewProfile('${p.id}')"><i class="fas fa-eye"></i></button>
         <button class="btn btn-xs btn-outline" onclick="openPatientModal('${p.id}')"><i class="fas fa-edit"></i></button>
@@ -2713,6 +2746,10 @@ function populateFilters() {
 // ==================== DASHBOARD ====================
 let chartInstances = {};
 function refreshDashboard() {
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  switchDashTab(currentDashTab || 'cancer');
+}
+function refreshDashboard_old() {
   document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const pts = DB.patients;
   const kpiData = [
@@ -2859,6 +2896,159 @@ function refreshDashboard() {
   buildChart('chartIsland', 'bar', Object.keys(islandCount), Object.values(islandCount), { label: 'Patients' });
 }
 
+
+// ==================== DASHBOARD TABS ====================
+let currentDashTab = 'cancer';
+
+function switchDashTab(tab) {
+  currentDashTab = tab;
+  ['cancer','chemo','op'].forEach(t => {
+    const panel = document.getElementById('dashPanel_' + t);
+    const btn = document.getElementById('dashTab_' + t);
+    if (panel) panel.style.display = t === tab ? '' : 'none';
+    if (btn) {
+      btn.style.background = t === tab ? 'var(--primary)' : 'transparent';
+      btn.style.color = t === tab ? 'white' : 'var(--text-muted)';
+      btn.style.fontWeight = t === tab ? '600' : '500';
+    }
+  });
+  if (tab === 'cancer') renderCancerDash();
+  if (tab === 'chemo') renderChemoDash();
+  if (tab === 'op') renderOPDashMain();
+}
+
+function renderCancerDash() {
+  const pts = DB.patients;
+  const isDark = document.body.classList.contains('dark');
+  Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+  const COLORS = ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1','#14b8a6','#f97316','#06b6d4','#84cc16'];
+
+  const kpiData = [
+    { label:'Total Cancer Patients', value: pts.length, icon:'fa-users', color:'#0F766E', bg:'#f0fdfa' },
+    { label:'Active Patients', value: pts.filter(p => p.status==='Active').length, icon:'fa-user-check', color:'#10B981', bg:'#d1fae5' },
+    { label:'In Remission', value: pts.filter(p => p.status==='In Remission').length, icon:'fa-heart', color:'#3B82F6', bg:'#dbeafe' },
+    { label:'Palliative Care', value: pts.filter(p => p.status==='Palliative Care').length, icon:'fa-hands-helping', color:'#F59E0B', bg:'#fef3c7' },
+    { label:'Expired Patients', value: pts.filter(p => p.status==='Expired').length, icon:'fa-heart-broken', color:'#EF4444', bg:'#fee2e2' },
+    { label:'Lost to Follow-up', value: pts.filter(p => p.status==='Lost to Follow-up').length, icon:'fa-user-times', color:'#8B5CF6', bg:'#ede9fe' },
+    { label:'Transferred Out', value: pts.filter(p => p.status==='Transferred Out').length, icon:'fa-exchange-alt', color:'#6366F1', bg:'#e0e7ff' },
+    { label:'Total Registered', value: pts.length, icon:'fa-clipboard-list', color:'#14b8a6', bg:'#f0fdfa' },
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpiData.map(k => `
+    <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
+      <div class="kpi-icon"><i class="fas ${k.icon}"></i></div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+
+  const buildC = (id, type, labels, data, label='') => {
+    if (chartInstances[id]) chartInstances[id].destroy();
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    const valid = labels.map((l,i)=>[l||'Unknown',data[i]]).filter(([l,v])=>v>0);
+    if (!valid.length) return;
+    chartInstances[id] = new Chart(ctx, {
+      type,
+      data: { labels: valid.map(([l])=>l), datasets: [{ label, data: valid.map(([,v])=>v),
+        backgroundColor: type==='line'?'rgba(15,118,110,0.1)':valid.map((_,i)=>COLORS[i%COLORS.length]),
+        borderColor: type==='line'?'#0F766E':valid.map((_,i)=>COLORS[i%COLORS.length]),
+        borderWidth: type==='line'?2:0, fill:type==='line', tension:0.4, pointBackgroundColor:'#0F766E', pointRadius:type==='line'?3:0 }] },
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:type==='doughnut'||type==='pie', position:'bottom', labels:{boxWidth:12,padding:10} },
+          tooltip:{ callbacks:{ label: ctx=>' '+ctx.label+': '+ctx.raw+' patient'+(ctx.raw!==1?'s':'') } } },
+        scales: (type==='bar'||type==='line') ? { x:{grid:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:12}}, y:{beginAtZero:true,ticks:{precision:0}} } : {}
+      }
+    });
+  };
+  const count = (arr,key) => arr.reduce((acc,v)=>{ const k=(v[key]||'').trim(); if(k) acc[k]=(acc[k]||0)+1; return acc; },{});
+  buildC('chartDiagnosis','bar',Object.keys(count(pts,'diagnosis')),Object.values(count(pts,'diagnosis')),'Patients');
+  buildC('chartAtoll','bar',Object.keys(count(pts,'atoll')),Object.values(count(pts,'atoll')),'Patients');
+  buildC('chartGender','doughnut',Object.keys(count(pts,'gender')),Object.values(count(pts,'gender')));
+  const ageGroups={'0-14 (Pediatric)':0,'15-24 (Young Adult)':0,'25-44 (Adult)':0,'45-64 (Middle Age)':0,'65+ (Elderly)':0};
+  pts.forEach(p=>{ let g=p.ageGroup; if(!g&&p.age){const a=parseInt(p.age);g=a<15?'0-14 (Pediatric)':a<25?'15-24 (Young Adult)':a<45?'25-44 (Adult)':a<65?'45-64 (Middle Age)':'65+ (Elderly)';} if(g&&ageGroups[g]!==undefined)ageGroups[g]++; });
+  const ageLbls=Object.keys(ageGroups).filter(k=>ageGroups[k]>0);
+  buildC('chartAge','bar',ageLbls,ageLbls.map(k=>ageGroups[k]),'Patients');
+  const monthly={};
+  pts.forEach(p=>{ if(!p.registrationDate) return; let d; const s=p.registrationDate.trim(); if(/^\d{4}-\d{2}-\d{2}/.test(s)) d=new Date(s.slice(0,10)); else if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const[dd,mo,yr]=s.split('/');d=new Date(yr,parseInt(mo)-1,dd);} else d=new Date(s); if(isNaN(d.getTime()))return; const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); monthly[k]=(monthly[k]||0)+1; });
+  const mKeys=Object.keys(monthly).sort().slice(-12);
+  buildC('chartMonthly','line',mKeys.map(m=>{const[y,mo]=m.split('-');return new Date(parseInt(y),parseInt(mo)-1,1).toLocaleString('default',{month:'short',year:'2-digit'});}),mKeys.map(k=>monthly[k]),'Registrations');
+  buildC('chartStatus','doughnut',Object.keys(count(pts,'status')),Object.values(count(pts,'status')));
+  buildC('chartIsland','bar',Object.keys(count(pts,'island')),Object.values(count(pts,'island')),'Patients');
+}
+
+function renderChemoDash() {
+  const isDark = document.body.classList.contains('dark');
+  Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+  const COLORS = ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1'];
+
+  const chemo = DB.chemo;
+  const adr = DB.adr;
+
+  const chemoKpis = [
+    { label:'Total Chemo Records', value: chemo.length, icon:'fa-syringe', color:'#0F766E', bg:'#f0fdfa' },
+    { label:'Ongoing', value: chemo.filter(c=>c.chemoStatus==='Ongoing').length, icon:'fa-play-circle', color:'#10B981', bg:'#d1fae5' },
+    { label:'Completed', value: chemo.filter(c=>c.chemoStatus==='Completed').length, icon:'fa-check-circle', color:'#3B82F6', bg:'#dbeafe' },
+    { label:'Paused', value: chemo.filter(c=>c.chemoStatus==='Paused').length, icon:'fa-pause-circle', color:'#F59E0B', bg:'#fef3c7' },
+    { label:'Discontinued', value: chemo.filter(c=>c.chemoStatus==='Discontinued').length, icon:'fa-stop-circle', color:'#EF4444', bg:'#fee2e2' },
+    { label:'Total ADR Reports', value: adr.length, icon:'fa-exclamation-triangle', color:'#8B5CF6', bg:'#ede9fe' },
+    { label:'Severe ADRs', value: adr.filter(a=>a.severity==='Severe'||a.severity==='Life-threatening'||a.severity==='Fatal').length, icon:'fa-skull-crossbones', color:'#EC4899', bg:'#fce7f3' },
+    { label:'ADR Recovery Rate', value: adr.length ? Math.round(adr.filter(a=>a.outcome==='Recovered').length/adr.length*100)+'%' : '—', icon:'fa-heart', color:'#14b8a6', bg:'#f0fdfa' },
+  ];
+  document.getElementById('chemoKpiGrid').innerHTML = chemoKpis.map(k=>`
+    <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
+      <div class="kpi-icon"><i class="fas ${k.icon}"></i></div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+
+  const buildC = (id,type,labels,data,label='') => {
+    if (chartInstances[id]) chartInstances[id].destroy();
+    const ctx = document.getElementById(id); if(!ctx) return;
+    const valid=labels.map((l,i)=>[l||'Unknown',data[i]]).filter(([l,v])=>v>0); if(!valid.length) return;
+    chartInstances[id]=new Chart(ctx,{type,data:{labels:valid.map(([l])=>l),datasets:[{label,data:valid.map(([,v])=>v),backgroundColor:type==='line'?'rgba(15,118,110,0.1)':valid.map((_,i)=>COLORS[i%COLORS.length]),borderColor:type==='line'?'#0F766E':valid.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:type==='line'?2:0,fill:type==='line',tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut'||type==='pie',position:'bottom',labels:{boxWidth:12}}},scales:(type==='bar'||type==='line')?{x:{grid:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:10}},y:{beginAtZero:true,ticks:{precision:0}}}:{}}});
+  };
+  const count=(arr,key)=>arr.reduce((acc,v)=>{const k=(v[key]||'').trim();if(k)acc[k]=(acc[k]||0)+1;return acc;},{});
+  buildC('chartChemoStatus','doughnut',Object.keys(count(chemo,'chemoStatus')),Object.values(count(chemo,'chemoStatus')));
+  buildC('chartChemoDiagnosis','bar',Object.keys(count(chemo,'diagnosis')),Object.values(count(chemo,'diagnosis')),'Patients');
+  buildC('chartADRSeverity','doughnut',Object.keys(count(adr,'severity')),Object.values(count(adr,'severity')));
+  buildC('chartADRDrug','bar',Object.keys(count(adr,'drugCategory')),Object.values(count(adr,'drugCategory')),'Reports');
+  const monthly={};
+  chemo.forEach(r=>{ if(!r.startedDate) return; const d=new Date(r.startedDate); if(isNaN(d.getTime())) return; const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); monthly[k]=(monthly[k]||0)+1; });
+  const mKeys=Object.keys(monthly).sort().slice(-12);
+  buildC('chartChemoMonthly','line',mKeys.map(m=>{const[y,mo]=m.split('-');return new Date(parseInt(y),parseInt(mo)-1,1).toLocaleString('default',{month:'short',year:'2-digit'});}),mKeys.map(k=>monthly[k]),'Chemo Starts');
+  buildC('chartBloodGroup','doughnut',Object.keys(count(chemo,'bloodGroup')),Object.values(count(chemo,'bloodGroup')));
+}
+
+function renderOPDashMain() {
+  const isDark = document.body.classList.contains('dark');
+  Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+  const COLORS = ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1'];
+
+  const today = new Date();
+  const thisMonth = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  const opKpis = [
+    { label:'Total OP Patients', value: DB.opPatients.length, icon:'fa-users', color:'#0F766E', bg:'#f0fdfa' },
+    { label:'Ongoing', value: DB.opPatients.filter(p=>p.status==='Ongoing').length, icon:'fa-user-check', color:'#10B981', bg:'#d1fae5' },
+    { label:'Treatment Plans', value: DB.opSchedule.length, icon:'fa-calendar-alt', color:'#3B82F6', bg:'#dbeafe' },
+    { label:'This Month Due', value: DB.opSchedule.filter(r=>{ const s=getSuggestedDate(r,today.getFullYear(),today.getMonth()); return s || (r.doses&&r.doses[thisMonth]); }).length, icon:'fa-calendar-day', color:'#F59E0B', bg:'#fef3c7' },
+  ];
+  document.getElementById('opDashKpiGrid').innerHTML = opKpis.map(k=>`
+    <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
+      <div class="kpi-icon"><i class="fas ${k.icon}"></i></div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+
+  const buildC=(id,type,labels,data,label='')=>{ if(chartInstances[id]) chartInstances[id].destroy(); const ctx=document.getElementById(id); if(!ctx) return; const valid=labels.map((l,i)=>[l||'Unknown',data[i]]).filter(([l,v])=>v>0); if(!valid.length) return; chartInstances[id]=new Chart(ctx,{type,data:{labels:valid.map(([l])=>l),datasets:[{label,data:valid.map(([,v])=>v),backgroundColor:valid.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut',position:'bottom',labels:{boxWidth:12}}},scales:type==='bar'?{x:{grid:{display:false},ticks:{maxRotation:45,autoSkip:true}},y:{beginAtZero:true,ticks:{precision:0}}}:{}}}); };
+  const count=(arr,key)=>arr.reduce((acc,v)=>{const k=(v[key]||'').trim();if(k)acc[k]=(acc[k]||0)+1;return acc;},{});
+  buildC('chartOPInjection','bar',Object.keys(count(DB.opSchedule,'injectionName')),Object.values(count(DB.opSchedule,'injectionName')),'Patients');
+  buildC('chartOPPeriodicity','doughnut',Object.keys(count(DB.opSchedule,'periodicity')),Object.values(count(DB.opSchedule,'periodicity')));
+  buildC('chartOPStatus','doughnut',Object.keys(count(DB.opPatients,'status')),Object.values(count(DB.opPatients,'status')));
+  // Monthly doses given
+  const monthly={};
+  DB.opSchedule.forEach(r=>{ Object.entries(r.doses||{}).forEach(([k,v])=>{ if(v.type==='given') monthly[k]=(monthly[k]||0)+1; }); });
+  const mKeys=Object.keys(monthly).sort().slice(-12);
+  buildC('chartOPMonthly','line',mKeys.map(m=>{const[y,mo]=m.split('-');return new Date(parseInt(y),parseInt(mo)-1,1).toLocaleString('default',{month:'short',year:'2-digit'});}),mKeys.map(k=>monthly[k]),'Doses Given');
+}
 
 // ==================== GLOBAL SEARCH ====================
 function globalSearchFn(q) {
@@ -3637,15 +3827,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Version-based one-time clear of all demo data
   const CLEAN_VERSION = 'cleaned_v5';
   if (localStorage.getItem('oms_data_cleaned') !== CLEAN_VERSION) {
-    // Clear ALL clinical data and cache — forces fresh load from Google Sheets
-    ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'].forEach(k => {
-      localStorage.removeItem('oms_' + k);
-      DB[k] = [];
-    });
-    localStorage.removeItem('oms_last_sync');
-    localStorage.removeItem('oms_cache_ts');
+    // Only clear if data is empty or truly demo data (HN-001 to HN-010 with Main Island)
+    const hasDemoOnly = DB.patients.length === 0 ||
+      (DB.patients.length <= 10 &&
+       DB.patients.every(p => /^HN-00[0-9]$/.test(p.hospitalNumber) && p.island === 'Main Island'));
+    if (hasDemoOnly) {
+      ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'].forEach(k => {
+        localStorage.removeItem('oms_' + k);
+        DB[k] = [];
+      });
+      localStorage.removeItem('oms_last_sync');
+      localStorage.removeItem('oms_cache_ts');
+      console.log('✓ Demo data cleared — loading fresh from Google Sheets');
+    }
     localStorage.setItem('oms_data_cleaned', CLEAN_VERSION);
-    console.log('✓ Local data cleared — loading fresh from Google Sheets');
   }
   if (AUTH.session) {
     const user = AUTH.users.find(u => u.id === AUTH.session.userId && u.status === 'Active');
