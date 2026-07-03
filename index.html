@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260703-134251">
+<meta name="version" content="v20260703-134814">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-134251</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-134814</span></div>
     </div>
   </div>
 </div>
@@ -882,10 +882,9 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <th onclick="sortTable('patients','registryNumber')">Registry No <i class="fas fa-sort"></i></th>
           <th onclick="sortTable('patients','fullName')">Full Name <i class="fas fa-sort"></i></th>
           <th onclick="sortTable('patients','gender')">Gender <i class="fas fa-sort"></i></th>
+          <th onclick="sortTable('patients','age')">Age <i class="fas fa-sort"></i></th>
           <th onclick="sortTable('patients','diagnosis')">Diagnosis <i class="fas fa-sort"></i></th>
-          <th onclick="sortTable('patients','atoll')">Atoll <i class="fas fa-sort"></i></th>
           <th onclick="sortTable('patients','status')">Status <i class="fas fa-sort"></i></th>
-          <th onclick="sortTable('patients','registrationDate')">Reg. Date <i class="fas fa-sort"></i></th>
           <th class="no-print">Actions</th>
         </tr></thead>
         <tbody id="patientsTbody"></tbody>
