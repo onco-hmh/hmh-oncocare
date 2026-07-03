@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260703-131643">
+<meta name="version" content="v20260703-133048">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-131643</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-133048</span></div>
     </div>
   </div>
 </div>
@@ -3059,8 +3059,27 @@ function processImport(input, type) { type = type || 'patients';
 }
 
 // Generate and download an Excel template
-function downloadImportTemplate(type) { if(type&&type!=='patients'){const s={chemo:[{'Hospital Number':'','Patient Name':'','Diagnosis':'','G6PD Status':'','Blood Group':'','Chemo Status':'Ongoing','Started Date':'','Completed Date':'','Remarks':''}],adr:[{'Hospital Number':'','Patient Name':'','Reaction Date':'','Suspected Drug Name':'','Severity':'','Outcome':'','Remarks':''}],extravasation:[{'Date':'','Hospital Number':'','Patient Name':'','Chemotherapy Drug':'','Drug Classification':'','Extravasation Occurred':'Yes','Nurse Administering':'','Remarks':''}],spill:[{'Date Time':'','Location':'','Drug Name':'','Quantity':'','Cause':'','Staff Involved':'','Exposure/Injury':'No','Remarks':''}],incident:[{'Date':'','Type':'','Staff Involved':'','Action Taken':''}]};const r=s[type]||[];const ws=XLSX.utils.json_to_sheet(r);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,type);XLSX.writeFile(wb,`OncoCare_${type}_Template.xlsx`);toast('Template downloaded!');return;}
-function downloadImportTemplate() {
+function downloadImportTemplate(type) {
+  type = type || 'patients';
+  if (type !== 'patients') {
+    const templates = {
+      chemo: [{'Hospital Number':'','Patient Name':'','Diagnosis':'','G6PD Status':'','Blood Group':'','Chemo Status':'Ongoing','Started Date':'','Completed Date':'','Remarks':''}],
+      adr: [{'Hospital Number':'','Patient Name':'','Reaction Date':'','Suspected Drug Name':'','Drug Category':'','Severity':'','Reaction Type':'','Outcome':'','Reporter Name':'','Remarks':''}],
+      extravasation: [{'Date':'','Hospital Number':'','Patient Name':'','Chemotherapy Drug':'','Drug Classification':'','Extravasation Occurred':'Yes','Severity Grade':'','Nurse Administering':'','Remarks':''}],
+      spill: [{'Date Time':'','Location':'','Drug Name':'','Drug Category':'','Quantity':'','Cause':'','Staff Involved':'','Exposure/Injury Occurred':'No','Reviewed By':'','Remarks':''}],
+      incident: [{'Date':'','Type':'','Staff Involved':'','Action Taken':''}]
+    };
+    const rows = templates[type] || [];
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]||{}).map(() => ({ wch: 22 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, type);
+    XLSX.writeFile(wb, 'OncoCare_' + type + '_Template.xlsx');
+    toast('Template downloaded!');
+    return;
+  }
+  // Patients template
+  function downloadImportTemplate_run() {
   const headers = Object.keys(IMPORT_COLUMNS).filter((k,i,arr) => arr.indexOf(k) === i); // unique
   const sampleRow = {
     'Hospital Number': 'HN-001',
@@ -3096,6 +3115,8 @@ function downloadImportTemplate() {
   XLSX.utils.book_append_sheet(wb, ws, 'Patients');
   XLSX.writeFile(wb, 'OncoCare_Patient_Import_Template.xlsx');
   toast('Template downloaded!');
+  }
+  downloadImportTemplate_run();
 }
 
 // ==================== BACKUP & RESTORE ====================
