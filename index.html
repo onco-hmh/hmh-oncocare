@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260629-142251">
+<meta name="version" content="v20260703-131643">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260629-142251</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-131643</span></div>
     </div>
   </div>
 </div>
@@ -871,6 +871,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div><h1>Chemotherapy Register</h1><p>Track chemotherapy treatment records</p></div>
     <div class="flex gap-2 no-print">
       <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="openImportModal('chemo')"><i class="fas fa-file-import"></i> Import</button>
       <button class="btn btn-outline btn-sm" onclick="exportData('chemo')"><i class="fas fa-file-export"></i> Export</button>
       <button class="btn btn-primary btn-sm" onclick="openChemoModal()"><i class="fas fa-plus"></i> Add Record</button>
     </div>
@@ -914,6 +915,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div><h1>ADR Register</h1><p>Adverse Drug Reaction reporting and management</p></div>
     <div class="flex gap-2 no-print">
       <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="openImportModal('adr')"><i class="fas fa-file-import"></i> Import</button>
       <button class="btn btn-outline btn-sm" onclick="exportData('adr')"><i class="fas fa-file-export"></i> Export</button>
       <button class="btn btn-primary btn-sm" onclick="openADRModal()"><i class="fas fa-plus"></i> Report ADR</button>
     </div>
@@ -956,6 +958,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div><h1>Extravasation Register</h1><p>Record and track extravasation incidents</p></div>
     <div class="flex gap-2 no-print">
       <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="openImportModal('extravasation')"><i class="fas fa-file-import"></i> Import</button>
       <button class="btn btn-outline btn-sm" onclick="exportData('extravasation')"><i class="fas fa-file-export"></i> Export</button>
       <button class="btn btn-primary btn-sm" onclick="openExtravModal()"><i class="fas fa-plus"></i> Add Record</button>
     </div>
@@ -999,6 +1002,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div><h1>Cytotoxic Spill Register</h1><p>Document and manage cytotoxic spill incidents</p></div>
     <div class="flex gap-2 no-print">
       <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="openImportModal('spill')"><i class="fas fa-file-import"></i> Import</button>
       <button class="btn btn-outline btn-sm" onclick="exportData('spill')"><i class="fas fa-file-export"></i> Export</button>
       <button class="btn btn-primary btn-sm" onclick="openSpillModal()"><i class="fas fa-plus"></i> Report Spill</button>
     </div>
@@ -1042,6 +1046,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div><h1>Incident Log</h1><p>Track department safety incidents</p></div>
     <div class="flex gap-2 no-print">
       <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="openImportModal('incident')"><i class="fas fa-file-import"></i> Import</button>
       <button class="btn btn-outline btn-sm" onclick="exportData('incident')"><i class="fas fa-file-export"></i> Export</button>
       <button class="btn btn-primary btn-sm" onclick="openIncidentModal()"><i class="fas fa-plus"></i> Log Incident</button>
     </div>
@@ -1508,10 +1513,10 @@ body.dark .login-input:focus { background: var(--card-bg); }
             <select class="form-control" id="pat_atoll" onchange="onAtollChange(this.value)"><option value="">Select Atoll</option></select>
           </div>
           <div class="form-group"><label class="form-label">Island</label>
-            <select class="form-control" id="pat_island" onchange="if(this.value=='__other__'){this.style.display='none';document.getElementById('pat_island_text').style.display='';document.getElementById('pat_island_text').focus();}">
+            <select class="form-control" id="pat_island">
               <option value="">Select Island</option>
             </select>
-            <input class="form-control" id="pat_island_text" placeholder="Type island name" style="display:none;margin-top:4px" oninput="syncIslandValue(this.value)">
+            <!-- Manual island typing disabled - use dropdown only -->
           </div>
           <div class="form-group full"><label class="form-label">Address</label><input class="form-control" id="pat_address" placeholder="Full address"></div>
         </div>
@@ -1967,7 +1972,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <p style="font-weight:700;color:var(--primary);margin-bottom:6px"><i class="fas fa-info-circle"></i> Required columns: Hospital Number, Full Name</p>
         <p style="color:var(--text-muted)">All other columns are optional. Missing data will be left blank. Duplicate Hospital Numbers are skipped automatically.</p>
       </div>
-      <button class="btn btn-outline w-full" style="margin-bottom:12px" onclick="downloadImportTemplate()">
+      <button class="btn btn-outline w-full" style="margin-bottom:12px" onclick="downloadImportTemplate(currentImportType)">
         <i class="fas fa-download"></i> Download Excel Template
       </button>
       <div style="border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer" onclick="document.getElementById('importFileInput').click()">
@@ -1975,7 +1980,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <p style="font-weight:600;color:var(--text)">Click to select your Excel file</p>
         <p style="font-size:12px;color:var(--text-muted)">.xlsx or .csv files supported</p>
       </div>
-      <input type="file" id="importFileInput" accept=".xlsx,.csv" style="display:none" onchange="processImport(this)">
+      <input type="file" id="importFileInput" accept=".xlsx,.csv" style="display:none" onchange="processImport(this, currentImportType)">
     </div>
   </div>
 </div>
@@ -2303,6 +2308,15 @@ function openPatientModal(id = null) {
   const fields = ['hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'];
   fields.forEach(f => { const el = document.getElementById('pat_' + f); if (el) el.value = ''; });
   document.getElementById('patientModalTitle').textContent = id ? 'Edit Patient' : 'Add New Patient';
+  // Auto-generate registry number for new patients
+  if (!id) {
+    const existingNums = DB.patients
+      .map(p => p.registryNumber)
+      .filter(r => r && r.startsWith('ONC'))
+      .map(r => parseInt(r.replace('ONC','')) || 0);
+    const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    document.getElementById('pat_registryNumber').value = 'ONC' + String(nextNum).padStart(4,'0');
+  }
   // Show first tab
   document.querySelectorAll('[id^="patTab"]').forEach((t, i) => t.style.display = i === 0 ? '' : 'none');
   document.querySelectorAll('.section-tab').forEach((t, i) => { if (i < 3) t.classList.toggle('active', i === 0); });
@@ -2357,7 +2371,13 @@ function savePatient() {
     toast('Patient added successfully');
   }
   save('patients'); closeModal('patientModal'); renderTable('patients'); populateFilters();
-  gsSaveRecord('patients', obj);
+  // Force push to Google Sheets
+  if (GS_ENABLED) {
+    gsPost({ action: 'save', sheet: 'patients', payload: obj }).then(r => {
+      if (r && r.success) showSyncStatus('✅ Patient saved to Google Sheets', 'success');
+      else showSyncStatus('⚠️ Saved locally — Sheets sync pending', 'warning');
+    }).catch(() => showSyncStatus('⚠️ Saved locally — Sheets sync pending', 'warning'));
+  }
 }
 function viewProfile(id) {
   const p = DB.patients.find(x => x.id === id);
@@ -2651,14 +2671,18 @@ function renderTable(type) {
   } else {
     tbody.innerHTML = data.slice(start, end).map(r => `<tr>${cfg.row(r)}</tr>`).join('');
   }
-  // pagination
+  // pagination with first/last buttons
   const pg = document.getElementById(cfg.pagination);
   if (pg) {
-    const btnHtml = (label, pg, disabled, active) => `<button class="page-btn${active?' active':''}" ${disabled?'disabled':''} onclick="changePage('${type}',${pg})">${label}</button>`;
-    let btns = btnHtml('‹', page-1, page<=1, false);
+    const btnHtml = (label, p, disabled, active) => `<button class="page-btn${active?' active':''}" ${disabled?'disabled':''} onclick="changePage('${type}',${p})" title="Page ${p}">${label}</button>`;
+    let btns = btnHtml('«', 1, page<=1, false);
+    btns += btnHtml('‹', page-1, page<=1, false);
     for (let i = Math.max(1, page-2); i <= Math.min(pages, page+2); i++) btns += btnHtml(i, i, false, i===page);
     btns += btnHtml('›', page+1, page>=pages, false);
-    pg.innerHTML = `<span class="pagination-info">Showing ${total ? start+1 : 0}–${end} of ${total}</span><div class="pagination-btns">${btns}</div>`;
+    btns += btnHtml('»', pages, page>=pages, false);
+    // Page jump input
+    const jumpHtml = pages > 5 ? `<span style="display:flex;align-items:center;gap:4px;margin-left:8px;font-size:12px;color:var(--text-muted)">Go to: <input type="number" min="1" max="${pages}" value="${page}" style="width:50px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px;text-align:center" onchange="if(this.value>=1&&this.value<=${pages})changePage('${type}',parseInt(this.value))"> of ${pages}</span>` : '';
+    pg.innerHTML = `<span class="pagination-info">Showing ${total ? start+1 : 0}–${end} of ${total} records</span><div style="display:flex;align-items:center"><div class="pagination-btns">${btns}</div>${jumpHtml}</div>`;
   }
 }
 function changePage(type, pg) { state.currentPage[type] = pg; renderTable(type); }
@@ -2865,7 +2889,15 @@ function exportData(type) {
 }
 
 // ==================== IMPORT ====================
-function importData(type) { openModal('importModal'); }
+function importData(type) { currentImportType = 'patients'; openModal('importModal'); }
+let currentImportType = 'patients';
+function openImportModal(type) {
+  currentImportType = type;
+  const labels = { patients:'Patients', chemo:'Chemotherapy', adr:'ADR', extravasation:'Extravasation', spill:'Cytotoxic Spill', incident:'Incident Log' };
+  document.querySelector('#importModal .modal-title').textContent = `Import ${labels[type]||type}`;
+  document.querySelector('#importModal p').textContent = `Import ${labels[type]} from Excel (.xlsx) or CSV. Download the template to see required columns.`;
+  openModal('importModal');
+}
 // Column mapping: Excel column name → internal field name
 const IMPORT_COLUMNS = {
   'Hospital Number':        'hospitalNumber',       // REQUIRED
@@ -2915,7 +2947,7 @@ function parseImportDate(val) {
   return s;
 }
 
-function processImport(input) {
+function processImport(input, type) { type = type || 'patients';
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -3027,6 +3059,7 @@ function processImport(input) {
 }
 
 // Generate and download an Excel template
+function downloadImportTemplate(type) { if(type&&type!=='patients'){const s={chemo:[{'Hospital Number':'','Patient Name':'','Diagnosis':'','G6PD Status':'','Blood Group':'','Chemo Status':'Ongoing','Started Date':'','Completed Date':'','Remarks':''}],adr:[{'Hospital Number':'','Patient Name':'','Reaction Date':'','Suspected Drug Name':'','Severity':'','Outcome':'','Remarks':''}],extravasation:[{'Date':'','Hospital Number':'','Patient Name':'','Chemotherapy Drug':'','Drug Classification':'','Extravasation Occurred':'Yes','Nurse Administering':'','Remarks':''}],spill:[{'Date Time':'','Location':'','Drug Name':'','Quantity':'','Cause':'','Staff Involved':'','Exposure/Injury':'No','Remarks':''}],incident:[{'Date':'','Type':'','Staff Involved':'','Action Taken':''}]};const r=s[type]||[];const ws=XLSX.utils.json_to_sheet(r);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,type);XLSX.writeFile(wb,`OncoCare_${type}_Template.xlsx`);toast('Template downloaded!');return;}
 function downloadImportTemplate() {
   const headers = Object.keys(IMPORT_COLUMNS).filter((k,i,arr) => arr.indexOf(k) === i); // unique
   const sampleRow = {
@@ -3852,7 +3885,7 @@ function populateDynamicSelects() {
     const atoll = document.getElementById('pat_atoll') ? document.getElementById('pat_atoll').value : '';
     const filtered = atoll ? LISTS.islands.filter(i => i.atoll === atoll) : LISTS.islands;
     const opts = filtered.sort((a,b) => a.name.localeCompare(b.name)).map(i => `<option value="${i.name}"${i.name===cur?' selected':''}>${i.name}</option>`).join('');
-    islandSel.innerHTML = '<option value="">Select Island</option>' + opts + (LISTS.islands.length === 0 ? '<option value="__other__">+ Type manually</option>' : '<option value="__other__">+ Type manually</option>');
+    islandSel.innerHTML = '<option value="">Select Island</option>' + opts;
   }
   // Filter dropdowns in patient table
   populateFilters();
