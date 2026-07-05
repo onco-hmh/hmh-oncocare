@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260705-074057">
+<meta name="version" content="v20260705-075158">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-074057</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-075158</span></div>
     </div>
   </div>
 </div>
@@ -3474,12 +3474,18 @@ function showBackupModal() { openModal('backupModal'); }
 async function backupData() {
   showSyncOverlay('Preparing backup from Supabase…');
   try {
-    // Use current DB data (already synced from Supabase)
     hideSyncOverlay();
-    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    const backupData = {
+      exportDate: new Date().toISOString(),
+      version: document.querySelector('meta[name="version"]')?.content || 'unknown',
+      counts: { patients: DB.patients.length, chemo: DB.chemo.length, adr: DB.adr.length },
+      ...DB
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = `OncoCare_Backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-    toast('Backup downloaded successfully');
+    localStorage.setItem('oms_last_backup', Date.now().toString());
+    toast(`✅ Backup downloaded — ${DB.patients.length} patients saved`);
   } catch(e) {
     hideSyncOverlay();
     toast('Backup failed', 'error');
@@ -3944,12 +3950,14 @@ async function doLogin() {
   populateFilters();
   Object.keys(tableConfigs).forEach(t => renderTable(t));
   navigate('dashboard');
-  // Sync with Google Sheets (instant if cached, full load if first time)
+  // Sync with Supabase
   gsLoadAll().then(() => {
     refreshDashboard();
     populateFilters();
     Object.keys(tableConfigs).forEach(t => renderTable(t));
   });
+  // Check if backup reminder needed (every 7 days)
+  checkBackupReminder();
 }
 
 document.addEventListener('keydown', e => {
@@ -5101,6 +5109,26 @@ function exportOPData() {
   }
   XLSX.writeFile(wb, `OncoCare_OP_Injection_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('OP Injection data exported');
+}
+
+// ==================== BACKUP REMINDER ====================
+function checkBackupReminder() {
+  const lastBackup = localStorage.getItem('oms_last_backup');
+  if (!lastBackup) {
+    // First time — set today as last backup date
+    localStorage.setItem('oms_last_backup', Date.now().toString());
+    return;
+  }
+  const daysSince = (Date.now() - parseInt(lastBackup)) / (1000 * 60 * 60 * 24);
+  if (daysSince >= 7) {
+    setTimeout(() => {
+      const msg = `⚠️ Last backup was ${Math.floor(daysSince)} days ago.\n\nIt is recommended to download a backup weekly.\n\nDownload backup now?`;
+      if (confirm(msg)) {
+        backupData();
+        localStorage.setItem('oms_last_backup', Date.now().toString());
+      }
+    }, 3000);
+  }
 }
 
 // Login helpers
