@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260705-055049">
+<meta name="version" content="v20260705-055709">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-055049</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-055709</span></div>
     </div>
   </div>
 </div>
@@ -2107,12 +2107,15 @@ async function gsDeleteRecord(sheetKey, id) {
   if (!GS_ENABLED) return;
   const table = SB_TABLES[sheetKey];
   if (!table) return;
-  await sbFetch(table, { method: 'DELETE', params: `?id=eq.${encodeURIComponent(id)}` });
+  await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+  });
 }
 
 // Legacy gsPost for backup/restore compatibility
 async function gsPost(payload) {
-  return { success: false, error: 'Google Sheets removed - using Supabase' };
+  return { success: false, error: 'Google Sheets removed - using Supabase - using Supabase' };
 }
 
 // Load ALL data from Google Sheets into DB (called on login)
@@ -2144,7 +2147,7 @@ async function gsLoadAll(forceRefresh = false) {
     return true;
   }
   // No fresh cache — need to load from Sheets
-  showSyncOverlay('Syncing with Google Sheets…');
+  showSyncOverlay('Syncing with Supabase…');
   return await gsFetchFromSheets();
 }
 
@@ -2549,7 +2552,7 @@ function saveChemo() {
   if (state.editId) { const idx = DB.chemo.findIndex(x => x.id === state.editId); DB.chemo[idx] = obj; toast('Record updated'); }
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
   save('chemo'); closeModal('chemoModal'); renderTable('chemo');
-  gsSaveRecord('chemo', obj);
+  if (GS_ENABLED) gsSaveRecord('chemo', obj);
 }
 
 // ==================== ADR ====================
@@ -3304,7 +3307,7 @@ function processImport(input, type) { type = type || 'patients';
         }, 500);
       }
 
-      // Push to Google Sheets
+      // Push to Supabase
       if (GS_ENABLED) {
         const newPats = DB.patients.slice(-added);
         newPats.forEach(p => gsSaveRecord('patients', p));
@@ -3427,15 +3430,19 @@ async function clearAllData() {
 
   // Delete all records from Google Sheets
   try {
-    await gsPost({ action: 'restoreAll', payload: {
-      patients:[], chemo:[], adr:[], extravasation:[],
-      spill:[], incident:[], opPatients:[], opSchedule:[]
-    }});
+    // Delete all records from Supabase
+    const tables = ['patients','chemotherapy','adr','extravasation','spill','incident','op_patients','op_schedule'];
+    for (const table of tables) {
+      await fetch(`${SB_URL}/rest/v1/${table}?id=neq.null`, {
+        method: 'DELETE',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+      });
+    }
     hideSyncOverlay();
-    toast('All data cleared from app and Google Sheets ✅', 'warning');
+    toast('All data cleared from app and Supabase ✅', 'warning');
   } catch(e) {
     hideSyncOverlay();
-    toast('Local data cleared. Could not reach Google Sheets.', 'warning');
+    toast('Local data cleared. Could not reach Supabase.', 'warning');
   }
 
   // Re-enable sync after clearing
@@ -3447,7 +3454,7 @@ async function clearAllData() {
 
 // ==================== SEED DATA ====================
 function seedDemoData() {
-  // Demo data disabled — using real data from Google Sheets
+  // Demo data disabled — using real data from Supabase
 }
 
 
@@ -3787,16 +3794,15 @@ async function doLogin() {
   // Show loading state
   if (loginBtn) { loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in…'; loginBtn.disabled = true; }
 
-  // Always fetch latest users from Google Sheets before login
-  // so passwords are always up to date across all devices
+  // Always fetch latest users from Supabase before login
   try {
-    const res = await gsPost({ action: 'getAll', sheet: 'users' });
-    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-      AUTH.users = res.data;
-      saveUsers();
+    const userRows = await sbFetchAll('users');
+    if (userRows.length > 0) {
+      AUTH.users = userRows;
+      localStorage.setItem('oms_users', JSON.stringify(AUTH.users));
     }
   } catch(e) {
-    console.warn('Could not fetch users from Sheets, using local cache');
+    console.warn('Could not fetch users from Supabase, using local cache');
   }
 
   // Hash the entered password then compare
@@ -3905,7 +3911,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       localStorage.removeItem('oms_last_sync');
       localStorage.removeItem('oms_cache_ts');
-      console.log('✓ Demo data cleared — loading fresh from Google Sheets');
+      console.log('✓ Demo data cleared — loading fresh from Supabase');
     }
     localStorage.setItem('oms_data_cleaned', CLEAN_VERSION);
   }
