@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260703-134814">
+<meta name="version" content="v20260705-054334">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260703-134814</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-054334</span></div>
     </div>
   </div>
 </div>
@@ -744,7 +744,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
   </div>
   <div class="topbar-right">
     <span id="topbarPageTitle" class="topbar-page-title">Dashboard</span>
-    <span id="gsStatusDot" title="Google Sheets: Connected" style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;margin-left:4px;flex-shrink:0" onclick="checkGsStatus()"></span>
+    <span id="gsStatusDot" title="Supabase: Connected" style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;margin-left:4px;flex-shrink:0" onclick="checkGsStatus()"></span>
     <div class="topbar-divider"></div>
     <button class="topbar-btn" onclick="toggleDark()" title="Toggle Dark Mode"><i class="fas fa-moon" id="topbarDarkIcon"></i></button>
     <div class="topbar-divider"></div>
@@ -1295,8 +1295,8 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <div class="card">
         <div class="settings-section-title"><i class="fas fa-database"></i> Data Management</div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <button class="btn btn-primary w-full" onclick="gsLoadAll(true).then(()=>{refreshDashboard();Object.keys(tableConfigs).forEach(t=>renderTable(t));populateFilters();})"><i class="fas fa-sync-alt"></i> Sync from Google Sheets</button>
-          <button class="btn btn-outline w-full" onclick="gsPushAll()"><i class="fas fa-cloud-upload-alt"></i> Push All Local Data to Sheets</button>
+          <button class="btn btn-primary w-full" onclick="gsLoadAll(true).then(()=>{refreshDashboard();Object.keys(tableConfigs).forEach(t=>renderTable(t));populateFilters();})"><i class="fas fa-sync-alt"></i> Sync from Supabase</button>
+          <button class="btn btn-outline w-full" onclick="gsPushAll()"><i class="fas fa-cloud-upload-alt"></i> Push All Data to Supabase</button>
           <button class="btn btn-outline w-full" onclick="showBackupModal()"><i class="fas fa-download"></i> Download System Backup</button>
           <button class="btn btn-outline w-full" onclick="document.getElementById('restoreInput').click()"><i class="fas fa-upload"></i> Restore from Backup</button>
           <button class="btn btn-danger w-full" onclick="clearAllData()"><i class="fas fa-trash"></i> Clear All Patient Data</button>
@@ -2026,10 +2026,23 @@ body.dark .login-input:focus { background: var(--card-bg); }
 
 <script>
 // ==================== DATA STORE ====================
-// ==================== GOOGLE SHEETS CONFIG ====================
-const GS_URL = 'https://script.google.com/macros/s/AKfycbwNrXea7KxUEGKqfV9_000P9UFmoMU-2v-c4JJtw57hzJYxeNa6RYU2-lf2XNVVQsAzYA/exec';
-const GS_KEY = 'oncocare2025';
+// ==================== SUPABASE CONFIG ====================
+const SB_URL = 'https://ulqqmdkrvcanvqbqyarl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscXFtZGtydmNhbnZxYnF5YXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMjI0MTksImV4cCI6MjA5ODc5ODQxOX0.ubL84w4zrQdPiqBvBw5oysLjDZbvD-KUsrtLzWtom_g';
 let GS_ENABLED = true; // flips to false if API unreachable
+
+// Table name mapping
+const SB_TABLES = {
+  patients:      'patients',
+  chemo:         'chemotherapy',
+  adr:           'adr',
+  extravasation: 'extravasation',
+  spill:         'spill',
+  incident:      'incident',
+  opPatients:    'op_patients',
+  opSchedule:    'op_schedule',
+  users:         'users',
+};
 
 // ==================== DATA STORE ====================
 const DB = {
@@ -2050,32 +2063,56 @@ function save(key) {
 
 function genId(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCase(); }
 
-// ==================== GOOGLE SHEETS API ====================
-async function gsPost(payload) {
+// ==================== SUPABASE API ====================
+async function sbFetch(table, options = {}) {
+  const { method = 'GET', body, params = '' } = options;
   try {
-    const res = await fetch(GS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ key: GS_KEY, ...payload })
+    const res = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+      method,
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal'
+      },
+      body: body ? JSON.stringify(body) : undefined
     });
-    const json = await res.json();
-    return json;
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn('Supabase error:', err);
+      return { success: false, error: err };
+    }
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : [];
+    return { success: true, data };
   } catch (err) {
-    console.warn('Google Sheets API error:', err);
+    console.warn('Supabase fetch error:', err);
     GS_ENABLED = false;
     return { success: false, error: err.message };
   }
 }
 
-// Save a single record to Google Sheets
+// Save a single record to Supabase (upsert)
 async function gsSaveRecord(sheetKey, record) {
   if (!GS_ENABLED) return;
-  await gsPost({ action: 'save', sheet: sheetKey, payload: record });
+  const table = SB_TABLES[sheetKey];
+  if (!table) return;
+  // For opSchedule, stringify doses
+  const data = sheetKey === 'opSchedule' ? { ...record, doses: JSON.stringify(record.doses || {}) } : record;
+  await sbFetch(table, { method: 'POST', body: data, params: '' });
 }
 
-// Delete a single record from Google Sheets
+// Delete a single record from Supabase
 async function gsDeleteRecord(sheetKey, id) {
   if (!GS_ENABLED) return;
-  await gsPost({ action: 'delete', sheet: sheetKey, payload: { id } });
+  const table = SB_TABLES[sheetKey];
+  if (!table) return;
+  await sbFetch(table, { method: 'DELETE', params: `?id=eq.${encodeURIComponent(id)}` });
+}
+
+// Legacy gsPost for backup/restore compatibility
+async function gsPost(payload) {
+  return { success: false, error: 'Google Sheets removed - using Supabase' };
 }
 
 // Load ALL data from Google Sheets into DB (called on login)
@@ -2115,12 +2152,23 @@ async function gsLoadAll(forceRefresh = false) {
 async function gsSyncBackground() {
   if (!GS_ENABLED) return;
   try {
-    const keys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
-    for (const key of keys) {
-      const res = await gsPost({ action: 'getAll', sheet: key });
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        DB[key] = res.data; save(key);
+    const allKeys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
+    for (const key of allKeys) {
+      const table = SB_TABLES[key];
+      if (!table) continue;
+      let allRows = [], from = 0;
+      while (true) {
+        const r = await fetch(`${SB_URL}/rest/v1/${table}?select=*&order=created_at.asc`, {
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Range': `${from}-${from+999}`, 'Range-Unit': 'items' }
+        });
+        if (!r.ok) break;
+        const batch = await r.json();
+        if (!Array.isArray(batch) || !batch.length) break;
+        allRows = allRows.concat(batch);
+        if (batch.length < 1000) break;
+        from += 1000;
       }
+      if (allRows.length > 0) { DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(allRows) : allRows; save(key); }
     }
     const usersRes = await gsPost({ action: 'getAll', sheet: 'users' });
     if (usersRes.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
@@ -2140,16 +2188,43 @@ async function gsSyncBackground() {
 // Full fetch from Sheets with overlay (used on first load or forced refresh)
 async function gsFetchFromSheets() {
   try {
-    const keys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
-    for (const key of keys) {
-      const res = await gsPost({ action: 'getAll', sheet: key });
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        // Parse nested objects for opSchedule
-        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(res.data) : res.data;
+    const allKeys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
+    for (const key of allKeys) {
+      const table = SB_TABLES[key];
+      if (!table) continue;
+      // Supabase supports up to 1000 rows per request by default
+      // For large tables, fetch in batches using range header
+      let allRows = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const res = await sbFetch(table, {
+          params: `?select=*&order=created_at.asc`,
+          method: 'GET',
+        });
+        // Override with range-based fetch for large tables
+        const rangeRes = await fetch(`${SB_URL}/rest/v1/${table}?select=*&order=created_at.asc`, {
+          headers: {
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Range': `${from}-${from + batchSize - 1}`,
+            'Range-Unit': 'items'
+          }
+        });
+        if (!rangeRes.ok) break;
+        const batch = await rangeRes.json();
+        if (!Array.isArray(batch) || batch.length === 0) break;
+        allRows = allRows.concat(batch);
+        if (batch.length < batchSize) break;
+        from += batchSize;
+      }
+      if (allRows.length > 0) {
+        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(allRows) : allRows;
         save(key);
       }
     }
-    const usersRes = await gsPost({ action: 'getAll', sheet: 'users' });
+    // Load users
+    const usersRes = await sbFetch('users', { params: '?select=*' });
     if (usersRes.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
       AUTH.users = usersRes.data; saveUsers();
     }
@@ -2167,19 +2242,18 @@ async function gsFetchFromSheets() {
 
 // Push ALL local data up to Google Sheets
 async function gsPushAll() {
-  showSyncOverlay('Syncing all data to Google Sheets…');
+  showSyncOverlay('Syncing all data to Supabase…');
   const keys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
   for (const key of keys) {
     for (const record of DB[key]) {
-      await gsPost({ action: 'save', sheet: key, payload: record });
+      await gsSaveRecord(key, record);
     }
   }
-  // Push users
   for (const user of AUTH.users) {
-    await gsPost({ action: 'save', sheet: 'users', payload: user });
+    await sbFetch('users', { method: 'POST', body: user });
   }
   hideSyncOverlay();
-  showSyncStatus('✅ All data synced to Google Sheets', 'success');
+  showSyncStatus('✅ All data synced to Supabase', 'success');
 }
 
 // Sync indicator UI
@@ -2223,19 +2297,21 @@ function showSyncStatus(msg, type) {
 }
 
 async function checkGsStatus() {
-  showSyncOverlay('Checking Google Sheets connection…');
+  showSyncOverlay('Checking Supabase connection…');
   try {
-    const res = await fetch(GS_URL);
-    const json = await res.json();
+    const res = await fetch(`${SB_URL}/rest/v1/patients?select=id&limit=1`, {
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+    });
     hideSyncOverlay();
-    if (json.status) {
-      showSyncStatus('✅ Google Sheets connected — ' + json.status, 'success');
+    if (res.ok) {
+      showSyncStatus('✅ Supabase connected', 'success');
+      GS_ENABLED = true;
     } else {
-      showSyncStatus('⚠️ Google Sheets responded unexpectedly', 'warning');
+      showSyncStatus('⚠️ Supabase connection issue', 'warning');
     }
   } catch(e) {
     hideSyncOverlay();
-    showSyncStatus('❌ Cannot reach Google Sheets', 'error');
+    showSyncStatus('❌ Cannot reach Supabase', 'error');
     GS_ENABLED = false;
   }
 }
@@ -2404,12 +2480,12 @@ function savePatient() {
     toast('Patient added successfully');
   }
   save('patients'); closeModal('patientModal'); renderTable('patients'); populateFilters();
-  // Force push to Google Sheets
+  // Push to Supabase
   if (GS_ENABLED) {
-    gsPost({ action: 'save', sheet: 'patients', payload: obj }).then(r => {
-      if (r && r.success) showSyncStatus('✅ Patient saved to Google Sheets', 'success');
-      else showSyncStatus('⚠️ Saved locally — Sheets sync pending', 'warning');
-    }).catch(() => showSyncStatus('⚠️ Saved locally — Sheets sync pending', 'warning'));
+    sbFetch('patients', { method: 'POST', body: obj }).then(r => {
+      if (r && r.success) showSyncStatus('✅ Patient saved to Supabase', 'success');
+      else showSyncStatus('⚠️ Saved locally — will sync shortly', 'warning');
+    }).catch(() => showSyncStatus('⚠️ Saved locally — will sync shortly', 'warning'));
   }
 }
 function viewProfile(id) {
@@ -3311,21 +3387,17 @@ function downloadImportTemplate(type) {
 // ==================== BACKUP & RESTORE ====================
 function showBackupModal() { openModal('backupModal'); }
 async function backupData() {
-  showSyncOverlay('Preparing backup from Google Sheets…');
+  showSyncOverlay('Preparing backup from Supabase…');
   try {
-    const res = await gsPost({ action: 'getAllData' });
-    hideSyncOverlay();
-    const data = res.success ? res.data : DB;
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `OncoCare_Backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
-    toast('Backup downloaded from Google Sheets');
-  } catch(e) {
+    // Use current DB data (already synced from Supabase)
     hideSyncOverlay();
     const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `OncoCare_Backup_Local_${new Date().toISOString().slice(0,10)}.json`; a.click();
-    toast('Backup downloaded (local data)');
+    a.download = `OncoCare_Backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    toast('Backup downloaded successfully');
+  } catch(e) {
+    hideSyncOverlay();
+    toast('Backup failed', 'error');
   }
 }
 function restoreData(input) {
@@ -3337,7 +3409,7 @@ function restoreData(input) {
       const data = JSON.parse(e.target.result);
       Object.keys(data).forEach(k => { if (DB[k] !== undefined) { DB[k] = data[k]; save(k); } });
       closeModal('backupModal'); refreshDashboard(); populateFilters();
-      toast('Data restored — syncing to Google Sheets…');
+      toast('Data restored — syncing to Supabase…');
       await gsPushAll();
     } catch { toast('Invalid backup file', 'error'); }
   };
@@ -3419,8 +3491,9 @@ function initAuth() {
 }
 function saveUsers() {
   localStorage.setItem('oms_users', JSON.stringify(AUTH.users));
-  // Push each user to GS asynchronously
-  if (GS_ENABLED) AUTH.users.forEach(u => gsSaveRecord('users', u));
+  if (GS_ENABLED) AUTH.users.forEach(u => {
+    sbFetch('users', { method: 'POST', body: u });
+  });
 }
 
 // Migrate plain-text passwords to hashed on first run
