@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260705-054334">
+<meta name="version" content="v20260705-055049">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-054334</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-055049</span></div>
     </div>
   </div>
 </div>
@@ -2156,19 +2156,11 @@ async function gsSyncBackground() {
     for (const key of allKeys) {
       const table = SB_TABLES[key];
       if (!table) continue;
-      let allRows = [], from = 0;
-      while (true) {
-        const r = await fetch(`${SB_URL}/rest/v1/${table}?select=*&order=created_at.asc`, {
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Range': `${from}-${from+999}`, 'Range-Unit': 'items' }
-        });
-        if (!r.ok) break;
-        const batch = await r.json();
-        if (!Array.isArray(batch) || !batch.length) break;
-        allRows = allRows.concat(batch);
-        if (batch.length < 1000) break;
-        from += 1000;
+      const rows = await sbFetchAll(table);
+      if (rows.length > 0) {
+        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
+        save(key);
       }
-      if (allRows.length > 0) { DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(allRows) : allRows; save(key); }
     }
     const usersRes = await gsPost({ action: 'getAll', sheet: 'users' });
     if (usersRes.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
@@ -2186,47 +2178,50 @@ async function gsSyncBackground() {
 }
 
 // Full fetch from Sheets with overlay (used on first load or forced refresh)
+async function sbFetchAll(table) {
+  // Fetch all rows from a Supabase table using range-based pagination
+  let allRows = [], from = 0;
+  const batchSize = 1000;
+  while (true) {
+    const res = await fetch(`${SB_URL}/rest/v1/${table}?select=*&order=created_at.asc`, {
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Range': `${from}-${from + batchSize - 1}`,
+        'Range-Unit': 'items'
+      }
+    });
+    if (!res.ok) break;
+    const batch = await res.json();
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    allRows = allRows.concat(batch);
+    if (batch.length < batchSize) break;
+    from += batchSize;
+  }
+  return allRows;
+}
+
 async function gsFetchFromSheets() {
   try {
     const allKeys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
     for (const key of allKeys) {
       const table = SB_TABLES[key];
       if (!table) continue;
-      // Supabase supports up to 1000 rows per request by default
-      // For large tables, fetch in batches using range header
-      let allRows = [];
-      let from = 0;
-      const batchSize = 1000;
-      while (true) {
-        const res = await sbFetch(table, {
-          params: `?select=*&order=created_at.asc`,
-          method: 'GET',
-        });
-        // Override with range-based fetch for large tables
-        const rangeRes = await fetch(`${SB_URL}/rest/v1/${table}?select=*&order=created_at.asc`, {
-          headers: {
-            'apikey': SB_KEY,
-            'Authorization': `Bearer ${SB_KEY}`,
-            'Range': `${from}-${from + batchSize - 1}`,
-            'Range-Unit': 'items'
-          }
-        });
-        if (!rangeRes.ok) break;
-        const batch = await rangeRes.json();
-        if (!Array.isArray(batch) || batch.length === 0) break;
-        allRows = allRows.concat(batch);
-        if (batch.length < batchSize) break;
-        from += batchSize;
-      }
-      if (allRows.length > 0) {
-        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(allRows) : allRows;
+      const rows = await sbFetchAll(table);
+      if (rows.length > 0) {
+        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
+        save(key);
+      } else {
+        // Table is empty - clear local cache too
+        DB[key] = [];
         save(key);
       }
     }
     // Load users
-    const usersRes = await sbFetch('users', { params: '?select=*' });
-    if (usersRes.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
-      AUTH.users = usersRes.data; saveUsers();
+    const userRows = await sbFetchAll('users');
+    if (userRows.length > 0) {
+      AUTH.users = userRows;
+      localStorage.setItem('oms_users', JSON.stringify(AUTH.users));
     }
     setCacheTimestamp();
     hideSyncOverlay();
