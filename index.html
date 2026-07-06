@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-051337">
+<meta name="version" content="v20260706-053049">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-051337</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-053049</span></div>
     </div>
   </div>
 </div>
@@ -2116,7 +2116,11 @@ function genId(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCa
 async function sbFetch(table, options = {}) {
   const { method = 'GET', body, params = '' } = options;
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+    // For POST (upsert), add on_conflict=id to properly upsert by primary key
+    const url = method === 'POST' && !params.includes('on_conflict')
+      ? `${SB_URL}/rest/v1/${table}?on_conflict=id`
+      : `${SB_URL}/rest/v1/${table}${params}`;
+    const res = await fetch(url, {
       method,
       headers: {
         'apikey': SB_KEY,
@@ -2146,9 +2150,46 @@ async function gsSaveRecord(sheetKey, record) {
   if (!GS_ENABLED) return;
   const table = SB_TABLES[sheetKey];
   if (!table) return;
-  // For opSchedule, stringify doses
-  const data = sheetKey === 'opSchedule' ? { ...record, doses: JSON.stringify(record.doses || {}) } : record;
-  await sbFetch(table, { method: 'POST', body: data, params: '' });
+  const data = sheetKey === 'opSchedule' ? { ...record, doses: JSON.stringify(record.doses || {}) } : { ...record };
+  // Ensure id exists
+  if (!data.id) data.id = genId(sheetKey.toUpperCase().slice(0,3));
+  await sbFetch(table, { method: 'POST', body: data });
+}
+
+// Batch upsert - much faster for bulk operations
+async function sbBatchUpsert(sheetKey, records) {
+  if (!GS_ENABLED || !records || !records.length) return;
+  const table = SB_TABLES[sheetKey];
+  if (!table) return;
+  // Process in chunks of 100
+  const chunkSize = 100;
+  for (let i = 0; i < records.length; i += chunkSize) {
+    const chunk = records.slice(i, i + chunkSize).map(r => {
+      const data = sheetKey === 'opSchedule' ? { ...r, doses: JSON.stringify(r.doses || {}) } : { ...r };
+      if (!data.id) data.id = genId(sheetKey.toUpperCase().slice(0,3));
+      return data;
+    });
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/${table}?on_conflict=id`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(chunk)
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        console.warn(`Batch upsert error for ${table} chunk ${i}:`, err);
+      } else {
+        console.log(`✓ Upserted ${chunk.length} records to ${table} (${i+chunk.length}/${records.length})`);
+      }
+    } catch(e) {
+      console.warn('Batch upsert failed:', e);
+    }
+  }
 }
 
 // Delete a single record from Supabase
