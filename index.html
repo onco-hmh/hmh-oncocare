@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-063117">
+<meta name="version" content="v20260706-064335">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-063117</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-064335</span></div>
     </div>
   </div>
 </div>
@@ -3394,7 +3394,7 @@ function processImport(input, type) { type = type || 'patients';
         const rowNum = rowIndex + 2; // +2 because row 1 is header
 
         // Map columns to internal fields
-        const patient = { id: genId('PAT') };
+        const patient = { id: 'PAT-' + Date.now().toString(36).toUpperCase() + '-' + rowIndex.toString(36).toUpperCase() };
         Object.entries(IMPORT_COLUMNS).forEach(([colName, fieldName]) => {
           const val = row[colName];
           if (val !== undefined && val !== '') {
@@ -5274,7 +5274,11 @@ window.flushPendingSync = flushPendingSync;
 window.sbBatchUpsert = sbBatchUpsert;
 window.normalizeRecord = normalizeRecord;
 
-function genId(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCase(); }
+let _idCounter = 0;
+function genId(prefix) {
+  _idCounter++;
+  return prefix + '-' + Date.now().toString(36).toUpperCase() + _idCounter.toString(36).toUpperCase();
+}
 
 // ==================== SUPABASE API ====================
 async function sbFetch(table, options = {}) {
