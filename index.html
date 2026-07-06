@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-081442">
+<meta name="version" content="v20260706-082011">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-081442</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-082011</span></div>
     </div>
   </div>
 </div>
@@ -3417,11 +3417,17 @@ function parseImportDate(val) {
   return s;
 }
 
-function processImport(input, type) { type = type || 'patients';
+function processImport(input, type) {
+  type = type || input.dataset.importType || 'patients';
   const file = input.files[0];
   if (!file) return;
+
+  // Determine correct DB key
+  const DB_KEY_MAP = { patients:'patients', chemo:'chemo', adr:'adr', extravasation:'extravasation', spill:'spill', incident:'incident' };
+  const dbKey = DB_KEY_MAP[type] || 'patients';
+
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const wb = XLSX.read(e.target.result, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -3429,110 +3435,87 @@ function processImport(input, type) { type = type || 'patients';
 
       let added = 0, skipped = 0, duplicates = 0;
       const errors = [];
+      const prefix = type === 'patients' ? 'PAT' : type.toUpperCase().slice(0,3);
+      const colMap = type === 'chemo' ? CHEMO_IMPORT_COLUMNS : IMPORT_COLUMNS;
 
       rows.forEach((row, rowIndex) => {
-        const rowNum = rowIndex + 2; // +2 because row 1 is header
+        const rowNum = rowIndex + 2;
+        const record = { id: genImportId(prefix, rowIndex) };
 
-        // Map columns to internal fields using type-specific mapping
-        const colMap = type === 'chemo' ? CHEMO_IMPORT_COLUMNS : IMPORT_COLUMNS;
-        const _prefix = type === 'patients' ? 'PAT' : type.toUpperCase().slice(0,3);
-        const patient = { id: genImportId(_prefix, rowIndex) };
+        // Map columns
         Object.entries(colMap).forEach(([colName, fieldName]) => {
           const val = row[colName];
           if (val !== undefined && val !== '') {
-            if (!patient[fieldName]) patient[fieldName] = String(val).trim();
+            if (!record[fieldName]) record[fieldName] = String(val).trim();
           }
         });
 
-        // ── Validation ──
-        // 1. Hospital Number is required for all types
-        if (!patient.hospitalNumber) {
+        // Validation
+        if (!record.hospitalNumber) {
           errors.push(`Row ${rowNum}: Missing Hospital Number — skipped`);
-          skipped++;
-          return;
+          skipped++; return;
+        }
+        if (type === 'patients' && !record.fullName) {
+          errors.push(`Row ${rowNum} (${record.hospitalNumber}): Missing Full Name — skipped`);
+          skipped++; return;
         }
 
-        // 2. Full Name is required only for patient registry
-        if (type === 'patients' && !patient.fullName) {
-          errors.push(`Row ${rowNum} (${patient.hospitalNumber}): Missing Full Name — skipped`);
-          skipped++;
-          return;
+        // Auto-fill from patient registry for non-patient imports
+        if (type !== 'patients') {
+          const reg = DB.patients.find(p => p.hospitalNumber === record.hospitalNumber);
+          if (reg) {
+            if (!record.patientName) record.patientName = reg.fullName || '';
+            if (!record.diagnosis) record.diagnosis = reg.diagnosis || '';
+          }
         }
 
-        // 3. For chemo, auto-fill patient name from registry if missing
-        if (type === 'chemo' && !patient.patientName) {
-          const reg = DB.patients.find(p => p.hospitalNumber === patient.hospitalNumber);
-          if (reg) patient.patientName = reg.fullName || '';
+        // Duplicate check for patients only
+        if (type === 'patients' && DB.patients.find(p => p.hospitalNumber === record.hospitalNumber)) {
+          duplicates++; return;
         }
 
-        // 3. Check duplicate
-        // Check duplicates in correct DB
-        const checkDB = type === 'patients' ? DB.patients : (DB[type] || []);
-        if (type === 'patients' && checkDB.find(p => p.hospitalNumber === patient.hospitalNumber)) {
-          duplicates++;
-          return;
+        // Patient-specific processing
+        if (type === 'patients') {
+          const g = (record.gender || '').toLowerCase();
+          record.gender = g === 'male' || g === 'm' ? 'Male' : g === 'female' || g === 'f' ? 'Female' : '';
+          record.registrationDate = parseImportDate(record.registrationDate) || new Date().toISOString().slice(0,10);
+          record.dob = parseImportDate(record.dob);
+          record.diagnosisDate = parseImportDate(record.diagnosisDate);
+          record.expiredDate = parseImportDate(record.expiredDate);
+          if (!record.status) record.status = 'Active';
+          if (record.dob && !record.age) {
+            record.age = String(Math.floor((Date.now() - new Date(record.dob).getTime()) / (365.25 * 24 * 3600 * 1000)));
+          }
         }
 
-        // 4. Normalize Gender
-        const g = (patient.gender || '').toLowerCase();
-        if (g === 'male' || g === 'm') patient.gender = 'Male';
-        else if (g === 'female' || g === 'f') patient.gender = 'Female';
-        else if (patient.gender) patient.gender = '';
-
-        // 5. Parse dates
-        patient.registrationDate = parseImportDate(patient.registrationDate);
-        patient.dob = parseImportDate(patient.dob);
-        patient.diagnosisDate = parseImportDate(patient.diagnosisDate);
-        patient.expiredDate = parseImportDate(patient.expiredDate);
-
-        // 6. Default status to Active if missing
-        if (!patient.status) patient.status = 'Active';
-
-        // 7. Calculate age if DOB present
-        if (patient.dob && !patient.age) {
-          const diff = Date.now() - new Date(patient.dob).getTime();
-          patient.age = String(Math.floor(diff / (365.25 * 24 * 3600 * 1000)));
-        }
-
-        // 8. Default registration date to today if missing
-        if (!patient.registrationDate) {
-          patient.registrationDate = new Date().toISOString().slice(0,10);
-        }
-
-        // Push to correct DB array based on import type
-        const targetDB = type === 'patients' ? DB.patients : (DB[type] || DB.patients);
-        targetDB.push(patient);
+        // Push to CORRECT DB array
+        DB[dbKey].push(record);
         added++;
       });
 
-      // Save to correct DB key based on type
-      const dbKey = type === 'patients' ? 'patients' : type;
-      if (DB[dbKey] !== undefined) {
-        save(dbKey);
-        renderTable(dbKey);
-      }
+      // Save and render correct module
+      save(dbKey);
+      renderTable(dbKey);
       populateFilters();
       populateDynamicSelects();
       closeModal('importModal');
       input.value = '';
 
-      // Show result summary
-      let msg = `✅ Imported ${added} patient(s) successfully.`;
+      let msg = `✅ Imported ${added} record(s) to ${dbKey}.`;
       if (duplicates > 0) msg += ` ${duplicates} duplicate(s) skipped.`;
       if (skipped > 0) msg += ` ${skipped} row(s) had errors.`;
       toast(msg, added > 0 ? 'success' : 'warning');
 
-      // Show detailed errors if any
       if (errors.length > 0) {
-        setTimeout(() => {
-          alert('Import completed with the following issues:\n\n' + errors.join('\n'));
-        }, 500);
+        setTimeout(() => alert('Import issues:\n\n' + errors.join('\n')), 500);
       }
 
       // Push to Supabase
-      if (GS_ENABLED) {
-        const newPats = DB.patients.slice(-added);
-        newPats.forEach(p => gsSaveRecord('patients', p));
+      if (GS_ENABLED && added > 0) {
+        const newRecords = DB[dbKey].slice(-added);
+        toast(`Syncing ${added} records to Supabase...`);
+        await sbBatchUpsert(dbKey, newRecords);
+        toast(`✅ ${added} records saved to Supabase`);
       }
 
     } catch (err) {
