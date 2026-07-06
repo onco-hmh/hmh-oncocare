@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-025311">
+<meta name="version" content="v20260706-030009">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-025311</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-030009</span></div>
     </div>
   </div>
 </div>
@@ -4052,23 +4052,8 @@ document.addEventListener('DOMContentLoaded', () => {
   migratePasswords(); // Hash any plain-text passwords from older versions
   applySettings();
   // Version-based one-time clear of all demo data
-  const CLEAN_VERSION = 'cleaned_v5';
-  if (localStorage.getItem('oms_data_cleaned') !== CLEAN_VERSION) {
-    // Only clear if data is empty or truly demo data (HN-001 to HN-010 with Main Island)
-    const hasDemoOnly = DB.patients.length === 0 ||
-      (DB.patients.length <= 10 &&
-       DB.patients.every(p => /^HN-00[0-9]$/.test(p.hospitalNumber) && p.island === 'Main Island'));
-    if (hasDemoOnly) {
-      ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'].forEach(k => {
-        localStorage.removeItem('oms_' + k);
-        DB[k] = [];
-      });
-      localStorage.removeItem('oms_last_sync');
-      localStorage.removeItem('oms_cache_ts');
-      console.log('✓ Demo data cleared — loading fresh from Supabase');
-    }
-    localStorage.setItem('oms_data_cleaned', CLEAN_VERSION);
-  }
+  // Supabase is the source of truth — no local clearing needed
+  // Data is always loaded fresh from Supabase on login
   if (AUTH.session) {
     const user = AUTH.users.find(u => u.id === AUTH.session.userId && u.status === 'Active');
     if (user) {
