@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-085346">
+<meta name="version" content="v20260706-085829">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-085346</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-085829</span></div>
     </div>
   </div>
 </div>
@@ -2639,7 +2639,7 @@ function openChemoModal(id = null) {
   document.getElementById('chemoModalTitle').textContent = id ? 'Edit Chemo Record' : 'Add Chemotherapy Record';
   if (id) {
     const r = DB.chemo.find(x => x.id === id);
-    if (r) { document.getElementById('chemo_hospitalNumber').value = r.hospitalNumber||''; document.getElementById('chemo_patientName').value = r.patientName||''; document.getElementById('chemo_diagnosis').value = r.diagnosis||''; document.getElementById('chemo_g6pd').value = r.g6pd||''; document.getElementById('chemo_bloodGroup').value = r.bloodGroup||''; document.getElementById('chemo_status').value = r.chemoStatus||''; document.getElementById('chemo_startedDate').value = r.startedDate||''; document.getElementById('chemo_completedDate').value = r.completedDate||''; document.getElementById('chemo_remarks').value = r.remarks||''; }
+    if (r) { document.getElementById('chemo_hospitalNumber').value = r.hospitalNumber||''; document.getElementById('chemo_patientName').value = r.patientName||''; document.getElementById('chemo_diagnosis').value = r.diagnosis||''; document.getElementById('chemo_g6pd').value = r.g6pd||''; document.getElementById('chemo_bloodGroup').value = r.bloodGroup||''; document.getElementById('chemo_status').value = r.status||r.chemoStatus||''; document.getElementById('chemo_startedDate').value = r.startedDate||''; document.getElementById('chemo_completedDate').value = r.completedDate||''; document.getElementById('chemo_remarks').value = r.remarks||''; }
   }
   openModal('chemoModal');
 }
@@ -2647,7 +2647,8 @@ function saveChemo() {
   const hn = document.getElementById('chemo_hospitalNumber').value.trim();
   const status = document.getElementById('chemo_status').value;
   if (!hn || !status) { toast('Hospital Number and Status are required', 'error'); return; }
-  const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, chemoStatus: status, startedDate: document.getElementById('chemo_startedDate').value, completedDate: document.getElementById('chemo_completedDate').value, remarks: document.getElementById('chemo_remarks').value };
+  const expiredDate = document.getElementById('chemo_expiredDate') ? document.getElementById('chemo_expiredDate').value : '';
+  const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, status: status, expiredDate: expiredDate, startedDate: document.getElementById('chemo_startedDate').value, completedDate: document.getElementById('chemo_completedDate').value, remarks: document.getElementById('chemo_remarks').value };
   if (state.editId) { const idx = DB.chemo.findIndex(x => x.id === state.editId); DB.chemo[idx] = obj; toast('Record updated'); }
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
   save('chemo');
@@ -2824,7 +2825,7 @@ const tableConfigs = {
       <td>${r.diagnosis||'—'}</td>
       <td>${r.g6pd||'—'}</td>
       <td>${r.bloodGroup||'—'}</td>
-      <td>${statusBadge(r.chemoStatus||'—')}</td>
+      <td>${statusBadge(r.status||r.chemoStatus||'—')}</td>
       <td>${fmtDate(r.startedDate)}</td>
       <td>${fmtDate(r.completedDate)||'—'}</td>
       <td class="no-print"><div class="flex gap-2">
