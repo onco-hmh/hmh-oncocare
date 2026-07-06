@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-074144">
+<meta name="version" content="v20260706-075547">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-074144</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-075547</span></div>
     </div>
   </div>
 </div>
@@ -2042,7 +2042,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <p style="font-weight:600;color:var(--text)">Click to select your Excel file</p>
         <p style="font-size:12px;color:var(--text-muted)">.xlsx or .csv files supported</p>
       </div>
-      <input type="file" id="importFileInput" accept=".xlsx,.csv" style="display:none" onchange="processImport(this, currentImportType)">
+      <input type="file" id="importFileInput" accept=".xlsx,.csv" style="display:none" onchange="processImport(this, this.dataset.importType || currentImportType)" data-import-type="patients">
     </div>
   </div>
 </div>
@@ -3338,13 +3338,16 @@ function exportData(type) {
 }
 
 // ==================== IMPORT ====================
-function importData(type) { currentImportType = 'patients'; openModal('importModal'); }
+function importData(type) { openImportModal('patients'); }
 let currentImportType = 'patients';
 function openImportModal(type) {
   currentImportType = type;
   const labels = { patients:'Patients', chemo:'Chemotherapy', adr:'ADR', extravasation:'Extravasation', spill:'Cytotoxic Spill', incident:'Incident Log' };
   document.querySelector('#importModal .modal-title').textContent = `Import ${labels[type]||type}`;
-  document.querySelector('#importModal p').textContent = `Import ${labels[type]} from Excel (.xlsx) or CSV. Download the template to see required columns.`;
+  document.querySelector('#importModal p').textContent = `Import ${labels[type]||type} from Excel (.xlsx) or CSV. Download the template to see required columns.`;
+  // Set type on file input so it persists when file is chosen
+  const fileInput = document.getElementById('importFileInput');
+  if (fileInput) { fileInput.dataset.importType = type; fileInput.value = ''; }
   openModal('importModal');
 }
 // Column mapping: Excel column name → internal field name
