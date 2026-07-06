@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-050235">
+<meta name="version" content="v20260706-050529">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-050235</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-050529</span></div>
     </div>
   </div>
 </div>
@@ -3512,11 +3512,9 @@ function downloadImportTemplate(type) {
     return;
   }
   // Patients template
-  function downloadImportTemplate_run() {
-  const headers = Object.keys(IMPORT_COLUMNS).filter((k,i,arr) => arr.indexOf(k) === i); // unique
   const sampleRow = {
     'Hospital Number': 'HN-001',
-    'Registry Number': 'REG-0001',
+    'Registry Number': 'ONC0001',
     'Registration Date': '2025-01-15',
     'Full Name': 'Aminath Example',
     'Gender': 'Female',
@@ -3525,8 +3523,9 @@ function downloadImportTemplate(type) {
     'National ID': 'A123456',
     'Passport Number': '',
     'Contact Number': '+960 300-0000',
-    'Atoll': 'Malé',
-    'Island': 'Malé',
+    'Blood Group': 'B+',
+    'Atoll': 'Kaafu (K)',
+    'Island': 'K. Malé',
     'Address': 'Malé, Maldives',
     'Diagnosis': 'Breast Cancer',
     'Diagnosis Details': 'IDC Grade 2',
@@ -3542,14 +3541,11 @@ function downloadImportTemplate(type) {
     'Remarks': '',
   };
   const ws = XLSX.utils.json_to_sheet([sampleRow]);
-  // Style header row width
   ws['!cols'] = Object.keys(sampleRow).map(() => ({ wch: 22 }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Patients');
   XLSX.writeFile(wb, 'OncoCare_Patient_Import_Template.xlsx');
   toast('Template downloaded!');
-  }
-  downloadImportTemplate_run();
 }
 
 // ==================== BACKUP & RESTORE ====================
