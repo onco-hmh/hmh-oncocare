@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-045416">
+<meta name="version" content="v20260706-045854">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-045416</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-045854</span></div>
     </div>
   </div>
 </div>
@@ -2088,6 +2088,25 @@ const DB = {
 // Always save locally (instant) AND push to Google Sheets (async)
 function save(key) {
   localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+  // Track pending Supabase sync
+  try {
+    const pending = JSON.parse(localStorage.getItem('oms_pending_sync') || '[]');
+    if (!pending.includes(key)) { pending.push(key); localStorage.setItem('oms_pending_sync', JSON.stringify(pending)); }
+  } catch(e) {}
+}
+
+async function flushPendingSync() {
+  if (!GS_ENABLED) return;
+  try {
+    const pending = JSON.parse(localStorage.getItem('oms_pending_sync') || '[]');
+    if (!pending.length) return;
+    for (const key of pending) {
+      if (!DB[key] || !DB[key].length) continue;
+      for (const record of DB[key]) { await gsSaveRecord(key, record); }
+      console.log('✓ Synced ' + DB[key].length + ' ' + key + ' to Supabase');
+    }
+    localStorage.setItem('oms_pending_sync', '[]');
+  } catch(e) { console.warn('flushPendingSync error:', e); }
 }
 
 function genId(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCase(); }
@@ -2189,9 +2208,13 @@ async function gsSyncBackground() {
       const table = SB_TABLES[key];
       if (!table) continue;
       const rows = await sbFetchAll(table);
-      if (rows.length > 0) {
+      const localCount = DB[key] ? DB[key].length : 0;
+      if (rows.length >= localCount && rows.length > 0) {
         DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
         save(key);
+      } else if (localCount > rows.length && localCount > 0) {
+        // Push local to Supabase silently
+        for (const record of DB[key]) { await gsSaveRecord(key, record); }
       }
     }
     const usersRes = await gsPost({ action: 'getAll', sheet: 'users' });
@@ -2240,14 +2263,27 @@ async function gsFetchFromSheets() {
       const table = SB_TABLES[key];
       if (!table) continue;
       const rows = await sbFetchAll(table);
-      if (rows.length > 0) {
+      const localCount = DB[key] ? DB[key].length : 0;
+      const remoteCount = rows.length;
+
+      if (remoteCount > localCount) {
+        // Supabase has more — use Supabase data
         DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
         save(key);
-      } else {
-        // Table is empty - clear local cache too
-        DB[key] = [];
+        console.log(`✓ ${key}: loaded ${remoteCount} from Supabase`);
+      } else if (localCount > remoteCount && localCount > 0) {
+        // Local has more — push local data to Supabase
+        console.log(`⚠️ ${key}: local (${localCount}) > Supabase (${remoteCount}), pushing local to Supabase`);
+        for (const record of DB[key]) {
+          await gsSaveRecord(key, record);
+        }
+        console.log(`✓ ${key}: pushed ${localCount} records to Supabase`);
+      } else if (remoteCount === localCount && remoteCount > 0) {
+        // Same count — use Supabase (most up to date)
+        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
         save(key);
       }
+      // If both are 0 — do nothing
     }
     // Load users
     // Fetch users (order by id since created_at may not exist)
@@ -4002,6 +4038,8 @@ async function doLogin() {
     populateFilters();
     Object.keys(tableConfigs).forEach(t => renderTable(t));
   });
+  // Flush any pending Supabase writes
+  setTimeout(() => flushPendingSync(), 3000);
   // Check if backup reminder needed (every 7 days)
   checkBackupReminder();
 }
