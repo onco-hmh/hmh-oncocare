@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-080056">
+<meta name="version" content="v20260706-081442">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-080056</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-081442</span></div>
     </div>
   </div>
 </div>
@@ -3435,9 +3435,8 @@ function processImport(input, type) { type = type || 'patients';
 
         // Map columns to internal fields using type-specific mapping
         const colMap = type === 'chemo' ? CHEMO_IMPORT_COLUMNS : IMPORT_COLUMNS;
-        // Generate truly unique ID using prefix + timestamp + row index + random
         const _prefix = type === 'patients' ? 'PAT' : type.toUpperCase().slice(0,3);
-        const patient = { id: _prefix + '-' + Date.now().toString(36) + '-' + rowIndex.toString(36) + '-' + Math.random().toString(36).slice(2,6) };
+        const patient = { id: genImportId(_prefix, rowIndex) };
         Object.entries(colMap).forEach(([colName, fieldName]) => {
           const val = row[colName];
           if (val !== undefined && val !== '') {
@@ -3467,10 +3466,11 @@ function processImport(input, type) { type = type || 'patients';
         }
 
         // 3. Check duplicate
+        // Check duplicates in correct DB
         const checkDB = type === 'patients' ? DB.patients : (DB[type] || []);
-        if (checkDB.find(p => p.hospitalNumber === patient.hospitalNumber && type !== 'chemo')) {
+        if (type === 'patients' && checkDB.find(p => p.hospitalNumber === patient.hospitalNumber)) {
           duplicates++;
-          return; // skip silently
+          return;
         }
 
         // 4. Normalize Gender
@@ -3499,7 +3499,9 @@ function processImport(input, type) { type = type || 'patients';
           patient.registrationDate = new Date().toISOString().slice(0,10);
         }
 
-        DB.patients.push(patient);
+        // Push to correct DB array based on import type
+        const targetDB = type === 'patients' ? DB.patients : (DB[type] || DB.patients);
+        targetDB.push(patient);
         added++;
       });
 
@@ -5329,7 +5331,18 @@ window.normalizeRecord = normalizeRecord;
 let _idCounter = 0;
 function genId(prefix) {
   _idCounter++;
-  return prefix + '-' + Date.now().toString(36).toUpperCase() + _idCounter.toString(36).toUpperCase();
+  const ts = Date.now().toString(36);
+  const cnt = _idCounter.toString(36).padStart(4,'0');
+  const rnd = Math.random().toString(36).slice(2,6);
+  return (prefix + '-' + ts + cnt + rnd).toUpperCase();
+}
+
+// Generate unique ID for import (guaranteed unique per row)
+function genImportId(prefix, rowIndex) {
+  const ts = Date.now().toString(36);
+  const idx = rowIndex.toString(36).padStart(4,'0');
+  const rnd = Math.random().toString(36).slice(2,8);
+  return (prefix + '-' + ts + idx + rnd).toUpperCase();
 }
 
 // ==================== SUPABASE API ====================
