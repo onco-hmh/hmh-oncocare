@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-090150">
+<meta name="version" content="v20260706-090623">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-090150</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-090623</span></div>
     </div>
   </div>
 </div>
@@ -929,9 +929,8 @@ body.dark .login-input:focus { background: var(--card-bg); }
   <div class="card">
     <div class="toolbar">
       <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by hospital number or name…" oninput="filterTable('chemo',this.value)"></div>
-      <select class="filter-select" onchange="filterTable('chemo',null,'chemoStatus',this.value)">
+      <select class="filter-select" id="chemoStatusFilter" onchange="filterTable('chemo',null,'status',this.value)">
         <option value="">All Statuses</option>
-        <option>Ongoing</option><option>Completed</option><option>Paused</option><option>Discontinued</option>
       </select>
     </div>
     <div class="table-wrapper">
@@ -2912,7 +2911,11 @@ function renderTable(type) {
   const q = (state.filters[type] || '').toLowerCase();
   if (q) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(q)));
   const fk = state.filters[type + '_field'], fv = state.filters[type + '_val'];
-  if (fk && fv) data = data.filter(r => (r[fk]||'').toLowerCase() === fv.toLowerCase());
+  if (fk && fv) data = data.filter(r => {
+    // Handle both 'status' and 'chemoStatus' field names for backward compatibility
+    const val = fk === 'status' ? (r.status || r.chemoStatus || '') : (r[fk] || '');
+    return val.toLowerCase() === fv.toLowerCase();
+  });
   const page = state.currentPage[type] || 1;
   const total = data.length, pages = Math.ceil(total / PAGE_SIZE);
   const start = (page - 1) * PAGE_SIZE, end = Math.min(start + PAGE_SIZE, total);
@@ -5249,11 +5252,20 @@ function toggleChemoExpiredDate() {
 }
 
 function populateChemoStatusSelect() {
+  // Populate form status select
   const sel = document.getElementById('chemo_status');
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Select</option>' +
-    LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select</option>' +
+      LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+  // Populate filter dropdown
+  const filterSel = document.getElementById('chemoStatusFilter');
+  if (filterSel) {
+    const cur = filterSel.value;
+    filterSel.innerHTML = '<option value="">All Statuses</option>' +
+      LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
 }
 
 // ==================== BACKUP REMINDER ====================
