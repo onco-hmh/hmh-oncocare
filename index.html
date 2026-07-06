@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-053947">
+<meta name="version" content="v20260706-062903">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-053947</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-062903</span></div>
     </div>
   </div>
 </div>
@@ -2102,13 +2102,14 @@ async function flushPendingSync() {
     if (!pending.length) return;
     for (const key of pending) {
       if (!DB[key] || !DB[key].length) continue;
-      for (const record of DB[key]) { await gsSaveRecord(key, record); }
-      console.log('✓ Synced ' + DB[key].length + ' ' + key + ' to Supabase');
+      await sbBatchUpsert(key, DB[key]);
     }
     localStorage.setItem('oms_pending_sync', '[]');
   } catch(e) { console.warn('flushPendingSync error:', e); }
 }
 window.flushPendingSync = flushPendingSync;
+window.sbBatchUpsert = sbBatchUpsert;
+window.normalizeRecord = normalizeRecord;
 
 function genId(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCase(); }
 
@@ -2150,39 +2151,42 @@ async function gsSaveRecord(sheetKey, record) {
   if (!GS_ENABLED) return;
   const table = SB_TABLES[sheetKey];
   if (!table) return;
-  const data = sheetKey === 'opSchedule' ? { ...record, doses: JSON.stringify(record.doses || {}) } : { ...record };
-  // Ensure id exists
-  if (!data.id) data.id = genId(sheetKey.toUpperCase().slice(0,3));
+  const data = normalizeRecord(sheetKey, record);
   await sbFetch(table, { method: 'POST', body: data });
 }
 
-// Batch upsert - normalizes all records to same keys first
+// Column definitions for each table - ensures consistent keys
+const TABLE_COLS = {
+  patients: ['id','hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','bloodGroup','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'],
+  chemo: ['id','hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','status','expiredDate','startedDate','completedDate','remarks'],
+  adr: ['id','hospitalNumber','patientName','reactionDate','drugName','drugCategory','doseRoute','cycleDay','description','onsetTime','severity','reactionType','action','treatment','outcome','rechallenge','physicianNotified','reporter','reviewedBy','remarks'],
+  extravasation: ['id','date','hospitalNumber','patientName','diagnosis','drug','drugType','doseDilution','route','site','nurse','time','signs','occurred','severity','action','antidote','compress','physician','incidentReport','education','outcome','remarks'],
+  spill: ['id','datetime','location','drugName','drugCategory','quantity','cause','staff','detectedBy','action','kit','isolated','ppe','decon','waste','exposure','nature','medical','incident','reported','capa','reviewedBy','reviewDate','remarks'],
+  incident: ['id','date','type','staff','action'],
+  opPatients: ['id','serial','hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'],
+  opSchedule: ['id','hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','periodicity','startDate','firstDose','remarks','doses'],
+};
+
+// Normalize a record to use only known columns
+function normalizeRecord(sheetKey, record) {
+  const cols = TABLE_COLS[sheetKey];
+  if (!cols) return record;
+  const normalized = {};
+  cols.forEach(col => { normalized[col] = record[col] !== undefined ? (record[col] === null ? '' : String(record[col])) : ''; });
+  if (!normalized.id) normalized.id = genId(sheetKey.toUpperCase().slice(0,3));
+  if (sheetKey === 'opSchedule') normalized.doses = JSON.stringify(record.doses || {});
+  return normalized;
+}
+
+// Batch upsert - sends records one by one with normalized columns
 async function sbBatchUpsert(sheetKey, records) {
   if (!GS_ENABLED || !records || !records.length) return;
   const table = SB_TABLES[sheetKey];
   if (!table) return;
-
-  // Step 1: normalize all records to have exactly the same keys
-  // Collect all keys across all records
-  const allKeys = new Set();
-  records.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
-  allKeys.add('id'); // ensure id is always present
-
-  // Step 2: normalize each record
-  const normalized = records.map(r => {
-    const data = sheetKey === 'opSchedule' ? { ...r, doses: JSON.stringify(r.doses || {}) } : { ...r };
-    if (!data.id) data.id = genId(sheetKey.toUpperCase().slice(0,3));
-    // Fill missing keys with empty string
-    allKeys.forEach(k => { if (data[k] === undefined) data[k] = ''; });
-    // Remove created_at - Supabase handles this
-    delete data.created_at;
-    return data;
-  });
-
-  // Step 3: insert one by one (most reliable for mixed data)
   let success = 0, failed = 0;
-  for (let i = 0; i < normalized.length; i++) {
+  for (let i = 0; i < records.length; i++) {
     try {
+      const record = normalizeRecord(sheetKey, records[i]);
       const res = await fetch(`${SB_URL}/rest/v1/${table}?on_conflict=id`, {
         method: 'POST',
         headers: {
@@ -2191,15 +2195,14 @@ async function sbBatchUpsert(sheetKey, records) {
           'Content-Type': 'application/json',
           'Prefer': 'resolution=merge-duplicates,return=minimal'
         },
-        body: JSON.stringify(normalized[i])
+        body: JSON.stringify(record)
       });
-      if (res.ok) { success++; }
-      else { failed++; }
+      if (res.ok) success++;
+      else { const e = await res.text(); console.warn(`Row ${i} failed:`, e); failed++; }
     } catch(e) { failed++; }
-    // Progress every 100
-    if ((i+1) % 100 === 0) console.log(`Progress: ${i+1}/${normalized.length} (${success} ok, ${failed} failed)`);
+    if ((i+1) % 100 === 0) console.log(`${sheetKey}: ${i+1}/${records.length} (${success} ok)`);
   }
-  console.log(`✓ ${sheetKey}: ${success} saved, ${failed} failed out of ${normalized.length}`);
+  console.log(`✓ ${sheetKey}: ${success} saved, ${failed} failed`);
 }
 
 // Delete a single record from Supabase
