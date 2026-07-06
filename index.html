@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-082011">
+<meta name="version" content="v20260706-085346">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-082011</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-085346</span></div>
     </div>
   </div>
 </div>
@@ -2088,6 +2088,7 @@ const DB = {
 // Always save locally (instant) AND push to Google Sheets (async)
 function save(key) {
   localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+  localStorage.setItem('oms_last_save_time', Date.now().toString());
   // Track pending Supabase sync
   try {
     const pending = JSON.parse(localStorage.getItem('oms_pending_sync') || '[]');
@@ -2197,19 +2198,28 @@ async function gsLoadAll(forceRefresh = false) {
 // Background sync — no overlay, no blocking
 async function gsSyncBackground() {
   if (!GS_ENABLED) return;
+  // Don't sync if user just saved something in the last 10 seconds
+  const lastSave = parseInt(localStorage.getItem('oms_last_save_time') || '0');
+  if (Date.now() - lastSave < 10000) {
+    console.log('Skipping sync - recent save detected');
+    return;
+  }
   try {
     const allKeys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
     for (const key of allKeys) {
       const table = SB_TABLES[key];
       if (!table) continue;
       const rows = await sbFetchAll(table);
-      const localCount = DB[key] ? DB[key].length : 0;
-      if (rows.length >= localCount && rows.length > 0) {
-        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
-        save(key);
-      } else if (localCount > rows.length && localCount > 0) {
-        // Push local to Supabase silently
-        for (const record of DB[key]) { await gsSaveRecord(key, record); }
+      if (rows.length > 0) {
+        // Only update local if Supabase has MORE records (someone else added data)
+        // Never overwrite if local has more - local is source of truth for current user
+        const localCount = DB[key] ? DB[key].length : 0;
+        if (rows.length > localCount) {
+          DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
+          localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+        } else if (localCount > rows.length) {
+          await sbBatchUpsert(key, DB[key]);
+        }
       }
     }
     const usersRes = await gsPost({ action: 'getAll', sheet: 'users' });
@@ -2641,15 +2651,19 @@ function saveChemo() {
   if (state.editId) { const idx = DB.chemo.findIndex(x => x.id === state.editId); DB.chemo[idx] = obj; toast('Record updated'); }
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
   save('chemo');
+  closeModal('chemoModal'); renderTable('chemo');
+  // Push to Supabase immediately
   if (GS_ENABLED) {
     const normalized = normalizeRecord('chemo', obj);
     fetch(`${SB_URL}/rest/v1/chemotherapy?on_conflict=id`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(normalized)
-    }).then(r => { if (r.ok) showSyncStatus('✅ Saved to Supabase', 'success'); });
+    }).then(r => {
+      if (r.ok) showSyncStatus('✅ Saved to Supabase', 'success');
+      else showSyncStatus('⚠️ Save failed — retrying...', 'warning');
+    });
   }
-  closeModal('chemoModal'); renderTable('chemo');
   // Fix 6: If status is Expired, update patient registry too
   if (obj.status === 'Expired') {
     const pat = DB.patients.find(p => p.hospitalNumber === obj.hospitalNumber);
