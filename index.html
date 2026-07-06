@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-045854">
+<meta name="version" content="v20260706-050235">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-045854</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-050235</span></div>
     </div>
   </div>
 </div>
@@ -2108,6 +2108,7 @@ async function flushPendingSync() {
     localStorage.setItem('oms_pending_sync', '[]');
   } catch(e) { console.warn('flushPendingSync error:', e); }
 }
+window.flushPendingSync = flushPendingSync;
 
 function genId(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCase(); }
 
