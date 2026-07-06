@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-050529">
+<meta name="version" content="v20260706-051337">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-050529</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-051337</span></div>
     </div>
   </div>
 </div>
@@ -2487,7 +2487,8 @@ function openPatientModal(id = null) {
   if (id) {
     let p = DB.patients.find(x => x.id === id);
     if (!p) p = DB.patients.find(x => x.hospitalNumber === id);
-    if (p) id = p.id; // normalize to actual id
+    if (!p) p = DB.patients.find(x => (x.id||'').toString() === id.toString());
+    if (p) id = p.id || id; // normalize to actual id
   }
   state.editId = id;
   const fields = ['hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','bloodGroup','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'];
@@ -2565,10 +2566,12 @@ function savePatient() {
   }
 }
 function viewProfile(id) {
+  if (!id) { toast('Patient not found', 'error'); return; }
+  // Search by id first, then by hospitalNumber
   let p = DB.patients.find(x => x.id === id);
-  // Fallback: try matching by hospitalNumber if id not found
   if (!p) p = DB.patients.find(x => x.hospitalNumber === id);
-  if (!p) { toast('Patient not found', 'error'); return; }
+  if (!p) p = DB.patients.find(x => (x.id||'').toString() === id.toString());
+  if (!p) { toast('Patient not found: ' + id, 'error'); return; }
   const chemoRecs = DB.chemo.filter(c => c.hospitalNumber === p.hospitalNumber);
   const adrRecs = DB.adr.filter(a => a.hospitalNumber === p.hospitalNumber);
   document.getElementById('profileContent').innerHTML = `
@@ -2780,9 +2783,9 @@ const tableConfigs = {
       <td>${p.diagnosis||'—'}</td>
       <td>${statusBadge(p.status||'—')}</td>
       <td class="no-print"><div class="flex gap-2">
-        <button class="btn btn-xs btn-outline" onclick="viewProfile(this.dataset.id)" data-id="${p.id}"><i class="fas fa-eye"></i></button>
-        <button class="btn btn-xs btn-outline" onclick="openPatientModal(this.dataset.id)" data-id="${p.id}"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-xs btn-danger" onclick="confirmDelete('patients',this.dataset.id)" data-id="${p.id}"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-xs btn-outline" onclick="viewProfile(this.dataset.id)" data-id="${p.id||p.hospitalNumber}"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-xs btn-outline" onclick="openPatientModal(this.dataset.id)" data-id="${p.id||p.hospitalNumber}"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="confirmDelete('patients',this.dataset.id)" data-id="${p.id||p.hospitalNumber}"><i class="fas fa-trash"></i></button>
       </div></td>`
   },
   chemo: {
