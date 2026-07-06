@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-071906">
+<meta name="version" content="v20260706-072901">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-071906</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-072901</span></div>
     </div>
   </div>
 </div>
@@ -2550,14 +2550,25 @@ function savePatient() {
     DB.patients.unshift(obj);
     toast('Patient added successfully');
   }
-  save('patients'); closeModal('patientModal'); renderTable('patients'); populateFilters();
-  // Push to Supabase
+  save('patients');
+  // Push to Supabase immediately and wait for confirmation
   if (GS_ENABLED) {
-    sbFetch('patients', { method: 'POST', body: obj }).then(r => {
-      if (r && r.success) showSyncStatus('✅ Patient saved to Supabase', 'success');
-      else showSyncStatus('⚠️ Saved locally — will sync shortly', 'warning');
-    }).catch(() => showSyncStatus('⚠️ Saved locally — will sync shortly', 'warning'));
+    const normalized = normalizeRecord('patients', obj);
+    fetch(`${SB_URL}/rest/v1/patients?on_conflict=id`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify(normalized)
+    }).then(r => {
+      if (r.ok) showSyncStatus('✅ Saved to Supabase', 'success');
+      else showSyncStatus('⚠️ Saved locally only — check connection', 'warning');
+    }).catch(() => showSyncStatus('⚠️ Saved locally only', 'warning'));
   }
+  closeModal('patientModal'); renderTable('patients'); populateFilters();
 }
 function viewProfile(id) {
   if (!id) { toast('Patient not found', 'error'); return; }
@@ -2629,8 +2640,16 @@ function saveChemo() {
   const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, chemoStatus: status, startedDate: document.getElementById('chemo_startedDate').value, completedDate: document.getElementById('chemo_completedDate').value, remarks: document.getElementById('chemo_remarks').value };
   if (state.editId) { const idx = DB.chemo.findIndex(x => x.id === state.editId); DB.chemo[idx] = obj; toast('Record updated'); }
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
-  save('chemo'); closeModal('chemoModal'); renderTable('chemo');
-  if (GS_ENABLED) gsSaveRecord('chemo', obj);
+  save('chemo');
+  if (GS_ENABLED) {
+    const normalized = normalizeRecord('chemo', obj);
+    fetch(`${SB_URL}/rest/v1/chemotherapy?on_conflict=id`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(normalized)
+    }).then(r => { if (r.ok) showSyncStatus('✅ Saved to Supabase', 'success'); });
+  }
+  closeModal('chemoModal'); renderTable('chemo');
   // Fix 6: If status is Expired, update patient registry too
   if (obj.status === 'Expired') {
     const pat = DB.patients.find(p => p.hospitalNumber === obj.hospitalNumber);
