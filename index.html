@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-072901">
+<meta name="version" content="v20260706-074144">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-072901</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-074144</span></div>
     </div>
   </div>
 </div>
@@ -3348,6 +3348,24 @@ function openImportModal(type) {
   openModal('importModal');
 }
 // Column mapping: Excel column name → internal field name
+// Chemo-specific column mapping
+const CHEMO_IMPORT_COLUMNS = {
+  'Hospital Number':   'hospitalNumber',
+  'Hospital No':       'hospitalNumber',
+  'Patient Name':      'patientName',
+  'Diagnosis':         'diagnosis',
+  'G6PD':             'g6pd',
+  'G6PD Status':      'g6pd',
+  'Blood Group':      'bloodGroup',
+  'Status':           'status',
+  'Chemo Status':     'status',
+  'Started Date':     'startedDate',
+  'Start Date':       'startedDate',
+  'Completed Date':   'completedDate',
+  'Completion Date':  'completedDate',
+  'Remarks':          'remarks',
+};
+
 const IMPORT_COLUMNS = {
   'Hospital Number':        'hospitalNumber',       // REQUIRED
   'Registry Number':        'registryNumber',
@@ -3412,33 +3430,40 @@ function processImport(input, type) { type = type || 'patients';
       rows.forEach((row, rowIndex) => {
         const rowNum = rowIndex + 2; // +2 because row 1 is header
 
-        // Map columns to internal fields
-        const patient = { id: 'PAT-' + Date.now().toString(36).toUpperCase() + '-' + rowIndex.toString(36).toUpperCase() };
-        Object.entries(IMPORT_COLUMNS).forEach(([colName, fieldName]) => {
+        // Map columns to internal fields using type-specific mapping
+        const colMap = type === 'chemo' ? CHEMO_IMPORT_COLUMNS : IMPORT_COLUMNS;
+        const patient = { id: (type === 'patients' ? 'PAT' : type.toUpperCase().slice(0,3)) + '-' + Date.now().toString(36).toUpperCase() + '-' + rowIndex.toString(36).toUpperCase() };
+        Object.entries(colMap).forEach(([colName, fieldName]) => {
           const val = row[colName];
           if (val !== undefined && val !== '') {
-            // Don't overwrite if already set by an alias
             if (!patient[fieldName]) patient[fieldName] = String(val).trim();
           }
         });
 
         // ── Validation ──
-        // 1. Hospital Number is required
+        // 1. Hospital Number is required for all types
         if (!patient.hospitalNumber) {
           errors.push(`Row ${rowNum}: Missing Hospital Number — skipped`);
           skipped++;
           return;
         }
 
-        // 2. Full Name is required
-        if (!patient.fullName) {
+        // 2. Full Name is required only for patient registry
+        if (type === 'patients' && !patient.fullName) {
           errors.push(`Row ${rowNum} (${patient.hospitalNumber}): Missing Full Name — skipped`);
           skipped++;
           return;
         }
 
-        // 3. Check duplicate Hospital Number
-        if (DB.patients.find(p => p.hospitalNumber === patient.hospitalNumber)) {
+        // 3. For chemo, auto-fill patient name from registry if missing
+        if (type === 'chemo' && !patient.patientName) {
+          const reg = DB.patients.find(p => p.hospitalNumber === patient.hospitalNumber);
+          if (reg) patient.patientName = reg.fullName || '';
+        }
+
+        // 3. Check duplicate
+        const checkDB = type === 'patients' ? DB.patients : (DB[type] || []);
+        if (checkDB.find(p => p.hospitalNumber === patient.hospitalNumber && type !== 'chemo')) {
           duplicates++;
           return; // skip silently
         }
@@ -3473,8 +3498,12 @@ function processImport(input, type) { type = type || 'patients';
         added++;
       });
 
-      save('patients');
-      renderTable('patients');
+      // Save to correct DB key based on type
+      const dbKey = type === 'patients' ? 'patients' : type;
+      if (DB[dbKey] !== undefined) {
+        save(dbKey);
+        renderTable(dbKey);
+      }
       populateFilters();
       populateDynamicSelects();
       closeModal('importModal');
