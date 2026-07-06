@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-085829">
+<meta name="version" content="v20260706-090150">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-085829</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-090150</span></div>
     </div>
   </div>
 </div>
@@ -2211,15 +2211,23 @@ async function gsSyncBackground() {
       if (!table) continue;
       const rows = await sbFetchAll(table);
       if (rows.length > 0) {
-        // Only update local if Supabase has MORE records (someone else added data)
-        // Never overwrite if local has more - local is source of truth for current user
         const localCount = DB[key] ? DB[key].length : 0;
         if (rows.length > localCount) {
-          DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
-          localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+          // Supabase has MORE records - merge new ones in without overwriting existing
+          const localIds = new Set((DB[key] || []).map(r => r.id));
+          const newRows = rows.filter(r => !localIds.has(r.id));
+          if (newRows.length > 0) {
+            DB[key] = [...(DB[key] || []), ...newRows];
+            localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+            console.log(`✓ Sync: added ${newRows.length} new ${key} records from Supabase`);
+          }
         } else if (localCount > rows.length) {
-          await sbBatchUpsert(key, DB[key]);
+          // Local has MORE - push missing ones to Supabase
+          const remoteIds = new Set(rows.map(r => r.id));
+          const missing = (DB[key] || []).filter(r => !remoteIds.has(r.id));
+          if (missing.length > 0) await sbBatchUpsert(key, missing);
         }
+        // If equal count - do nothing (trust local data)
       }
     }
     const usersRes = await gsPost({ action: 'getAll', sheet: 'users' });
