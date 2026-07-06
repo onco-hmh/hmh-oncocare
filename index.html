@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-075547">
+<meta name="version" content="v20260706-080056">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-075547</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-080056</span></div>
     </div>
   </div>
 </div>
@@ -3435,7 +3435,9 @@ function processImport(input, type) { type = type || 'patients';
 
         // Map columns to internal fields using type-specific mapping
         const colMap = type === 'chemo' ? CHEMO_IMPORT_COLUMNS : IMPORT_COLUMNS;
-        const patient = { id: (type === 'patients' ? 'PAT' : type.toUpperCase().slice(0,3)) + '-' + Date.now().toString(36).toUpperCase() + '-' + rowIndex.toString(36).toUpperCase() };
+        // Generate truly unique ID using prefix + timestamp + row index + random
+        const _prefix = type === 'patients' ? 'PAT' : type.toUpperCase().slice(0,3);
+        const patient = { id: _prefix + '-' + Date.now().toString(36) + '-' + rowIndex.toString(36) + '-' + Math.random().toString(36).slice(2,6) };
         Object.entries(colMap).forEach(([colName, fieldName]) => {
           const val = row[colName];
           if (val !== undefined && val !== '') {
