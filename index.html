@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260705-075158">
+<meta name="version" content="v20260706-025311">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260705-075158</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-025311</span></div>
     </div>
   </div>
 </div>
@@ -943,7 +943,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <th>Diagnosis</th>
           <th>G6PD</th>
           <th>Blood Group</th>
-          <th>Chemo Status</th>
+          <th>Status</th>
           <th>Started Date</th>
           <th>Completed Date</th>
           <th class="no-print">Actions</th>
@@ -1198,6 +1198,16 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <button class="btn btn-primary btn-sm" onclick="addIsland()"><i class="fas fa-plus"></i></button>
         </div>
         <div id="islandList" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+
+      <!-- Chemo Status List -->
+      <div class="card">
+        <div class="settings-section-title"><i class="fas fa-syringe"></i> Chemo Status List</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input class="form-control" id="newChemoStatus" placeholder="Add new status...">
+          <button class="btn btn-primary btn-sm" onclick="addListItem('chemoStatuses','newChemoStatus')"><i class="fas fa-plus"></i></button>
+        </div>
+        <div id="chemoStatusList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
       </div>
 
       <!-- Atolls List -->
@@ -1559,6 +1569,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <div class="form-group"><label class="form-label">Nationality</label><input class="form-control" id="pat_nationality" placeholder="e.g. Maldivian"></div>
           <div class="form-group"><label class="form-label">National ID / Passport No</label><input class="form-control" id="pat_nationalId" placeholder="e.g. A123456"></div>
           <div class="form-group"><label class="form-label">Contact Number</label><input class="form-control" id="pat_contactNumber" placeholder="e.g. +960 300-0000"></div>
+          <div class="form-group"><label class="form-label">Blood Group</label><select class="form-control" id="pat_bloodGroup"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Unknown</option></select></div>
           <div class="form-group"><label class="form-label">Atoll</label>
             <select class="form-control" id="pat_atoll" onchange="onAtollChange(this.value)"><option value="">Select Atoll</option></select>
           </div>
@@ -1643,11 +1654,12 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Blood Group</label>
           <select class="form-control" id="chemo_bloodGroup"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Unknown</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Chemo Status <span class="req">*</span></label>
-          <select class="form-control" id="chemo_status"><option value="">Select</option><option>Ongoing</option><option>Completed</option><option>Paused</option><option>Discontinued</option></select>
+        <div class="form-group"><label class="form-label">Status <span class="req">*</span></label>
+          <select class="form-control" id="chemo_status" onchange="toggleChemoExpiredDate()"><option value="">Select</option></select>
         </div>
         <div class="form-group"><label class="form-label">Started Date</label><input type="date" class="form-control" id="chemo_startedDate"></div>
         <div class="form-group"><label class="form-label">Completed Date</label><input type="date" class="form-control" id="chemo_completedDate"></div>
+        <div class="form-group" id="chemoExpiredDateGroup" style="display:none"><label class="form-label">Expired Date <span class="req">*</span></label><input type="date" class="form-control" id="chemo_expiredDate"></div>
         <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="chemo_remarks" rows="2"></textarea></div>
       </div>
     </div>
@@ -2435,7 +2447,7 @@ function fmtDate(d) { if (!d) return '—'; try { return new Date(d).toLocaleDat
 // ==================== PATIENT REGISTRY ====================
 function openPatientModal(id = null) {
   state.editId = id;
-  const fields = ['hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'];
+  const fields = ['hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','bloodGroup','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'];
   fields.forEach(f => { const el = document.getElementById('pat_' + f); if (el) el.value = ''; });
   document.getElementById('patientModalTitle').textContent = id ? 'Edit Patient' : 'Add New Patient';
   // Auto-generate registry number for new patients
@@ -2488,7 +2500,7 @@ function savePatient() {
   if (existing) { toast('Hospital Number already exists!', 'error'); return; }
 
   const obj = { id: state.editId || genId('PAT') };
-  ['hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'].forEach(f => {
+  ['hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','bloodGroup','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'].forEach(f => {
     const el = document.getElementById('pat_' + f);
     if (el) obj[f] = el.value;
   });
@@ -2526,7 +2538,7 @@ function viewProfile(id) {
     <div class="profile-body">
       <p class="profile-section-title">Personal Information</p>
       <div class="profile-grid">
-        ${profileField('Gender',p.gender)}${profileField('Date of Birth',fmtDate(p.dob))}${profileField('Age',p.age?p.age+' years':'—')}${profileField('Age Group',p.ageGroup)}${profileField('Nationality',p.nationality)}${profileField('National ID / PP',p.nationalId||'—')}${profileField('Contact Number',p.contactNumber||'—')}${profileField('Atoll',p.atoll)}${profileField('Island',p.island)}${profileField('Address',p.address)}
+        ${profileField('Gender',p.gender)}${profileField('Date of Birth',fmtDate(p.dob))}${profileField('Age',p.age?p.age+' years':'—')}${profileField('Age Group',p.ageGroup)}${profileField('Nationality',p.nationality)}${profileField('National ID / PP',p.nationalId||'—')}${profileField('Contact Number',p.contactNumber||'—')}${profileField('Blood Group',p.bloodGroup||'—')}${profileField('Atoll',p.atoll)}${profileField('Island',p.island)}${profileField('Address',p.address)}
       </div>
       <p class="profile-section-title">Medical Information</p>
       <div class="profile-grid">
@@ -2556,8 +2568,9 @@ function printProfile() { window.print(); }
 
 // ==================== CHEMOTHERAPY ====================
 function openChemoModal(id = null) {
+  populateChemoStatusSelect();
   state.editId = id;
-  ['hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','status','startedDate','completedDate','remarks'].forEach(f => {
+  ['hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','status','expiredDate','startedDate','completedDate','remarks'].forEach(f => {
     const el = document.getElementById('chemo_' + f); if (el) el.value = '';
   });
   document.getElementById('chemoModalTitle').textContent = id ? 'Edit Chemo Record' : 'Add Chemotherapy Record';
@@ -2576,6 +2589,17 @@ function saveChemo() {
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
   save('chemo'); closeModal('chemoModal'); renderTable('chemo');
   if (GS_ENABLED) gsSaveRecord('chemo', obj);
+  // Fix 6: If status is Expired, update patient registry too
+  if (obj.status === 'Expired') {
+    const pat = DB.patients.find(p => p.hospitalNumber === obj.hospitalNumber);
+    if (pat) {
+      pat.status = 'Expired';
+      if (obj.expiredDate) pat.expiredDate = obj.expiredDate;
+      save('patients');
+      if (GS_ENABLED) gsSaveRecord('patients', pat);
+      toast('Patient status updated to Expired in registry ✅');
+    }
+  }
 }
 
 // ==================== ADR ====================
@@ -2682,6 +2706,20 @@ function lookupPatient(prefix, hn) {
   const diagEl = document.getElementById(prefix + '_diagnosis');
   if (nameEl) nameEl.value = p ? (p.fullName || '') : '';
   if (diagEl) diagEl.value = p ? (p.diagnosis || '') : '';
+  // Auto-fill blood group if available
+  const bgEl = document.getElementById(prefix + '_bloodGroup');
+  if (bgEl && p && p.bloodGroup) bgEl.value = p.bloodGroup;
+  // Fix 4: If patient is Expired, auto-select Expired status
+  if (prefix === 'chemo' && p && p.status === 'Expired') {
+    const statusEl = document.getElementById('chemo_status');
+    if (statusEl) {
+      statusEl.value = 'Expired';
+      toggleChemoExpiredDate();
+      // Pre-fill expired date from patient record
+      const expEl = document.getElementById('chemo_expiredDate');
+      if (expEl && p.expiredDate) expEl.value = p.expiredDate;
+    }
+  }
 }
 
 // ==================== TABLE RENDERING ====================
@@ -4134,6 +4172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 // ==================== LISTS MANAGEMENT ====================
+const DEFAULT_CHEMO_STATUSES = ['Ongoing','Completed','Paused','Discontinued','Expired'];
 const DEFAULT_DIAGNOSES = ['Breast Cancer','Cervical Cancer','Colorectal Cancer','Leukemia','Lymphoma','Lung Cancer','Ovarian Cancer','Gastric Cancer','Thyroid Cancer','Liver Cancer','Prostate Cancer','Brain Tumor','Uterine Cancer','Bladder Cancer','Kidney Cancer','Multiple Myeloma','Pancreatic Cancer','Other'];
 const DEFAULT_STATUSES = ['Active','In Remission','Palliative Care','Lost to Follow-up','Transferred Out','Expired'];
 const DEFAULT_ATOLLS = ["Haa Alifu (HA)", "Haa Dhaalu (HDh)", "Shaviyani (Sh)", "Noonu (N)", "Raa (R)", "Baa (B)", "Lhaviyani (Lh)", "Kaafu (K)", "Alifu Alifu (AA)", "Alifu Dhaalu (ADh)", "Vaavu (V)", "Meemu (M)", "Faafu (F)", "Dhaalu (Dh)", "Thaa (Th)", "Laamu (L)", "Gaafu Alifu (GA)", "Gaafu Dhaalu (GDh)", "Gnaviyani (Gn)", "Seenu (S)"];
@@ -4143,6 +4182,7 @@ const DEFAULT_ISLANDS = [{"name": "HA. Baarah", "atoll": "Haa Alifu (HA)"}, {"na
 const LISTS = {
   diagnoses: JSON.parse(localStorage.getItem('oms_list_diagnoses') || JSON.stringify(DEFAULT_DIAGNOSES)),
   patientStatuses: JSON.parse(localStorage.getItem('oms_list_statuses') || JSON.stringify(DEFAULT_STATUSES)),
+  chemoStatuses: JSON.parse(localStorage.getItem('oms_list_chemoStatuses') || JSON.stringify(DEFAULT_CHEMO_STATUSES)),
   islands: (() => {
     const stored = localStorage.getItem('oms_list_islands');
     if (stored) {
@@ -4254,6 +4294,7 @@ function renderIslandList() {
 function renderAllLists() {
   renderListItems('diagnosisList', 'diagnoses');
   renderListItems('statusList', 'patientStatuses');
+  renderListItems('chemoStatusList', 'chemoStatuses');
   renderListItems('atollList', 'atolls');
   renderIslandList();
   // Populate atoll filters in island admin panel
@@ -4277,6 +4318,8 @@ function populateDynamicSelects() {
     const cur = statSel.value;
     statSel.innerHTML = '<option value="">Select Status</option>' + LISTS.patientStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
   }
+  // Chemo status dropdown
+  populateChemoStatusSelect();
   // Atoll dropdown
   const atollSel = document.getElementById('pat_atoll');
   if (atollSel) {
@@ -5109,6 +5152,22 @@ function exportOPData() {
   }
   XLSX.writeFile(wb, `OncoCare_OP_Injection_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('OP Injection data exported');
+}
+
+// ==================== CHEMO STATUS HELPERS ====================
+
+function toggleChemoExpiredDate() {
+  const status = document.getElementById('chemo_status')?.value;
+  const grp = document.getElementById('chemoExpiredDateGroup');
+  if (grp) grp.style.display = status === 'Expired' ? '' : 'none';
+}
+
+function populateChemoStatusSelect() {
+  const sel = document.getElementById('chemo_status');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Select</option>' +
+    LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
 }
 
 // ==================== BACKUP REMINDER ====================
