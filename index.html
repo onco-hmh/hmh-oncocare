@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-030308">
+<meta name="version" content="v20260707-031914">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-030308</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-031914</span></div>
     </div>
   </div>
 </div>
@@ -2419,13 +2419,22 @@ function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('active'); });
   document.getElementById('topbarPageTitle').textContent = pageLabels[page] || page;
+
+  // Clear all filters when navigating to a page
+  state.filters[page] = '';
+  state.fieldFilters[page] = {};
+  const pageDiv = document.getElementById('page-' + page);
+  if (pageDiv) {
+    pageDiv.querySelectorAll('.filter-select').forEach(sel => sel.value = '');
+    pageDiv.querySelectorAll('.toolbar-search input').forEach(inp => inp.value = '');
+  }
+
   if (page === 'dashboard') refreshDashboard();
   else if (page === 'opinjection') {
     renderOPRegister();
   }
   else if (page === 'admin') {
     const isSA = isSuperAdmin();
-    // Settings and Security tabs only for superadmin
     const settingsTab = document.querySelector('.admin-tab[data-tab="settings"]');
     const securityTab = document.querySelector('.admin-tab[data-tab="security"]');
     if (settingsTab) settingsTab.style.display = isSA ? '' : 'none';
@@ -2433,7 +2442,6 @@ function navigate(page) {
     renderAdminUsers();
     loadSettingsPanel();
     refreshSecurityPanel();
-    // Reset to users tab on open
     switchAdminTab('users');
   }
   else renderTable(page);
