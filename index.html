@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-051644">
+<meta name="version" content="v20260707-052123">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -525,15 +525,6 @@ body.dark .op-month-box.stopped  { background: #1e293b; color: #94a3b8; }
   .op-months-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
-/* DATE INPUT - force dd/mm/yyyy display */
-input[type="date"]::-webkit-datetime-edit { padding: 0; }
-input[type="date"]::-webkit-datetime-edit-fields-wrapper { display:flex; }
-input[type="date"]::-webkit-datetime-edit-text { padding: 0 2px; }
-input[type="date"]::-webkit-datetime-edit-month-field { order: 2; }
-input[type="date"]::-webkit-datetime-edit-literal:first-of-type { order: 1; }
-input[type="date"]::-webkit-datetime-edit-day-field { order: 0; }
-input[type="date"]::-webkit-datetime-edit-year-field { order: 4; }
-
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -671,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-051644</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-052123</span></div>
     </div>
   </div>
 </div>
@@ -1562,12 +1553,12 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-grid">
           <div class="form-group"><label class="form-label">Hospital Number <span class="req">*</span></label><input class="form-control" id="pat_hospitalNumber" placeholder="e.g. HN-001"></div>
           <div class="form-group"><label class="form-label">Registry Number</label><input class="form-control" id="pat_registryNumber" placeholder="e.g. REG-001"></div>
-          <div class="form-group"><label class="form-label">Registration Date <span class="req">*</span></label><input type="date" class="form-control" id="pat_registrationDate"></div>
+          <div class="form-group"><label class="form-label">Registration Date <span class="req">*</span></label><input type="text" class="form-control date-input" id="pat_registrationDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
           <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label><input class="form-control" id="pat_fullName" placeholder="Full name"></div>
           <div class="form-group"><label class="form-label">Gender <span class="req">*</span></label>
             <select class="form-control" id="pat_gender"><option value="">Select</option><option>Male</option><option>Female</option></select>
           </div>
-          <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="pat_dob" oninput="calcAge()"></div>
+          <div class="form-group"><label class="form-label">Date of Birth</label><input type="text" class="form-control date-input" id="pat_dob" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="calcAge()" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
           <div class="form-group"><label class="form-label">Age at Registration</label><input class="form-control" id="pat_age" placeholder="Auto-calculated" readonly></div>
           <div class="form-group"><label class="form-label">Age Group</label>
             <select class="form-control" id="pat_ageGroup"><option value="">Select</option><option>0-14 (Pediatric)</option><option>15-24 (Young Adult)</option><option>25-44 (Adult)</option><option>45-64 (Middle Age)</option><option>65+ (Elderly)</option></select>
@@ -1596,7 +1587,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
             </select>
           </div>
           <div class="form-group"><label class="form-label">Diagnosis Details</label><input class="form-control" id="pat_diagnosisDetails"></div>
-          <div class="form-group"><label class="form-label">Date of Diagnosis</label><input type="date" class="form-control" id="pat_diagnosisDate"></div>
+          <div class="form-group"><label class="form-label">Date of Diagnosis</label><input type="text" class="form-control date-input" id="pat_diagnosisDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
           <div class="form-group"><label class="form-label">Stage</label>
             <select class="form-control" id="pat_stage"><option value="">Select Stage</option><option>Stage I</option><option>Stage II</option><option>Stage III</option><option>Stage IV</option><option>Unknown</option></select>
           </div>
@@ -1614,7 +1605,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
               <option value="">Select Status</option>
             </select>
           </div>
-          <div class="form-group" id="expiredDateGroup" style="display:none"><label class="form-label">Expired Date</label><input type="date" class="form-control" id="pat_expiredDate"></div>
+          <div class="form-group" id="expiredDateGroup" style="display:none"><label class="form-label">Expired Date</label><input type="text" class="form-control date-input" id="pat_expiredDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
           <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="pat_remarks" rows="2"></textarea></div>
         </div>
       </div>
@@ -1680,9 +1671,9 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Status <span class="req">*</span></label>
           <select class="form-control" id="chemo_status" onchange="toggleChemoExpiredDate()"><option value="">Select</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Started Date</label><input type="date" class="form-control" id="chemo_startedDate"></div>
-        <div class="form-group"><label class="form-label">Completed Date</label><input type="date" class="form-control" id="chemo_completedDate"></div>
-        <div class="form-group" id="chemoExpiredDateGroup" style="display:none"><label class="form-label">Expired Date <span class="req">*</span></label><input type="date" class="form-control" id="chemo_expiredDate"></div>
+        <div class="form-group"><label class="form-label">Started Date</label><input type="text" class="form-control date-input" id="chemo_startedDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
+        <div class="form-group"><label class="form-label">Completed Date</label><input type="text" class="form-control date-input" id="chemo_completedDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
+        <div class="form-group" id="chemoExpiredDateGroup" style="display:none"><label class="form-label">Expired Date <span class="req">*</span></label><input type="text" class="form-control date-input" id="chemo_expiredDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="chemo_remarks" rows="2"></textarea></div>
       </div>
     </div>
@@ -1706,7 +1697,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <input class="form-control" id="adr_hospitalNumber" oninput="lookupPatient('adr',this.value)">
         </div>
         <div class="form-group"><label class="form-label">Patient Name</label><input class="form-control" id="adr_patientName" readonly placeholder="Auto-filled"></div>
-        <div class="form-group"><label class="form-label">Reaction Date <span class="req">*</span></label><input type="date" class="form-control" id="adr_reactionDate"></div>
+        <div class="form-group"><label class="form-label">Reaction Date <span class="req">*</span></label><input type="text" class="form-control date-input" id="adr_reactionDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group"><label class="form-label">Suspected Drug Name <span class="req">*</span></label><input class="form-control" id="adr_drugName"></div>
         <div class="form-group"><label class="form-label">Drug Category</label>
           <select class="form-control" id="adr_drugCategory"><option value="">Select</option><option>Alkylating Agent</option><option>Antimetabolite</option><option>Taxane</option><option>Vinca Alkaloid</option><option>Anthracycline</option><option>Platinum Compound</option><option>Topoisomerase Inhibitor</option><option>Targeted Therapy</option><option>Immunotherapy</option><option>Hormonal</option><option>Other</option></select>
@@ -1753,7 +1744,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Date <span class="req">*</span></label><input type="date" class="form-control" id="extrav_date"></div>
+        <div class="form-group"><label class="form-label">Date <span class="req">*</span></label><input type="text" class="form-control date-input" id="extrav_date" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group"><label class="form-label">Hospital Number <span class="req">*</span></label>
           <input class="form-control" id="extrav_hospitalNumber" oninput="lookupPatient('extrav',this.value)">
         </div>
@@ -1854,7 +1845,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         </div>
         <div class="form-group full"><label class="form-label">Corrective & Preventive Action</label><textarea class="form-control" id="spill_capa" rows="2"></textarea></div>
         <div class="form-group"><label class="form-label">Reviewed By</label><input class="form-control" id="spill_reviewedBy"></div>
-        <div class="form-group"><label class="form-label">Review Date</label><input type="date" class="form-control" id="spill_reviewDate"></div>
+        <div class="form-group"><label class="form-label">Review Date</label><input type="text" class="form-control date-input" id="spill_reviewDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="spill_remarks" rows="2"></textarea></div>
       </div>
     </div>
@@ -1874,7 +1865,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Date <span class="req">*</span></label><input type="date" class="form-control" id="inc_date"></div>
+        <div class="form-group"><label class="form-label">Date <span class="req">*</span></label><input type="text" class="form-control date-input" id="inc_date" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group"><label class="form-label">Type <span class="req">*</span></label>
           <select class="form-control" id="inc_type"><option value="">Select Type</option><option>Medication Error</option><option>Near Miss</option><option>Equipment Failure</option><option>Patient Fall</option><option>Infection Control</option><option>Documentation Error</option><option>Other</option></select>
         </div>
@@ -1926,7 +1917,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Gender</label>
           <select class="form-control" id="op_gender"><option value="">Select</option><option>Male</option><option>Female</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="op_dob" oninput="calcOPAge()"></div>
+        <div class="form-group"><label class="form-label">Date of Birth</label><input type="text" class="form-control date-input" id="op_dob" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="calcOPAge()" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group"><label class="form-label">Age</label><input class="form-control" id="op_age" placeholder="Auto-calculated"></div>
         <div class="form-group"><label class="form-label">ID / Passport Number</label><input class="form-control" id="op_idNumber"></div>
         <div class="form-group"><label class="form-label">Contact Number</label><input class="form-control" id="op_contact"></div>
@@ -1986,7 +1977,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
             <option>Custom</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-control" id="ops_startDate"></div>
+        <div class="form-group"><label class="form-label">Start Date</label><input type="text" class="form-control date-input" id="ops_startDate" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group"><label class="form-label">First Dose Number</label><input type="number" class="form-control" id="ops_firstDose" placeholder="e.g. 1" value="1" min="1"></div>
         <div class="form-group full"><label class="form-label">Remarks</label><textarea class="form-control" id="ops_remarks" rows="2"></textarea></div>
       </div>
@@ -2008,7 +1999,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
     <div class="modal-body">
       <div id="opDosePatientInfo" style="background:var(--primary-bg);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px"></div>
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Date Given</label><input type="date" class="form-control" id="opd_date"></div>
+        <div class="form-group"><label class="form-label">Date Given</label><input type="text" class="form-control date-input" id="opd_date" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" oninput="formatDateInput(this)" onblur="validateDateInput(this)" data-iso=""></div>
         <div class="form-group"><label class="form-label">Dose Number</label><input type="number" class="form-control" id="opd_doseNumber" min="1"></div>
         <div class="form-group full"><label class="form-label">Entry Type</label>
           <select class="form-control" id="opd_type" onchange="toggleDoseFields()">
@@ -2591,7 +2582,7 @@ function toggleExpiredDate() {
   document.getElementById('expiredDateGroup').style.display = s === 'Expired' ? '' : 'none';
 }
 function calcAge() {
-  const dob = document.getElementById('pat_dob').value;
+  const dob = getDateVal('pat_dob');
   if (!dob) return;
   const diff = Date.now() - new Date(dob).getTime();
   const age = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
@@ -2610,7 +2601,7 @@ function savePatient() {
     if (!el.value.trim()) { el.classList.add('error'); toast('Please fill all required fields', 'error'); el.focus(); return; }
     el.classList.remove('error');
   }
-  const regDate = document.getElementById('pat_registrationDate').value;
+  const regDate = getDateVal('pat_registrationDate');
   if (!regDate) { toast('Registration date is required', 'error'); return; }
   const hn = document.getElementById('pat_hospitalNumber').value.trim();
   const existing = DB.patients.find(p => p.hospitalNumber === hn && p.id !== state.editId);
@@ -2714,8 +2705,8 @@ function openChemoModal(id = null) {
       document.getElementById('chemo_diagnosis').value = r.diagnosis||'';
       document.getElementById('chemo_g6pd').value = r.g6pd||'';
       document.getElementById('chemo_status').value = r.status||r.chemoStatus||'';
-      document.getElementById('chemo_startedDate').value = r.startedDate||'';
-      document.getElementById('chemo_completedDate').value = r.completedDate||'';
+      setDateVal('chemo_startedDate', r.startedDate||'');
+      setDateVal('chemo_completedDate', r.completedDate||'');
       document.getElementById('chemo_remarks').value = r.remarks||'';
       document.getElementById('chemo_drugDosage').value = r.drugDosage||'';
       // Load frequency checkboxes
@@ -2730,7 +2721,7 @@ function openChemoModal(id = null) {
       // Also auto-fill expired date if status is Expired
       if (r.status === 'Expired' || r.chemoStatus === 'Expired') {
         toggleChemoExpiredDate();
-        document.getElementById('chemo_expiredDate').value = r.expiredDate || (pat ? pat.expiredDate : '') || '';
+        setDateVal('chemo_expiredDate', r.expiredDate || (pat ? pat.expiredDate : '') || '');
       }
     }
   }
@@ -2740,9 +2731,9 @@ function saveChemo() {
   const hn = document.getElementById('chemo_hospitalNumber').value.trim();
   const status = document.getElementById('chemo_status').value;
   if (!hn || !status) { toast('Hospital Number and Status are required', 'error'); return; }
-  const expiredDate = document.getElementById('chemo_expiredDate') ? document.getElementById('chemo_expiredDate').value : '';
+  const expiredDate = document.getElementById('chemo_expiredDate') ? getDateVal('chemo_expiredDate') : '';
   const freqChecked = [...document.querySelectorAll('.chemo-freq-cb:checked')].map(cb => cb.value);
-  const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, drugDosage: document.getElementById('chemo_drugDosage').value, frequency: freqChecked.join(', '), status: status, expiredDate: expiredDate, startedDate: document.getElementById('chemo_startedDate').value, completedDate: document.getElementById('chemo_completedDate').value, remarks: document.getElementById('chemo_remarks').value };
+  const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, drugDosage: document.getElementById('chemo_drugDosage').value, frequency: freqChecked.join(', '), status: status, expiredDate: expiredDate, startedDate: getDateVal('chemo_startedDate'), completedDate: getDateVal('chemo_completedDate'), remarks: document.getElementById('chemo_remarks').value };
   if (state.editId) { const idx = DB.chemo.findIndex(x => x.id === state.editId); DB.chemo[idx] = obj; toast('Record updated'); }
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
   save('chemo');
@@ -2804,7 +2795,7 @@ function openExtravModal(id = null) {
   openModal('extravModal');
 }
 function saveExtrav() {
-  const d = document.getElementById('extrav_date').value;
+  const d = getDateVal('extrav_date');
   const hn = document.getElementById('extrav_hospitalNumber').value.trim();
   const drug = document.getElementById('extrav_drug').value.trim();
   const nurse = document.getElementById('extrav_nurse').value.trim();
@@ -2843,11 +2834,11 @@ function openIncidentModal(id = null) {
   state.editId = id;
   ['date','type','staff','action'].forEach(f => { const el = document.getElementById('inc_' + f); if (el) el.value = ''; });
   document.getElementById('incidentModalTitle').textContent = id ? 'Edit Incident' : 'Log Incident';
-  if (id) { const r = DB.incident.find(x => x.id === id); if (r) { document.getElementById('inc_date').value = r.date||''; document.getElementById('inc_type').value = r.type||''; document.getElementById('inc_staff').value = r.staff||''; document.getElementById('inc_action').value = r.action||''; } }
+  if (id) { const r = DB.incident.find(x => x.id === id); if (r) { setDateVal('inc_date', r.date||''); document.getElementById('inc_type').value = r.type||''; document.getElementById('inc_staff').value = r.staff||''; document.getElementById('inc_action').value = r.action||''; } }
   openModal('incidentModal');
 }
 function saveIncident() {
-  const date = document.getElementById('inc_date').value;
+  const date = getDateVal('inc_date');
   const type = document.getElementById('inc_type').value;
   if (!date || !type) { toast('Date and Type are required', 'error'); return; }
   const obj = { id: state.editId || genId('INC'), date, type, staff: document.getElementById('inc_staff').value, action: document.getElementById('inc_action').value };
@@ -4672,7 +4663,7 @@ function lookupOPPatient(hn) {
   if (p) {
     document.getElementById('op_patientName').value = p.fullName||'';
     document.getElementById('op_gender').value = p.gender||'';
-    document.getElementById('op_dob').value = p.dob||'';
+    setDateVal('op_dob', p.dob||'');
     document.getElementById('op_age').value = p.age||'';
     document.getElementById('op_idNumber').value = p.nationalId||'';
     document.getElementById('op_contact').value = p.contactNumber||'';
@@ -4681,7 +4672,7 @@ function lookupOPPatient(hn) {
 }
 
 function calcOPAge() {
-  const dob = document.getElementById('op_dob').value;
+  const dob = getDateVal('op_dob');
   if (!dob) return;
   const age = Math.floor((Date.now() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
   document.getElementById('op_age').value = age;
@@ -4697,7 +4688,7 @@ function saveOPPatient() {
     hospitalNumber: hn,
     patientName: document.getElementById('op_patientName').value,
     gender: document.getElementById('op_gender').value,
-    dob: document.getElementById('op_dob').value,
+    dob: getDateVal('op_dob'),
     age: document.getElementById('op_age').value,
     idNumber: document.getElementById('op_idNumber').value,
     contact: document.getElementById('op_contact').value,
@@ -4830,7 +4821,7 @@ function saveOPSchedule() {
     injectionName: inj,
     dosage,
     periodicity: period,
-    startDate: document.getElementById('ops_startDate').value,
+    startDate: getDateVal('ops_startDate'),
     firstDose: parseInt(document.getElementById('ops_firstDose').value) || 1,
     remarks: document.getElementById('ops_remarks').value,
     doses: state.editId ? (DB.opSchedule.find(x => x.id === state.editId)?.doses || {}) : {},
@@ -5225,14 +5216,14 @@ function openDoseEntry(scheduleId, monthKey) {
     <span style="color:var(--primary)">${r.injectionName}</span> · ${r.dosage} · <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>`;
   // Pre-fill
   if (existing) {
-    document.getElementById('opd_date').value = existing.date||'';
+    setDateVal('opd_date', existing.date||'');
     document.getElementById('opd_doseNumber').value = existing.doseNumber||'';
     document.getElementById('opd_type').value = existing.type||'given';
     document.getElementById('opd_notes').value = existing.notes||'';
   } else {
     // Auto-suggest date and dose number
     const suggested = getSuggestedDate(r, parseInt(yr), parseInt(mo)-1);
-    document.getElementById('opd_date').value = suggested ? new Date(`${suggested} ${yr}`).toISOString().slice(0,10) : '';
+    setDateVal('opd_date', suggested ? new Date(`${suggested} ${yr}`).toISOString().slice(0,10) : '');
     document.getElementById('opd_doseNumber').value = getNextDoseNumber(r);
     document.getElementById('opd_type').value = 'given';
     document.getElementById('opd_notes').value = '';
@@ -5248,7 +5239,7 @@ function getNextDoseNumber(record) {
 
 function saveDoseEntry() {
   if (!currentDoseRecord || !currentDoseKey) return;
-  const date = document.getElementById('opd_date').value;
+  const date = getDateVal('opd_date');
   const doseNumber = document.getElementById('opd_doseNumber').value;
   const type = document.getElementById('opd_type').value;
   const notes = document.getElementById('opd_notes').value;
@@ -5499,18 +5490,86 @@ function populateChemoStatusSelect() {
   }
 }
 
-// ==================== DATE FORMAT FIX ====================
+// ==================== DATE INPUT HELPERS ====================
 function forceDateFormat() {
-  // Replace all date inputs with text inputs that show dd/mm/yyyy
-  document.querySelectorAll('input[type="date"]').forEach(el => {
-    el.setAttribute('lang', 'en-GB');
-    // Store original value
-    const origVal = el.value;
-    // Add event listener to ensure format
-    if (!el.dataset.formatFixed) {
-      el.dataset.formatFixed = '1';
-    }
+  // Initialize all date-input fields
+  document.querySelectorAll('.date-input').forEach(el => {
+    if (el.dataset.iso) setDateInputDisplay(el, el.dataset.iso);
   });
+}
+
+// Format as user types: auto-insert slashes
+function formatDateInput(el) {
+  let v = el.value.replace(/[^0-9]/g, '');
+  if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+  if (v.length >= 6) v = v.slice(0,5) + '/' + v.slice(5,9);
+  el.value = v;
+  // Update ISO value when complete
+  if (v.length === 10) {
+    const iso = ddmmyyyyToISO(v);
+    if (iso) el.dataset.iso = iso;
+  }
+}
+
+function validateDateInput(el) {
+  if (!el.value) { el.dataset.iso = ''; return; }
+  const iso = ddmmyyyyToISO(el.value);
+  if (iso) {
+    el.dataset.iso = iso;
+    el.style.borderColor = '';
+  } else {
+    el.style.borderColor = 'var(--danger)';
+  }
+}
+
+// Convert DD/MM/YYYY → YYYY-MM-DD
+function ddmmyyyyToISO(dmy) {
+  if (!dmy) return '';
+  const parts = dmy.split('/');
+  if (parts.length !== 3) return '';
+  const [d, m, y] = parts.map(p => p.trim());
+  if (!d || !m || !y || y.length !== 4) return '';
+  const day = parseInt(d), month = parseInt(m), year = parseInt(y);
+  if (isNaN(day)||isNaN(month)||isNaN(year)) return '';
+  if (day<1||day>31||month<1||month>12||year<1900||year>2100) return '';
+  return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+
+// Convert YYYY-MM-DD → DD/MM/YYYY
+function isoToDDMMYYYY(iso) {
+  if (!iso) return '';
+  const parts = iso.slice(0,10).split('-');
+  if (parts.length !== 3) return '';
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+// Set a date input from ISO string
+function setDateInputDisplay(el, iso) {
+  if (!el) return;
+  if (iso) {
+    el.value = isoToDDMMYYYY(iso);
+    el.dataset.iso = iso;
+  } else {
+    el.value = '';
+    el.dataset.iso = '';
+  }
+}
+
+// Get ISO value from a date input by ID
+function getDateVal(id) {
+  const el = document.getElementById(id);
+  if (!el) return '';
+  // If it has an ISO data attribute, use that
+  if (el.dataset.iso) return el.dataset.iso;
+  // Otherwise try to parse the displayed value
+  return ddmmyyyyToISO(el.value) || el.value || '';
+}
+
+// Set a date input by ID from ISO string
+function setDateVal(id, iso) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  setDateInputDisplay(el, iso);
 }
 
 // ==================== BACKUP REMINDER ====================
