@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-073306">
+<meta name="version" content="v20260707-073734">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -5371,7 +5371,7 @@ function renderOPOngoing() {
       <td>${lastDate ? fmtDate(lastDate) : '—'}</td>
       <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '—'}${isOverdue?' ⚠️':isDueSoon?' 🔔':''}</td>
       <td><span class="badge badge-info">${totalDoses} doses</span></td>
-      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTabForPatient('${hn}')"><i class="fas fa-calendar"></i> Schedule</button></td>
+      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTabForPatient('${r.hospitalNumber}')"><i class="fas fa-calendar"></i> Schedule</button></td>
     </tr>`;
   }).join('');
 }
