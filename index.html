@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-053850">
+<meta name="version" content="v20260707-071515">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-053850</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-071515</span></div>
     </div>
   </div>
 </div>
@@ -4864,6 +4864,24 @@ function renderOPSchedule() {
 
   let data = [...DB.opSchedule];
   if (opScheduleFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opScheduleFilter.toLowerCase())));
+
+  // Filter to only show patients that have activity (doses given OR suggested dates) in selected year
+  data = data.filter(r => {
+    // Check if any doses were recorded in this year
+    const hasDosesThisYear = Object.keys(r.doses||{}).some(k => k.startsWith(year + '-'));
+    if (hasDosesThisYear) return true;
+    // Check if any suggested dates fall in this year
+    for (let mi = 0; mi < 12; mi++) {
+      const suggested = getSuggestedDate(r, year, mi);
+      if (suggested) return true;
+    }
+    // Check if treatment started in or before this year and is still active
+    if (r.startDate) {
+      const startYear = parseInt((r.startDate||'').slice(0,4));
+      if (startYear <= year) return true;
+    }
+    return false;
+  });
 
   if (!data.length) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-calendar-alt"></i></div><div class="empty-title">No treatment plans yet</div><div class="empty-text">Click "+ Add Treatment" to get started</div></div>`;
