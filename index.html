@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-043516">
+<meta name="version" content="v20260707-043929">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-043516</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-043929</span></div>
     </div>
   </div>
 </div>
@@ -3226,7 +3226,7 @@ function renderCancerDash() {
     { label:'Expired Patients', value: pts.filter(p => p.status==='Expired').length, icon:'fa-heart-broken', color:'#EF4444', bg:'#fee2e2' },
     { label:'Lost to Follow-up', value: pts.filter(p => p.status==='Lost to Follow-up').length, icon:'fa-user-times', color:'#8B5CF6', bg:'#ede9fe' },
     { label:'Transferred Out', value: pts.filter(p => p.status==='Transferred Out').length, icon:'fa-exchange-alt', color:'#6366F1', bg:'#e0e7ff' },
-    { label:'Total Registered', value: pts.length, icon:'fa-clipboard-list', color:'#14b8a6', bg:'#f0fdfa' },
+
   ];
   document.getElementById('kpiGrid').innerHTML = kpiData.map(k => `
     <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
