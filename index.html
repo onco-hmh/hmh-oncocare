@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-095617">
+<meta name="version" content="v20260707-100254">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1551,12 +1551,12 @@ body.dark .login-input:focus { background: var(--card-bg); }
 
   <!-- Sub Tabs -->
   <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:12px;padding:4px;width:fit-content;border:1px solid var(--border)">
-    <button id="ppTab_register_btn" onclick="switchPPTab('register')" class="pp-tab-btn active-pp-tab" style="padding:8px 16px;border-radius:9px;border:none;background:var(--primary);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-list-alt"></i> Line Register</button>
-    <button id="ppTab_portflush_btn" onclick="switchPPTab('portflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> Port Flush &amp; Dressing</button>
-    <button id="ppTab_piccflush_btn" onclick="switchPPTab('piccflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> PICC Flush &amp; Dressing</button>
+    <button id="ppTab_register_btn" onclick="switchPPTab('register')" style="padding:8px 18px;border-radius:9px;border:none;background:var(--primary);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-procedures"></i> Line Register</button>
+    <button id="ppTab_portflush_btn" onclick="switchPPTab('portflush')" style="padding:8px 18px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> Port Flush &amp; Dressing</button>
+    <button id="ppTab_piccflush_btn" onclick="switchPPTab('piccflush')" style="padding:8px 18px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> PICC Flush &amp; Dressing</button>
   </div>
 
-  <!-- ── TAB 1: LINE REGISTER ── -->
+  <!-- ── TAB 1: LINE REGISTER (Card View) ── -->
   <div id="ppPanel_register">
     <div class="toolbar">
       <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPPRegister(this.value)"></div>
@@ -1567,33 +1567,11 @@ body.dark .login-input:focus { background: var(--card-bg); }
       </select>
       <button class="btn btn-primary btn-sm" onclick="openPPRegisterModal()"><i class="fas fa-plus"></i> Add Entry</button>
     </div>
-    <div class="card" style="padding:0">
-      <div class="table-wrapper">
-        <table id="ppRegisterTable">
-          <thead><tr>
-            <th>#</th>
-            <th>ID No</th>
-            <th>Patient Name</th>
-            <th>Diagnosis</th>
-            <th>Line Type</th>
-            <th>Date Inserted</th>
-            <th>Insertion Site</th>
-            <th>Inserted By</th>
-            <th>Catheter Size</th>
-            <th>Lumens</th>
-            <th>Tip Confirmed</th>
-            <th>Purpose</th>
-            <th>Signs of Infection</th>
-            <th>Phlebitis Score</th>
-            <th>Nurse Initial</th>
-            <th>Date Removed</th>
-            <th class="no-print">Actions</th>
-          </tr></thead>
-          <tbody id="ppRegisterTbody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-wrap" id="ppRegisterPagination"></div>
-    </div>
+    <!-- Summary KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="ppRegisterKPIs"></div>
+    <!-- Cards container -->
+    <div id="ppRegisterCards"></div>
+    <div id="ppRegisterPagination"></div>
   </div>
 
   <!-- ── TAB 2: PORT FLUSH & DRESSING ── -->
@@ -1603,33 +1581,9 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <input type="month" class="filter-select" id="portFlushMonth" onchange="renderPortFlush()" style="max-width:160px">
       <button class="btn btn-primary btn-sm" onclick="openPortFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
     </div>
-    <!-- KPI row -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="portFlushKPIs"></div>
-    <div class="card" style="padding:0">
-      <div class="table-wrapper">
-        <table id="portFlushTable">
-          <thead><tr>
-            <th>#</th>
-            <th>ID No</th>
-            <th>Patient Name</th>
-            <th>Diagnosis</th>
-            <th>Date of Flush</th>
-            <th>Dressing Clean</th>
-            <th>Signs of Infection</th>
-            <th>Backflow/Inflow Status</th>
-            <th>Phlebitis Score</th>
-            <th>Flush Given</th>
-            <th>Aseptic Technique</th>
-            <th>Action Taken</th>
-            <th>Nurse Initial</th>
-            <th>Remarks</th>
-            <th class="no-print">Actions</th>
-          </tr></thead>
-          <tbody id="portFlushTbody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-wrap" id="portFlushPagination"></div>
-    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="portFlushKPIs"></div>
+    <div id="portFlushCards"></div>
+    <div id="portFlushPagination"></div>
   </div>
 
   <!-- ── TAB 3: PICC FLUSH & DRESSING ── -->
@@ -1639,33 +1593,9 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <input type="month" class="filter-select" id="piccFlushMonth" onchange="renderPiccFlush()" style="max-width:160px">
       <button class="btn btn-primary btn-sm" onclick="openPiccFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
     </div>
-    <!-- KPI row -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="piccFlushKPIs"></div>
-    <div class="card" style="padding:0">
-      <div class="table-wrapper">
-        <table id="piccFlushTable">
-          <thead><tr>
-            <th>#</th>
-            <th>ID No</th>
-            <th>Patient Name</th>
-            <th>Diagnosis</th>
-            <th>Date of Flush/Dressing</th>
-            <th>Dressing Clean</th>
-            <th>Signs of Infection</th>
-            <th>Backflow/Inflow Status</th>
-            <th>Phlebitis Score</th>
-            <th>Flush Given</th>
-            <th>Aseptic Technique</th>
-            <th>Action Taken</th>
-            <th>Nurse Initial</th>
-            <th>Remarks</th>
-            <th class="no-print">Actions</th>
-          </tr></thead>
-          <tbody id="piccFlushTbody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-wrap" id="piccFlushPagination"></div>
-    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="piccFlushKPIs"></div>
+    <div id="piccFlushCards"></div>
+    <div id="piccFlushPagination"></div>
   </div>
 </div>
 
@@ -6281,7 +6211,7 @@ function lookupPPPatientFlush(prefix, val) {
   document.getElementById(prefix + '_diagnosis').value = p ? (p.diagnosis||'') : '';
 }
 
-// ── LINE REGISTER ──
+// ── LINE REGISTER (Card View) ──
 function renderPPRegister(search, typeFilter) {
   if (search !== undefined && search !== null) ppRegisterFilter = search;
   if (typeFilter !== undefined && typeFilter !== null) ppRegisterTypeFilter = typeFilter;
@@ -6290,48 +6220,85 @@ function renderPPRegister(search, typeFilter) {
   if (ppRegisterTypeFilter) data = data.filter(r => r.lineType === ppRegisterTypeFilter);
   data.sort((a,b) => (b.dateOfInsertion||'').localeCompare(a.dateOfInsertion||''));
 
-  const tbody = document.getElementById('ppRegisterTbody');
-  if (!tbody) return;
+  // KPIs
+  const kpiEl = document.getElementById('ppRegisterKPIs');
+  if (kpiEl) {
+    const total = DB.portpiccRegister.length;
+    const ports = DB.portpiccRegister.filter(r=>r.lineType==='PORT').length;
+    const piccs = DB.portpiccRegister.filter(r=>r.lineType==='PICC').length;
+    const active = DB.portpiccRegister.filter(r=>!r.dateOfRemoval).length;
+    const removed = DB.portpiccRegister.filter(r=>r.dateOfRemoval).length;
+    const infections = DB.portpiccRegister.filter(r=>r.signsOfInfection==='Yes').length;
+    [
+      {label:'Total Lines', val:total, icon:'fa-procedures', color:'#0F766E', bg:'#f0fdfa'},
+      {label:'PORT', val:ports, icon:'fa-dot-circle', color:'#0F766E', bg:'#f0fdfa'},
+      {label:'PICC', val:piccs, icon:'fa-grip-lines', color:'#8B5CF6', bg:'#ede9fe'},
+      {label:'Active Lines', val:active, icon:'fa-check-circle', color:'#10B981', bg:'#d1fae5'},
+      {label:'Removed', val:removed, icon:'fa-times-circle', color:'#6B7280', bg:'#f3f4f6'},
+      {label:'Infections', val:infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2'},
+    ].forEach(k => {
+      kpiEl.innerHTML = '';
+    });
+    kpiEl.innerHTML = [{label:'Total Lines',val:total,icon:'fa-procedures',color:'#0F766E',bg:'#f0fdfa'},{label:'PORT',val:ports,icon:'fa-dot-circle',color:'#0F766E',bg:'#f0fdfa'},{label:'PICC',val:piccs,icon:'fa-grip-lines',color:'#8B5CF6',bg:'#ede9fe'},{label:'Active Lines',val:active,icon:'fa-check-circle',color:'#10B981',bg:'#d1fae5'},{label:'Removed',val:removed,icon:'fa-times-circle',color:'#6B7280',bg:'#f3f4f6'},{label:'Infections',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'}]
+    .map(k=>`<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+  }
+
+  const container = document.getElementById('ppRegisterCards');
+  if (!container) return;
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="17"><div class="empty-state"><div class="empty-icon"><i class="fas fa-procedures"></i></div><div class="empty-title">No line entries</div><div class="empty-text">Click "+ Add Entry" to record a line insertion</div></div></td></tr>`;
-    document.getElementById('ppRegisterPagination').innerHTML = '';
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-procedures"></i></div><div class="empty-title">No line entries yet</div><div class="empty-text">Click "+ Add Entry" to record a line insertion</div></div>`;
     return;
   }
 
-  const page = 1, pageSize = 15;
-  const paged = data.slice(0, pageSize * page);
-
-  tbody.innerHTML = data.map((r, i) => {
-    const lineColor = r.lineType === 'PORT' ? 'var(--primary)' : '#8B5CF6';
-    const infectionBadge = r.signsOfInfection === 'Yes'
-      ? '<span class="badge badge-danger">Yes</span>'
-      : '<span class="badge badge-success">No</span>';
-    const phScore = parseInt(r.phlebitisScore);
-    const phBadge = phScore >= 2
-      ? `<span class="badge badge-danger">${phScore}</span>`
-      : `<span class="badge badge-success">${phScore||0}</span>`;
-    return `<tr>
-      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
-      <td style="font-weight:600;color:var(--primary)">${r.idNo}</td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td style="font-size:12px">${r.diagnosis||'—'}</td>
-      <td><span class="badge" style="background:${lineColor}20;color:${lineColor};font-size:11px">${r.lineType||'—'}</span></td>
-      <td style="font-size:12px">${fmtDate(r.dateOfInsertion)}</td>
-      <td style="font-size:12px">${r.insertionSite||'—'}</td>
-      <td style="font-size:12px">${r.insertedBy||'—'}</td>
-      <td style="font-size:12px">${r.catheterSize||'—'}</td>
-      <td style="font-size:12px">${r.lumens||'—'}</td>
-      <td style="font-size:12px">${r.tipPositionConfirmed||'—'}</td>
-      <td style="font-size:12px">${r.purpose||'—'}</td>
-      <td>${infectionBadge}</td>
-      <td>${phBadge}</td>
-      <td style="font-size:12px;font-weight:600">${r.nurseInitial||'—'}</td>
-      <td style="font-size:12px;color:${r.dateOfRemoval?'var(--danger)':'var(--text-muted)'}">${r.dateOfRemoval ? fmtDate(r.dateOfRemoval) : '—'}</td>
-      <td class="no-print"><div class="flex gap-2">
-        <button class="btn btn-xs btn-outline" onclick="openPPRegisterModal('${r.id}')"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portpiccRegister','${r.id}')"><i class="fas fa-trash"></i></button>
-      </div></td>
-    </tr>`;
+  container.innerHTML = data.map(r => {
+    const isPort = r.lineType === 'PORT';
+    const lineColor = isPort ? 'var(--primary)' : '#8B5CF6';
+    const lineBg = isPort ? 'var(--primary-bg)' : '#ede9fe';
+    const isActive = !r.dateOfRemoval;
+    const hasInfection = r.signsOfInfection === 'Yes';
+    const phScore = parseInt(r.phlebitisScore||0);
+    return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${lineColor};padding:16px 20px">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <!-- Icon -->
+        <div style="width:44px;height:44px;border-radius:10px;background:${lineBg};color:${lineColor};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+          <i class="fas ${isPort ? 'fa-dot-circle' : 'fa-grip-lines'}"></i>
+        </div>
+        <!-- Main info -->
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-size:15px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
+            <span style="font-size:12px;color:var(--primary);font-weight:600">${r.idNo}</span>
+            <span class="badge" style="background:${lineBg};color:${lineColor};font-size:11px">${r.lineType||'—'}</span>
+            ${isActive ? '<span class="badge badge-success" style="font-size:11px">Active</span>' : '<span class="badge" style="background:#f3f4f6;color:#6B7280;font-size:11px">Removed</span>'}
+            ${hasInfection ? '<span class="badge badge-danger" style="font-size:11px"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : ''}
+            ${phScore >= 2 ? `<span class="badge badge-warning" style="font-size:11px">Phlebitis ${phScore}</span>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${r.diagnosis||'—'}</div>
+          <!-- Details grid -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 16px">
+            ${r.insertionSite ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Site:</span> <span style="color:var(--text);font-weight:500">${r.insertionSite}</span></div>` : ''}
+            ${r.dateOfInsertion ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Inserted:</span> <span style="color:var(--text);font-weight:500">${fmtDate(r.dateOfInsertion)}</span></div>` : ''}
+            ${r.insertedBy ? `<div style="font-size:12px"><span style="color:var(--text-muted)">By:</span> <span style="color:var(--text);font-weight:500">${r.insertedBy}</span></div>` : ''}
+            ${r.catheterSize ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Catheter:</span> <span style="color:var(--text);font-weight:500">${r.catheterSize}</span></div>` : ''}
+            ${r.lumens ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Lumens:</span> <span style="color:var(--text);font-weight:500">${r.lumens}</span></div>` : ''}
+            ${r.tipPositionConfirmed ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Tip Confirmed:</span> <span style="color:var(--text);font-weight:500">${r.tipPositionConfirmed}</span></div>` : ''}
+            ${r.confirmationMethod ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Method:</span> <span style="color:var(--text);font-weight:500">${r.confirmationMethod}</span></div>` : ''}
+            ${r.purpose ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Purpose:</span> <span style="color:var(--text);font-weight:500">${r.purpose}</span></div>` : ''}
+            ${r.flushGiven ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Flush:</span> <span style="color:var(--primary);font-weight:500">${r.flushGiven}</span></div>` : ''}
+            ${r.nurseInitial ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Nurse:</span> <span style="color:var(--text);font-weight:600">${r.nurseInitial}</span></div>` : ''}
+            ${r.dateOfRemoval ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Removed:</span> <span style="color:var(--danger);font-weight:500">${fmtDate(r.dateOfRemoval)}</span></div>` : ''}
+            ${r.reasonForRemoval ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Reason:</span> <span style="color:var(--text)">${r.reasonForRemoval}</span></div>` : ''}
+          </div>
+          ${r.complication ? `<div style="margin-top:8px;padding:6px 10px;background:var(--bg-warning,#fef3c7);border-radius:6px;font-size:12px;color:#92400e"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i><strong>Complication:</strong> ${r.complication}</div>` : ''}
+          ${r.remarks ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">${r.remarks}</div>` : ''}
+        </div>
+        <!-- Actions -->
+        <div class="flex gap-2 no-print" style="flex-shrink:0">
+          <button class="btn btn-xs btn-outline" onclick="openPPRegisterModal('${r.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portpiccRegister','${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -6383,45 +6350,52 @@ function renderPortFlush(search) {
     const infections = data.filter(r => r.signsOfInfection === 'Yes').length;
     const highPhlebitis = data.filter(r => parseInt(r.phlebitisScore) >= 2).length;
     kpiEl.innerHTML = [
-      { label:'Total Flushes', val: total, color:'#0F766E', bg:'#f0fdfa' },
-      { label:'Signs of Infection', val: infections, color:'#EF4444', bg:'#fee2e2' },
-      { label:'Phlebitis ≥2', val: highPhlebitis, color:'#F59E0B', bg:'#fef3c7' },
-    ].map(k => `<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:${k.bg};border-radius:8px">
-      <span style="font-size:18px;font-weight:700;color:${k.color}">${k.val}</span>
-      <span style="font-size:12px;color:${k.color}">${k.label}</span>
-    </div>`).join('');
+      { label:'Total Flushes', val: total, icon:'fa-tint', color:'#0F766E', bg:'#f0fdfa' },
+      { label:'Signs of Infection', val: infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2' },
+      { label:'Phlebitis ≥2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
+    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
   }
 
-  const tbody = document.getElementById('portFlushTbody');
-  if (!tbody) return;
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="15"><div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div></td></tr>`;
-    document.getElementById('portFlushPagination').innerHTML = ''; return;
+  // Card view for Port Flush
+  const container = document.getElementById('portFlushCards');
+  if (!container) return;
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div>`;
+    return;
   }
-  tbody.innerHTML = data.map((r,i) => {
-    const infBadge = r.signsOfInfection==='Yes' ? '<span class="badge badge-danger">Yes</span>' : '<span class="badge badge-success">No</span>';
+  container.innerHTML = data.map(r => {
+    const hasInfection = r.signsOfInfection === 'Yes';
     const phScore = parseInt(r.phlebitisScore||0);
-    const phBadge = phScore >= 2 ? `<span class="badge badge-danger">${phScore}</span>` : `<span class="badge badge-success">${phScore}</span>`;
-    return `<tr>
-      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
-      <td style="font-weight:600;color:var(--primary)">${r.idNo}</td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td style="font-size:12px">${r.diagnosis||'—'}</td>
-      <td style="font-size:12px">${fmtDate(r.dateOfFlush)}</td>
-      <td style="font-size:12px">${r.dressingClean||'—'}</td>
-      <td>${infBadge}</td>
-      <td style="font-size:12px">${r.backflowStatus||'—'}</td>
-      <td>${phBadge}</td>
-      <td style="font-size:12px;font-weight:500;color:var(--primary)">${r.flushGiven||'—'}</td>
-      <td style="font-size:12px">${r.asepticTechnique||'—'}</td>
-      <td style="font-size:12px">${r.actionTaken||'—'}</td>
-      <td style="font-size:12px;font-weight:600">${r.nurseInitial||'—'}</td>
-      <td style="font-size:12px">${r.remarks||'—'}</td>
-      <td class="no-print"><div class="flex gap-2">
-        <button class="btn btn-xs btn-outline" onclick="openPortFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portFlush','${r.id}')"><i class="fas fa-trash"></i></button>
-      </div></td>
-    </tr>`;
+    const backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
+    return `<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ${hasInfection||phScore>=2?'var(--danger)':'var(--success)'}">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-tint"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:14px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
+            <span style="font-size:12px;color:var(--primary);font-weight:600">${r.idNo}</span>
+            <span style="font-size:12px;color:var(--text-muted)">${fmtDate(r.dateOfFlush)}</span>
+            ${hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>'}
+            ${phScore >= 2 ? `<span class="badge badge-danger">Phlebitis ${phScore}</span>` : `<span class="badge badge-success">Phlebitis 0</span>`}
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'—'}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">
+            ${r.dressingClean ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Dressing:</span> <span style="font-weight:500;color:${r.dressingClean==='Yes'?'var(--success)':'var(--danger)'}">${r.dressingClean}</span></div>` : ''}
+            ${r.backflowStatus ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Backflow:</span> <span style="font-weight:500;color:${backflowGood?'var(--success)':'var(--danger)'}">${r.backflowStatus}</span></div>` : ''}
+            ${r.flushGiven ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Flush:</span> <span style="font-weight:600;color:var(--primary)">${r.flushGiven}</span></div>` : ''}
+            ${r.asepticTechnique ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Aseptic:</span> <span style="font-weight:500">${r.asepticTechnique}</span></div>` : ''}
+            ${r.actionTaken ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Action:</span> <span style="font-weight:500">${r.actionTaken}</span></div>` : ''}
+            ${r.nurseInitial ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Nurse:</span> <span style="font-weight:700;color:var(--primary)">${r.nurseInitial}</span></div>` : ''}
+          </div>
+          ${r.remarks ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">${r.remarks}</div>` : ''}
+        </div>
+        <div class="flex gap-2 no-print" style="flex-shrink:0">
+          <button class="btn btn-xs btn-outline" onclick="openPortFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portFlush','${r.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -6472,45 +6446,52 @@ function renderPiccFlush(search) {
     const infections = data.filter(r => r.signsOfInfection === 'Yes').length;
     const highPhlebitis = data.filter(r => parseInt(r.phlebitisScore) >= 2).length;
     kpiEl.innerHTML = [
-      { label:'Total Flushes', val: total, color:'#0F766E', bg:'#f0fdfa' },
-      { label:'Signs of Infection', val: infections, color:'#EF4444', bg:'#fee2e2' },
-      { label:'Phlebitis ≥2', val: highPhlebitis, color:'#F59E0B', bg:'#fef3c7' },
-    ].map(k => `<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:${k.bg};border-radius:8px">
-      <span style="font-size:18px;font-weight:700;color:${k.color}">${k.val}</span>
-      <span style="font-size:12px;color:${k.color}">${k.label}</span>
-    </div>`).join('');
+      { label:'Total Flushes', val: total, icon:'fa-tint', color:'#8B5CF6', bg:'#ede9fe' },
+      { label:'Signs of Infection', val: infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2' },
+      { label:'Phlebitis ≥2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
+    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
   }
 
-  const tbody = document.getElementById('piccFlushTbody');
-  if (!tbody) return;
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="15"><div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div></td></tr>`;
-    document.getElementById('piccFlushPagination').innerHTML = ''; return;
+  // Card view for PICC Flush
+  const piccContainer = document.getElementById('piccFlushCards');
+  if (!piccContainer) return;
+  if (!data.length) {
+    piccContainer.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div>`;
+    return;
   }
-  tbody.innerHTML = data.map((r,i) => {
-    const infBadge = r.signsOfInfection==='Yes' ? '<span class="badge badge-danger">Yes</span>' : '<span class="badge badge-success">No</span>';
+  piccContainer.innerHTML = data.map(r => {
+    const hasInfection = r.signsOfInfection === 'Yes';
     const phScore = parseInt(r.phlebitisScore||0);
-    const phBadge = phScore >= 2 ? `<span class="badge badge-danger">${phScore}</span>` : `<span class="badge badge-success">${phScore}</span>`;
-    return `<tr>
-      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
-      <td style="font-weight:600;color:var(--primary)">${r.idNo}</td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td style="font-size:12px">${r.diagnosis||'—'}</td>
-      <td style="font-size:12px">${fmtDate(r.dateOfFlush)}</td>
-      <td style="font-size:12px">${r.dressingClean||'—'}</td>
-      <td>${infBadge}</td>
-      <td style="font-size:12px">${r.backflowStatus||'—'}</td>
-      <td>${phBadge}</td>
-      <td style="font-size:12px;font-weight:500;color:var(--primary)">${r.flushGiven||'—'}</td>
-      <td style="font-size:12px">${r.asepticTechnique||'—'}</td>
-      <td style="font-size:12px">${r.actionTaken||'—'}</td>
-      <td style="font-size:12px;font-weight:600">${r.nurseInitial||'—'}</td>
-      <td style="font-size:12px">${r.remarks||'—'}</td>
-      <td class="no-print"><div class="flex gap-2">
-        <button class="btn btn-xs btn-outline" onclick="openPiccFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-xs btn-danger" onclick="deletePPRecord('piccFlush','${r.id}')"><i class="fas fa-trash"></i></button>
-      </div></td>
-    </tr>`;
+    const backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
+    return `<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ${hasInfection||phScore>=2?'var(--danger)':'#8B5CF6'}">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:#ede9fe;color:#8B5CF6;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-grip-lines"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:14px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
+            <span style="font-size:12px;color:#8B5CF6;font-weight:600">${r.idNo}</span>
+            <span style="font-size:12px;color:var(--text-muted)">${fmtDate(r.dateOfFlush)}</span>
+            ${hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>'}
+            ${phScore >= 2 ? `<span class="badge badge-danger">Phlebitis ${phScore}</span>` : `<span class="badge badge-success">Phlebitis 0</span>`}
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'—'}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">
+            ${r.dressingClean ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Dressing:</span> <span style="font-weight:500;color:${r.dressingClean==='Yes'?'var(--success)':'var(--danger)'}">${r.dressingClean}</span></div>` : ''}
+            ${r.backflowStatus ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Backflow:</span> <span style="font-weight:500;color:${backflowGood?'var(--success)':'var(--danger)'}">${r.backflowStatus}</span></div>` : ''}
+            ${r.flushGiven ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Flush:</span> <span style="font-weight:600;color:#8B5CF6">${r.flushGiven}</span></div>` : ''}
+            ${r.asepticTechnique ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Aseptic:</span> <span style="font-weight:500">${r.asepticTechnique}</span></div>` : ''}
+            ${r.actionTaken ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Action:</span> <span style="font-weight:500">${r.actionTaken}</span></div>` : ''}
+            ${r.nurseInitial ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Nurse:</span> <span style="font-weight:700;color:#8B5CF6">${r.nurseInitial}</span></div>` : ''}
+          </div>
+          ${r.remarks ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">${r.remarks}</div>` : ''}
+        </div>
+        <div class="flex gap-2 no-print" style="flex-shrink:0">
+          <button class="btn btn-xs btn-outline" onclick="openPiccFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-xs btn-danger" onclick="deletePPRecord('piccFlush','${r.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
