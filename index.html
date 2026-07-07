@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-053238">
+<meta name="version" content="v20260707-053850">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-053238</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-053850</span></div>
     </div>
   </div>
 </div>
@@ -2721,7 +2721,7 @@ function openChemoModal(id = null) {
       // Also auto-fill expired date if status is Expired
       if (r.status === 'Expired' || r.chemoStatus === 'Expired') {
         toggleChemoExpiredDate();
-        setDateVal('chemo_expiredDate', r.expiredDate || (pat ? pat.expiredDate : '') || '');
+        document.getElementById('chemo_expiredDate').value = r.expiredDate || (pat ? pat.expiredDate : '') || '';
       }
     }
   }
@@ -4625,6 +4625,15 @@ function calcNextDue(lastDate, periodicity) {
   return yr + '-' + mo + '-' + dy;
 }
 
+function switchOPTabForPatient(hn) {
+  // Switch to schedule tab and filter to specific patient
+  opScheduleFilter = hn;
+  switchOPTab('schedule');
+  // Set search box to hospital number
+  const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
+  if (searchEl) searchEl.value = hn;
+}
+
 function switchOPTab(tab) {
   document.querySelectorAll('#opTabs .section-tab').forEach(t => t.classList.remove('active'));
   ['register','schedule','ongoing','dashboard'].forEach(t => {
@@ -5255,7 +5264,18 @@ function openDoseEntry(scheduleId, monthKey) {
   } else {
     // Auto-suggest date and dose number
     const suggested = getSuggestedDate(r, parseInt(yr), parseInt(mo)-1);
-    setDateVal('opd_date', suggested ? new Date(`${suggested} ${yr}`).toISOString().slice(0,10) : '');
+    if (suggested) {
+      // suggested is like "12 Apr" - convert to YYYY-MM-DD
+      try {
+        const parts = suggested.split(' ');
+        const day = parts[0].padStart(2,'0');
+        const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+        const month = months[parts[1]] || '01';
+        document.getElementById('opd_date').value = `${yr}-${month}-${day}`;
+      } catch(e) { document.getElementById('opd_date').value = ''; }
+    } else {
+      document.getElementById('opd_date').value = '';
+    }
     document.getElementById('opd_doseNumber').value = getNextDoseNumber(r);
     document.getElementById('opd_type').value = 'given';
     document.getElementById('opd_notes').value = '';
@@ -5324,7 +5344,7 @@ function renderOPOngoing() {
       <td>${lastDate ? fmtDate(lastDate) : '—'}</td>
       <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '—'}${isOverdue?' ⚠️':isDueSoon?' 🔔':''}</td>
       <td><span class="badge badge-info">${totalDoses} doses</span></td>
-      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTab('schedule')"><i class="fas fa-calendar"></i> Schedule</button></td>
+      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTabForPatient('${hn}')"><i class="fas fa-calendar"></i> Schedule</button></td>
     </tr>`;
   }).join('');
 }
