@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-100254">
+<meta name="version" content="v20260707-101005">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6229,18 +6229,14 @@ function renderPPRegister(search, typeFilter) {
     const active = DB.portpiccRegister.filter(r=>!r.dateOfRemoval).length;
     const removed = DB.portpiccRegister.filter(r=>r.dateOfRemoval).length;
     const infections = DB.portpiccRegister.filter(r=>r.signsOfInfection==='Yes').length;
-    [
-      {label:'Total Lines', val:total, icon:'fa-procedures', color:'#0F766E', bg:'#f0fdfa'},
-      {label:'PORT', val:ports, icon:'fa-dot-circle', color:'#0F766E', bg:'#f0fdfa'},
-      {label:'PICC', val:piccs, icon:'fa-grip-lines', color:'#8B5CF6', bg:'#ede9fe'},
-      {label:'Active Lines', val:active, icon:'fa-check-circle', color:'#10B981', bg:'#d1fae5'},
-      {label:'Removed', val:removed, icon:'fa-times-circle', color:'#6B7280', bg:'#f3f4f6'},
-      {label:'Infections', val:infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2'},
-    ].forEach(k => {
-      kpiEl.innerHTML = '';
-    });
-    kpiEl.innerHTML = [{label:'Total Lines',val:total,icon:'fa-procedures',color:'#0F766E',bg:'#f0fdfa'},{label:'PORT',val:ports,icon:'fa-dot-circle',color:'#0F766E',bg:'#f0fdfa'},{label:'PICC',val:piccs,icon:'fa-grip-lines',color:'#8B5CF6',bg:'#ede9fe'},{label:'Active Lines',val:active,icon:'fa-check-circle',color:'#10B981',bg:'#d1fae5'},{label:'Removed',val:removed,icon:'fa-times-circle',color:'#6B7280',bg:'#f3f4f6'},{label:'Infections',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'}]
-    .map(k=>`<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+    kpiEl.innerHTML = [
+      {label:'Total Lines',val:total,icon:'fa-procedures',color:'#0F766E',bg:'#f0fdfa'},
+      {label:'PORT',val:ports,icon:'fa-dot-circle',color:'#0F766E',bg:'#f0fdfa'},
+      {label:'PICC',val:piccs,icon:'fa-grip-lines',color:'#8B5CF6',bg:'#ede9fe'},
+      {label:'Active Lines',val:active,icon:'fa-check-circle',color:'#10B981',bg:'#d1fae5'},
+      {label:'Removed',val:removed,icon:'fa-times-circle',color:'#6B7280',bg:'#f3f4f6'},
+      {label:'Infections',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'},
+    ].map(k=>`<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
   }
 
   const container = document.getElementById('ppRegisterCards');
