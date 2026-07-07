@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-075816">
+<meta name="version" content="v20260707-080927">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1964,6 +1964,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
             <option value="">Select or type below</option>
           </select>
           <input class="form-control" id="ops_injectionName_custom" placeholder="Or type custom injection name…" style="margin-top:6px">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-info-circle"></i> For multiple injections, add a separate treatment plan for each injection</div>
         </div>
         <div class="form-group"><label class="form-label">Dosage <span class="req">*</span></label><input class="form-control" id="ops_dosage" placeholder="e.g. 4mg IV"></div>
         <div class="form-group"><label class="form-label">Periodicity <span class="req">*</span></label>
@@ -4861,8 +4862,19 @@ function saveOPSchedule() {
     remarks: document.getElementById('ops_remarks').value,
     doses: state.editId ? (DB.opSchedule.find(x => x.id === state.editId)?.doses || {}) : {},
   };
-  if (state.editId) { const idx = DB.opSchedule.findIndex(x => x.id === state.editId); DB.opSchedule[idx] = obj; toast('Treatment plan updated'); }
-  else { DB.opSchedule.push(obj); toast('Treatment plan added'); }
+  if (state.editId) {
+    const idx = DB.opSchedule.findIndex(x => x.id === state.editId);
+    DB.opSchedule[idx] = obj;
+    toast('Treatment plan updated ✅');
+  } else {
+    // Check duplicate: same patient + same injection
+    const dupCheck = DB.opSchedule.find(x => x.hospitalNumber === hn && x.injectionName.toLowerCase() === inj.toLowerCase() && x.id !== state.editId);
+    if (dupCheck) {
+      if (!confirm(`${inj} is already scheduled for this patient.\n\nAdd another entry anyway? (e.g. different dosage)`)) return;
+    }
+    DB.opSchedule.push(obj);
+    toast('Treatment plan added ✅');
+  }
   save_op('opSchedule'); closeModal('opScheduleModal'); renderOPSchedule();
 }
 
@@ -4982,7 +4994,7 @@ function renderOPSchedule() {
           <span style="font-size:13px;font-weight:600;color:var(--primary)"><i class="fas fa-prescription-bottle-alt" style="margin-right:4px"></i>${r.injectionName}</span>
           <span style="font-size:12px;color:var(--text-muted)">${r.dosage}</span>
           <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>
-          <span style="font-size:11px;color:var(--text-muted);margin-left:auto">${givenCount} given · Next: Dose ${nextDoseNum}</span>
+          <span style="font-size:11px;color:var(--success);margin-left:auto"><i class="fas fa-check-circle"></i> ${givenCount} given · Next: Dose ${nextDoseNum}</span>
           <div class="flex gap-2 no-print">
             <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openScheduleModal('${r.id}')"><i class="fas fa-edit"></i></button>
             <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteOPSchedule('${r.id}')"><i class="fas fa-trash"></i></button>
