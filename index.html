@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-074834">
+<meta name="version" content="v20260707-075816">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4769,17 +4769,33 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 function populateInjectionNameDropdown(hn) {
   const sel = document.getElementById('ops_injectionName');
   if (!sel) return;
-  const patientInjections = hn ? [...new Set(DB.opSchedule.filter(r => r.hospitalNumber === hn).map(r => r.injectionName).filter(Boolean))] : [];
+
+  // Get injections from OP Register for this patient
+  const opPatient = hn ? DB.opPatients.find(p => p.hospitalNumber === hn) : null;
+  const patientRegInjections = opPatient && opPatient.injections
+    ? opPatient.injections.split(',').map(i => i.trim()).filter(Boolean)
+    : [];
+
+  // Get injections already used by this patient in schedule
+  const patientScheduleInjections = hn
+    ? [...new Set(DB.opSchedule.filter(r => r.hospitalNumber === hn).map(r => r.injectionName).filter(Boolean))]
+    : [];
+
+  // Merge patient-specific injections (register + schedule)
+  const patientInjections = [...new Set([...patientRegInjections, ...patientScheduleInjections])];
+
+  // All injections ever used across all patients
   const allInjections = [...new Set(DB.opSchedule.map(r => r.injectionName).filter(Boolean))].sort();
+
   sel.innerHTML = '<option value="">Select injection…</option>' +
-    (patientInjections.length > 0 ? `<optgroup label="This Patient's Injections">${patientInjections.map(i=>`<option value="${i}">${i}</option>`).join('')}</optgroup>` : '') +
-    `<optgroup label="All Injections">${allInjections.map(i=>`<option value="${i}">${i}</option>`).join('')}</optgroup>`;
-  const custom = document.getElementById('ops_injectionName_custom');
-  if (custom) {
-    custom.oninput = () => { if (custom.value) sel.value = ''; };
-    sel.onchange = () => { if (sel.value) custom.value = ''; };
-  }
+    (patientInjections.length > 0
+      ? `<optgroup label="This Patient's Injections">${patientInjections.map(i => `<option value="${i}">${i}</option>`).join('')}</optgroup>`
+      : '') +
+    (allInjections.length > 0
+      ? `<optgroup label="All Injections">${allInjections.filter(i => !patientInjections.includes(i)).map(i => `<option value="${i}">${i}</option>`).join('')}</optgroup>`
+      : '');
 }
+
 
 function openScheduleModal(id = null) {
   state.editId = id;
