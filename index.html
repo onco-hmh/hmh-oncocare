@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-092806">
+<meta name="version" content="v20260707-094753">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1773,19 +1773,15 @@ body.dark .login-input:focus { background: var(--card-bg); }
             <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Hep Flush</label>
-          <select class="form-control" id="ppr_hepFlush">
+        <div class="form-group"><label class="form-label">Flush Given</label>
+          <select class="form-control" id="ppr_flushGiven">
             <option value="">Select</option>
-            <option>HEPFLUSH 5mL</option>
-            <option>HEPFLUSH 10mL</option>
-            <option>HEPFLUSH 20mL</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">PossiFLUSH</label>
-          <select class="form-control" id="ppr_possiFlush">
-            <option value="">Select</option>
-            <option>POSSIFLUSH 10mL</option>
-            <option>POSSIFLUSH 20mL</option>
+            <option>Hepflush 5ml</option>
+            <option>Hepflush 10ml</option>
+            <option>Hepflush 20ml</option>
+            <option>Possiflush 5ml</option>
+            <option>Possiflush 10ml</option>
+            <option>Possiflush 20ml</option>
           </select>
         </div>
         <div class="form-group"><label class="form-label">Aseptic Technique</label>
@@ -2590,7 +2586,7 @@ const TABLE_COLS = {
   spill: ['id','datetime','location','drugName','drugCategory','quantity','cause','staff','detectedBy','action','kit','isolated','ppe','decon','waste','exposure','nature','medical','incident','reported','capa','reviewedBy','reviewDate','remarks'],
   incident: ['id','date','type','staff','action'],
   opPatients: ['id','serial','hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'],
-  portpiccRegister: ['id','idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','hepFlush','possiFlush','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'],
+  portpiccRegister: ['id','idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'],
   portFlush: ['id','idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'],
   piccFlush: ['id','idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'],
   opSchedule: ['id','hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','route','periodicity','startDate','firstDose','remarks','doses'],
@@ -6338,7 +6334,7 @@ function renderPPRegister(search, typeFilter) {
 
 function openPPRegisterModal(id = null) {
   state.editId = id;
-  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','hepFlush','possiFlush','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
+  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
   fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) el.value = ''; });
   document.getElementById('ppRegisterModalTitle').textContent = id ? 'Edit Line Entry' : 'Add Line Entry';
   if (id) {
@@ -6352,7 +6348,7 @@ function savePPRegister() {
   const idNo = document.getElementById('ppr_idNo').value.trim();
   const lineType = document.getElementById('ppr_lineType').value;
   if (!idNo || !lineType) { toast('ID No and Line Type are required', 'error'); return; }
-  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','hepFlush','possiFlush','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
+  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
   const obj = { id: state.editId || genId('PPR') };
   fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
