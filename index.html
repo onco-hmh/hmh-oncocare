@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-072124">
+<meta name="version" content="v20260707-073306">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-072124</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-073306</span></div>
     </div>
   </div>
 </div>
@@ -5336,9 +5336,12 @@ function filterOPOngoing(val) { opOngoingFilter = val; renderOPOngoing(); }
 function renderOPOngoing() {
   const tbody = document.getElementById('opOngoingTbody');
   if (!tbody) return;
+  // Group by hospital number - show all unique patients with treatment plans
+  const seen = new Set();
   let data = DB.opSchedule.filter(r => {
-    const pat = DB.opPatients.find(p => p.hospitalNumber === r.hospitalNumber);
-    return !pat || pat.status === 'Ongoing';
+    if (seen.has(r.hospitalNumber)) return false;
+    seen.add(r.hospitalNumber);
+    return true;
   });
   if (opOngoingFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opOngoingFilter.toLowerCase())));
 
