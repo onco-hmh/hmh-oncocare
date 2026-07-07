@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-040420">
+<meta name="version" content="v20260707-043516">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-040420</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-043516</span></div>
     </div>
   </div>
 </div>
@@ -3344,10 +3344,10 @@ function renderChemoDash() {
 
   const chemoKpis = [
     { label:'Total Chemo Records', value: chemo.length, icon:'fa-syringe', color:'#0F766E', bg:'#f0fdfa' },
-    { label:'Ongoing', value: chemo.filter(c=>c.chemoStatus==='Ongoing').length, icon:'fa-play-circle', color:'#10B981', bg:'#d1fae5' },
-    { label:'Completed', value: chemo.filter(c=>c.chemoStatus==='Completed').length, icon:'fa-check-circle', color:'#3B82F6', bg:'#dbeafe' },
-    { label:'Paused', value: chemo.filter(c=>c.chemoStatus==='Paused').length, icon:'fa-pause-circle', color:'#F59E0B', bg:'#fef3c7' },
-    { label:'Discontinued', value: chemo.filter(c=>c.chemoStatus==='Discontinued').length, icon:'fa-stop-circle', color:'#EF4444', bg:'#fee2e2' },
+    { label:'Ongoing', value: chemo.filter(c=>(c.status||c.chemoStatus)==='Ongoing').length, icon:'fa-play-circle', color:'#10B981', bg:'#d1fae5' },
+    { label:'Completed', value: chemo.filter(c=>(c.status||c.chemoStatus)==='Completed').length, icon:'fa-check-circle', color:'#3B82F6', bg:'#dbeafe' },
+    { label:'Paused', value: chemo.filter(c=>(c.status||c.chemoStatus)==='Paused').length, icon:'fa-pause-circle', color:'#F59E0B', bg:'#fef3c7' },
+    { label:'Discontinued', value: chemo.filter(c=>(c.status||c.chemoStatus)==='Discontinued').length, icon:'fa-stop-circle', color:'#EF4444', bg:'#fee2e2' },
     { label:'Total ADR Reports', value: adr.length, icon:'fa-exclamation-triangle', color:'#8B5CF6', bg:'#ede9fe' },
     { label:'Severe ADRs', value: adr.filter(a=>a.severity==='Severe'||a.severity==='Life-threatening'||a.severity==='Fatal').length, icon:'fa-skull-crossbones', color:'#EC4899', bg:'#fce7f3' },
     { label:'ADR Recovery Rate', value: adr.length ? Math.round(adr.filter(a=>a.outcome==='Recovered').length/adr.length*100)+'%' : '—', icon:'fa-heart', color:'#14b8a6', bg:'#f0fdfa' },
@@ -3366,7 +3366,9 @@ function renderChemoDash() {
     chartInstances[id]=new Chart(ctx,{type,data:{labels:valid.map(([l])=>l),datasets:[{label,data:valid.map(([,v])=>v),backgroundColor:type==='line'?'rgba(15,118,110,0.1)':valid.map((_,i)=>COLORS[i%COLORS.length]),borderColor:type==='line'?'#0F766E':valid.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:type==='line'?2:0,fill:type==='line',tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut'||type==='pie',position:'bottom',labels:{boxWidth:12}}},scales:(type==='bar'||type==='line')?{x:{grid:{display:false},ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:10}},y:{beginAtZero:true,ticks:{precision:0}}}:{}}});
   };
   const count=(arr,key)=>arr.reduce((acc,v)=>{const k=(v[key]||'').trim();if(k)acc[k]=(acc[k]||0)+1;return acc;},{});
-  buildC('chartChemoStatus','doughnut',Object.keys(count(chemo,'chemoStatus')),Object.values(count(chemo,'chemoStatus')));
+  // Count using status field (with fallback to chemoStatus for old records)
+  const chemoStatusCount = chemo.reduce((acc,r) => { const s=(r.status||r.chemoStatus||'').trim(); if(s) acc[s]=(acc[s]||0)+1; return acc; },{});
+  buildC('chartChemoStatus','doughnut',Object.keys(chemoStatusCount),Object.values(chemoStatusCount));
   buildC('chartChemoDiagnosis','bar',Object.keys(count(chemo,'diagnosis')),Object.values(count(chemo,'diagnosis')),'Patients');
   buildC('chartADRSeverity','doughnut',Object.keys(count(adr,'severity')),Object.values(count(adr,'severity')));
   buildC('chartADRDrug','bar',Object.keys(count(adr,'drugCategory')),Object.values(count(adr,'drugCategory')),'Reports');
@@ -5325,6 +5327,7 @@ function viewChemoProfile(id) {
   const p = DB.patients.find(x => x.hospitalNumber === r.hospitalNumber);
 
   const row = (label, val) => val ? `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val}</span></div>` : '';
+  const rowAlways = (label, val) => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val||'—'}</span></div>`;
 
   let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--primary)">
     <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${(r.patientName||'?').charAt(0)}</div>
@@ -5337,8 +5340,8 @@ function viewChemoProfile(id) {
   // Chemo specific info
   html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 4px">Chemotherapy Details</div>`;
   html += row('Diagnosis', r.diagnosis);
-  html += row('Drug & Dosage', r.drugDosage);
-  html += row('Frequency', r.frequency);
+  html += rowAlways('Drug & Dosage', r.drugDosage || '—');
+  html += rowAlways('Frequency', r.frequency || '—');
   html += row('G6PD Status', r.g6pd);
   html += row('Blood Group', r.bloodGroup||(p&&p.bloodGroup));
   html += row('Status', r.status||r.chemoStatus);
