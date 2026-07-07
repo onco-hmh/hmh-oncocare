@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-025257">
+<meta name="version" content="v20260707-030308">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-025257</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-030308</span></div>
     </div>
   </div>
 </div>
@@ -886,10 +886,8 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <option value="">All Genders</option>
         <option>Male</option><option>Female</option><option>Other</option>
       </select>
-      <select class="filter-select" onchange="filterTable('patients',null,'status',this.value)">
+      <select class="filter-select" id="filterPatStatus" onchange="filterTable('patients',null,'status',this.value)">
         <option value="">All Statuses</option>
-        <option>Active</option><option>In Remission</option><option>Palliative Care</option>
-        <option>Lost to Follow-up</option><option>Transferred Out</option><option>Expired</option>
       </select>
     </div>
     <div class="table-wrapper">
@@ -2406,6 +2404,7 @@ const state = {
   sortKey: {},
   sortDir: {},
   filters: {},
+  fieldFilters: {}, // supports multiple field filters per table
   charts: {},
 };
 const PAGE_SIZE = 10;
@@ -2912,11 +2911,16 @@ function renderTable(type) {
   if (sk) data.sort((a, b) => { const av = (a[sk]||'').toString().toLowerCase(), bv = (b[sk]||'').toString().toLowerCase(); return sd === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); });
   const q = (state.filters[type] || '').toLowerCase();
   if (q) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(q)));
-  const fk = state.filters[type + '_field'], fv = state.filters[type + '_val'];
-  if (fk && fv) data = data.filter(r => {
-    // Handle both 'status' and 'chemoStatus' field names for backward compatibility
-    const val = fk === 'status' ? (r.status || r.chemoStatus || '') : (r[fk] || '');
-    return val.toLowerCase() === fv.toLowerCase();
+  // Apply multiple field filters simultaneously
+  const activeFilters = state.fieldFilters[type] || {};
+  Object.entries(activeFilters).forEach(([fk, fv]) => {
+    if (fk && fv) {
+      data = data.filter(r => {
+        // Handle both 'status' and 'chemoStatus' for backward compatibility
+        const val = fk === 'status' ? (r.status || r.chemoStatus || '') : (r[fk] || '');
+        return val.toLowerCase() === fv.toLowerCase();
+      });
+    }
   });
   const page = state.currentPage[type] || 1;
   const total = data.length, pages = Math.ceil(total / PAGE_SIZE);
@@ -2949,8 +2953,18 @@ function sortTable(type, key) {
   renderTable(type);
 }
 function filterTable(type, val, field, fieldVal) {
+  // Update text search filter
   if (val !== null && val !== undefined) state.filters[type] = val;
-  if (field) { state.filters[type + '_field'] = fieldVal ? field : null; state.filters[type + '_val'] = fieldVal; }
+  // Update field-specific filter - supports multiple fields simultaneously
+  if (field !== undefined) {
+    if (!state.fieldFilters[type]) state.fieldFilters[type] = {};
+    if (fieldVal) {
+      state.fieldFilters[type][field] = fieldVal;
+    } else {
+      // Clear this specific field filter when empty value selected
+      delete state.fieldFilters[type][field];
+    }
+  }
   state.currentPage[type] = 1;
   renderTable(type);
 }
@@ -2959,7 +2973,14 @@ function filterTable(type, val, field, fieldVal) {
 function populateFilters() {
   const diagEl = document.getElementById('filterDiag');
   const atollEl = document.getElementById('filterAtoll');
+  const patStatusEl = document.getElementById('filterPatStatus');
   if (!diagEl || !atollEl) return;
+  // Populate patient status filter
+  if (patStatusEl) {
+    const curStatus = patStatusEl.value;
+    patStatusEl.innerHTML = '<option value="">All Statuses</option>' +
+      LISTS.patientStatuses.map(s => `<option${s===curStatus?' selected':''}>${s}</option>`).join('');
+  }
   const diags = [...new Set(DB.patients.map(p => p.diagnosis).filter(Boolean))].sort();
   const atolls = [...new Set([...LISTS.atolls, ...DB.patients.map(p => p.atoll).filter(Boolean)])].sort();
   diagEl.innerHTML = '<option value="">All Diagnoses</option>' + diags.map(d => `<option>${d}</option>`).join('');
