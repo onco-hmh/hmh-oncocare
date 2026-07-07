@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-091105">
+<meta name="version" content="v20260707-092541">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1535,7 +1535,459 @@ body.dark .login-input:focus { background: var(--card-bg); }
   </div>
 </div>
 
+
+<!-- ==================== PORT & PICC LINE PAGE ==================== -->
+<div class="page" id="page-portpicc">
+  <div class="print-header"><img src="" id="printLogo2" style="height:60px"><div><div style="font-size:18px;font-weight:700">Hulhumale' Hospital</div><div style="font-size:13px">Oncology Unit</div></div></div>
+
+  <div class="page-header flex justify-between items-center">
+    <div>
+      <h1>Port &amp; PICC Line</h1>
+      <p>Vascular access device management</p>
+    </div>
+    <div class="flex gap-2 no-print">
+      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="exportPortPicc()"><i class="fas fa-file-export"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- Sub Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:12px;padding:4px;width:fit-content;border:1px solid var(--border)">
+    <button id="ppTab_register_btn" onclick="switchPPTab('register')" class="pp-tab-btn active-pp-tab" style="padding:8px 16px;border-radius:9px;border:none;background:var(--primary);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-list-alt"></i> Line Register</button>
+    <button id="ppTab_portflush_btn" onclick="switchPPTab('portflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> Port Flush &amp; Dressing</button>
+    <button id="ppTab_piccflush_btn" onclick="switchPPTab('piccflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> PICC Flush &amp; Dressing</button>
+  </div>
+
+  <!-- ── TAB 1: LINE REGISTER ── -->
+  <div id="ppPanel_register">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPPRegister(this.value)"></div>
+      <select class="filter-select" onchange="renderPPRegister(null,this.value)">
+        <option value="">All Types</option>
+        <option>PORT</option>
+        <option>PICC</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openPPRegisterModal()"><i class="fas fa-plus"></i> Add Entry</button>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="ppRegisterTable">
+          <thead><tr>
+            <th>#</th>
+            <th>ID No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Line Type</th>
+            <th>Date Inserted</th>
+            <th>Insertion Site</th>
+            <th>Inserted By</th>
+            <th>Catheter Size</th>
+            <th>Lumens</th>
+            <th>Tip Confirmed</th>
+            <th>Purpose</th>
+            <th>Signs of Infection</th>
+            <th>Phlebitis Score</th>
+            <th>Nurse Initial</th>
+            <th>Date Removed</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="ppRegisterTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="ppRegisterPagination"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: PORT FLUSH & DRESSING ── -->
+  <div id="ppPanel_portflush" style="display:none">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPortFlush(this.value)"></div>
+      <input type="month" class="filter-select" id="portFlushMonth" onchange="renderPortFlush()" style="max-width:160px">
+      <button class="btn btn-primary btn-sm" onclick="openPortFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
+    </div>
+    <!-- KPI row -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="portFlushKPIs"></div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="portFlushTable">
+          <thead><tr>
+            <th>#</th>
+            <th>ID No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Date of Flush</th>
+            <th>Dressing Clean</th>
+            <th>Signs of Infection</th>
+            <th>Backflow/Inflow Status</th>
+            <th>Phlebitis Score</th>
+            <th>Flush Given</th>
+            <th>Aseptic Technique</th>
+            <th>Action Taken</th>
+            <th>Nurse Initial</th>
+            <th>Remarks</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="portFlushTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="portFlushPagination"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB 3: PICC FLUSH & DRESSING ── -->
+  <div id="ppPanel_piccflush" style="display:none">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPiccFlush(this.value)"></div>
+      <input type="month" class="filter-select" id="piccFlushMonth" onchange="renderPiccFlush()" style="max-width:160px">
+      <button class="btn btn-primary btn-sm" onclick="openPiccFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
+    </div>
+    <!-- KPI row -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="piccFlushKPIs"></div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="piccFlushTable">
+          <thead><tr>
+            <th>#</th>
+            <th>ID No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Date of Flush/Dressing</th>
+            <th>Dressing Clean</th>
+            <th>Signs of Infection</th>
+            <th>Backflow/Inflow Status</th>
+            <th>Phlebitis Score</th>
+            <th>Flush Given</th>
+            <th>Aseptic Technique</th>
+            <th>Action Taken</th>
+            <th>Nurse Initial</th>
+            <th>Remarks</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="piccFlushTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="piccFlushPagination"></div>
+    </div>
+  </div>
+</div>
+
+
 </main>
+<!-- PORT & PICC LINE REGISTER MODAL -->
+<div class="modal-overlay" id="ppRegisterModal" style="display:none">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header">
+      <span class="modal-title" id="ppRegisterModalTitle">Add Line Entry</span>
+      <button class="modal-close" onclick="closeModal('ppRegisterModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
+          <input class="form-control" id="ppr_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatient(this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label>
+          <input class="form-control" id="ppr_patientName" placeholder="Auto-filled or enter name">
+        </div>
+        <div class="form-group"><label class="form-label">Diagnosis</label>
+          <input class="form-control" id="ppr_diagnosis" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Line Type <span class="req">*</span></label>
+          <select class="form-control" id="ppr_lineType">
+            <option value="">Select</option>
+            <option>PORT</option>
+            <option>PICC</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Date of Insertion</label>
+          <input type="date" class="form-control" id="ppr_dateOfInsertion">
+        </div>
+        <div class="form-group"><label class="form-label">Insertion Site</label>
+          <select class="form-control" id="ppr_insertionSite">
+            <option value="">Select</option>
+            <option>Right Upper Arm</option>
+            <option>Left Upper Arm</option>
+            <option>Right Upper Chest</option>
+            <option>Left Upper Chest</option>
+            <option>Right Basilic Vein</option>
+            <option>Left Basilic Vein</option>
+            <option>Right Internal Jugular Vein</option>
+            <option>Left Internal Jugular Vein</option>
+            <option>Right Cephalic Vein</option>
+            <option>Left Cephalic Vein</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Inserted By</label>
+          <input class="form-control" id="ppr_insertedBy" placeholder="Physician/Hospital name">
+        </div>
+        <div class="form-group"><label class="form-label">Catheter Size (Fr)</label>
+          <input class="form-control" id="ppr_catheterSize" placeholder="e.g. 4Fr">
+        </div>
+        <div class="form-group"><label class="form-label">No. of Lumens</label>
+          <select class="form-control" id="ppr_lumens">
+            <option value="">Select</option>
+            <option>Single</option>
+            <option>Double</option>
+            <option>Triple</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Tip Position Confirmed (Y/N)</label>
+          <select class="form-control" id="ppr_tipPositionConfirmed">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Confirmation Method</label>
+          <select class="form-control" id="ppr_confirmationMethod">
+            <option value="">Select</option>
+            <option>Chest X-Ray</option>
+            <option>Fluoroscopy</option>
+            <option>Ultrasound</option>
+            <option>ECG</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Purpose</label>
+          <select class="form-control" id="ppr_purpose">
+            <option value="">Select</option>
+            <option>For Chemotherapy</option>
+            <option>Fluids/Nutrition Balance</option>
+            <option>Port Flush</option>
+            <option>Blood Transfusion</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
+          <select class="form-control" id="ppr_dressingClean">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Signs of Infection</label>
+          <select class="form-control" id="ppr_signsOfInfection">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Phlebitis Score</label>
+          <select class="form-control" id="ppr_phlebitisScore">
+            <option value="">Select</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Hep Flush</label>
+          <select class="form-control" id="ppr_hepFlush">
+            <option value="">Select</option>
+            <option>HEPFLUSH 5mL</option>
+            <option>HEPFLUSH 10mL</option>
+            <option>HEPFLUSH 20mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">PossiFLUSH</label>
+          <select class="form-control" id="ppr_possiFlush">
+            <option value="">Select</option>
+            <option>POSSIFLUSH 10mL</option>
+            <option>POSSIFLUSH 20mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Aseptic Technique</label>
+          <select class="form-control" id="ppr_asepticTechnique">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Complication</label>
+          <input class="form-control" id="ppr_complication" placeholder="Describe if any">
+        </div>
+        <div class="form-group"><label class="form-label">Action Taken</label>
+          <input class="form-control" id="ppr_actionTaken" placeholder="Actions if any">
+        </div>
+        <div class="form-group"><label class="form-label">Physician Notified</label>
+          <select class="form-control" id="ppr_physicianNotified">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Date of Removal</label>
+          <input type="date" class="form-control" id="ppr_dateOfRemoval">
+        </div>
+        <div class="form-group"><label class="form-label">Reason for Removal</label>
+          <input class="form-control" id="ppr_reasonForRemoval" placeholder="Reason if removed">
+        </div>
+        <div class="form-group"><label class="form-label">Nurse Initial</label>
+          <input class="form-control" id="ppr_nurseInitial" placeholder="Nurse initials">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label>
+          <textarea class="form-control" id="ppr_remarks" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('ppRegisterModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePPRegister()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PORT FLUSH & DRESSING MODAL -->
+<div class="modal-overlay" id="portFlushModal" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title" id="portFlushModalTitle">Add Port Flush &amp; Dressing Record</span>
+      <button class="modal-close" onclick="closeModal('portFlushModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
+          <input class="form-control" id="pf_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pf', this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label>
+          <input class="form-control" id="pf_patientName" placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Diagnosis</label>
+          <input class="form-control" id="pf_diagnosis" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Date of Flush <span class="req">*</span></label>
+          <input type="date" class="form-control" id="pf_dateOfFlush">
+        </div>
+        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
+          <select class="form-control" id="pf_dressingClean">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Signs of Infection</label>
+          <select class="form-control" id="pf_signsOfInfection">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Backflow/Inflow Status</label>
+          <select class="form-control" id="pf_backflowStatus">
+            <option value="">Select</option>
+            <option>Backflow Present / Inflow Good</option>
+            <option>Backflow Absent / Inflow Good</option>
+            <option>Backflow Not Present / Inflow Good</option>
+            <option>No Backflow / No Inflow</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Phlebitis Score</label>
+          <select class="form-control" id="pf_phlebitisScore">
+            <option value="">Select</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Flush Given</label>
+          <select class="form-control" id="pf_flushGiven">
+            <option value="">Select</option>
+            <option>HEPFLUSH 5mL</option>
+            <option>HEPFLUSH 10mL</option>
+            <option>HEPFLUSH 20mL</option>
+            <option>POSSIFLUSH 10mL</option>
+            <option>POSSIFLUSH 20mL</option>
+            <option>Normal Saline 10mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Aseptic Technique Followed</label>
+          <select class="form-control" id="pf_asepticTechnique">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Action Taken</label>
+          <input class="form-control" id="pf_actionTaken" placeholder="e.g. No Action Required">
+        </div>
+        <div class="form-group"><label class="form-label">Nurse Initial</label>
+          <input class="form-control" id="pf_nurseInitial" placeholder="Nurse initials">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label>
+          <textarea class="form-control" id="pf_remarks" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('portFlushModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePortFlush()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PICC FLUSH & DRESSING MODAL -->
+<div class="modal-overlay" id="piccFlushModal" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title" id="piccFlushModalTitle">Add PICC Flush &amp; Dressing Record</span>
+      <button class="modal-close" onclick="closeModal('piccFlushModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
+          <input class="form-control" id="pc_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pc', this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label>
+          <input class="form-control" id="pc_patientName" placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Diagnosis</label>
+          <input class="form-control" id="pc_diagnosis" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Date of Flush/Dressing <span class="req">*</span></label>
+          <input type="date" class="form-control" id="pc_dateOfFlush">
+        </div>
+        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
+          <select class="form-control" id="pc_dressingClean">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Signs of Infection</label>
+          <select class="form-control" id="pc_signsOfInfection">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Backflow/Inflow Status</label>
+          <select class="form-control" id="pc_backflowStatus">
+            <option value="">Select</option>
+            <option>Backflow Present / Inflow Good</option>
+            <option>Backflow Absent / Inflow Good</option>
+            <option>Backflow Not Present / Inflow Good</option>
+            <option>No Backflow / No Inflow</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Phlebitis Score</label>
+          <select class="form-control" id="pc_phlebitisScore">
+            <option value="">Select</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Flush Given</label>
+          <select class="form-control" id="pc_flushGiven">
+            <option value="">Select</option>
+            <option>POSSIFLUSH 20mL</option>
+            <option>POSSIFLUSH 10mL</option>
+            <option>HEPFLUSH 10mL</option>
+            <option>Normal Saline 10mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Aseptic Technique Followed</label>
+          <select class="form-control" id="pc_asepticTechnique">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Action Taken</label>
+          <input class="form-control" id="pc_actionTaken" placeholder="e.g. No Action Required">
+        </div>
+        <div class="form-group"><label class="form-label">Nurse Initial</label>
+          <input class="form-control" id="pc_nurseInitial" placeholder="Nurse initials">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label>
+          <textarea class="form-control" id="pc_remarks" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('piccFlushModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePiccFlush()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- ==================== MODALS ==================== -->
 
@@ -6122,456 +6574,6 @@ function exportPortPicc() {
 
 </script>
 
-<!-- ==================== PORT & PICC LINE PAGE ==================== -->
-<div class="page" id="page-portpicc">
-  <div class="print-header"><img src="" id="printLogo2" style="height:60px"><div><div style="font-size:18px;font-weight:700">Hulhumale' Hospital</div><div style="font-size:13px">Oncology Unit</div></div></div>
-
-  <div class="page-header flex justify-between items-center">
-    <div>
-      <h1>Port &amp; PICC Line</h1>
-      <p>Vascular access device management</p>
-    </div>
-    <div class="flex gap-2 no-print">
-      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
-      <button class="btn btn-outline btn-sm" onclick="exportPortPicc()"><i class="fas fa-file-export"></i> Export</button>
-    </div>
-  </div>
-
-  <!-- Sub Tabs -->
-  <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:12px;padding:4px;width:fit-content;border:1px solid var(--border)">
-    <button id="ppTab_register_btn" onclick="switchPPTab('register')" class="pp-tab-btn active-pp-tab" style="padding:8px 16px;border-radius:9px;border:none;background:var(--primary);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-list-alt"></i> Line Register</button>
-    <button id="ppTab_portflush_btn" onclick="switchPPTab('portflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> Port Flush &amp; Dressing</button>
-    <button id="ppTab_piccflush_btn" onclick="switchPPTab('piccflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> PICC Flush &amp; Dressing</button>
-  </div>
-
-  <!-- ── TAB 1: LINE REGISTER ── -->
-  <div id="ppPanel_register">
-    <div class="toolbar">
-      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPPRegister(this.value)"></div>
-      <select class="filter-select" onchange="renderPPRegister(null,this.value)">
-        <option value="">All Types</option>
-        <option>PORT</option>
-        <option>PICC</option>
-      </select>
-      <button class="btn btn-primary btn-sm" onclick="openPPRegisterModal()"><i class="fas fa-plus"></i> Add Entry</button>
-    </div>
-    <div class="card" style="padding:0">
-      <div class="table-wrapper">
-        <table id="ppRegisterTable">
-          <thead><tr>
-            <th>#</th>
-            <th>ID No</th>
-            <th>Patient Name</th>
-            <th>Diagnosis</th>
-            <th>Line Type</th>
-            <th>Date Inserted</th>
-            <th>Insertion Site</th>
-            <th>Inserted By</th>
-            <th>Catheter Size</th>
-            <th>Lumens</th>
-            <th>Tip Confirmed</th>
-            <th>Purpose</th>
-            <th>Signs of Infection</th>
-            <th>Phlebitis Score</th>
-            <th>Nurse Initial</th>
-            <th>Date Removed</th>
-            <th class="no-print">Actions</th>
-          </tr></thead>
-          <tbody id="ppRegisterTbody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-wrap" id="ppRegisterPagination"></div>
-    </div>
-  </div>
-
-  <!-- ── TAB 2: PORT FLUSH & DRESSING ── -->
-  <div id="ppPanel_portflush" style="display:none">
-    <div class="toolbar">
-      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPortFlush(this.value)"></div>
-      <input type="month" class="filter-select" id="portFlushMonth" onchange="renderPortFlush()" style="max-width:160px">
-      <button class="btn btn-primary btn-sm" onclick="openPortFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
-    </div>
-    <!-- KPI row -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="portFlushKPIs"></div>
-    <div class="card" style="padding:0">
-      <div class="table-wrapper">
-        <table id="portFlushTable">
-          <thead><tr>
-            <th>#</th>
-            <th>ID No</th>
-            <th>Patient Name</th>
-            <th>Diagnosis</th>
-            <th>Date of Flush</th>
-            <th>Dressing Clean</th>
-            <th>Signs of Infection</th>
-            <th>Backflow/Inflow Status</th>
-            <th>Phlebitis Score</th>
-            <th>Flush Given</th>
-            <th>Aseptic Technique</th>
-            <th>Action Taken</th>
-            <th>Nurse Initial</th>
-            <th>Remarks</th>
-            <th class="no-print">Actions</th>
-          </tr></thead>
-          <tbody id="portFlushTbody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-wrap" id="portFlushPagination"></div>
-    </div>
-  </div>
-
-  <!-- ── TAB 3: PICC FLUSH & DRESSING ── -->
-  <div id="ppPanel_piccflush" style="display:none">
-    <div class="toolbar">
-      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPiccFlush(this.value)"></div>
-      <input type="month" class="filter-select" id="piccFlushMonth" onchange="renderPiccFlush()" style="max-width:160px">
-      <button class="btn btn-primary btn-sm" onclick="openPiccFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
-    </div>
-    <!-- KPI row -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="piccFlushKPIs"></div>
-    <div class="card" style="padding:0">
-      <div class="table-wrapper">
-        <table id="piccFlushTable">
-          <thead><tr>
-            <th>#</th>
-            <th>ID No</th>
-            <th>Patient Name</th>
-            <th>Diagnosis</th>
-            <th>Date of Flush/Dressing</th>
-            <th>Dressing Clean</th>
-            <th>Signs of Infection</th>
-            <th>Backflow/Inflow Status</th>
-            <th>Phlebitis Score</th>
-            <th>Flush Given</th>
-            <th>Aseptic Technique</th>
-            <th>Action Taken</th>
-            <th>Nurse Initial</th>
-            <th>Remarks</th>
-            <th class="no-print">Actions</th>
-          </tr></thead>
-          <tbody id="piccFlushTbody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-wrap" id="piccFlushPagination"></div>
-    </div>
-  </div>
-</div>
-
-<!-- PORT & PICC LINE REGISTER MODAL -->
-<div class="modal-overlay" id="ppRegisterModal" style="display:none">
-  <div class="modal" style="max-width:800px">
-    <div class="modal-header">
-      <span class="modal-title" id="ppRegisterModalTitle">Add Line Entry</span>
-      <button class="modal-close" onclick="closeModal('ppRegisterModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
-          <input class="form-control" id="ppr_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatient(this.value)">
-        </div>
-        <div class="form-group"><label class="form-label">Patient Name</label>
-          <input class="form-control" id="ppr_patientName" placeholder="Auto-filled or enter name">
-        </div>
-        <div class="form-group"><label class="form-label">Diagnosis</label>
-          <input class="form-control" id="ppr_diagnosis" readonly placeholder="Auto-filled">
-        </div>
-        <div class="form-group"><label class="form-label">Line Type <span class="req">*</span></label>
-          <select class="form-control" id="ppr_lineType">
-            <option value="">Select</option>
-            <option>PORT</option>
-            <option>PICC</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Date of Insertion</label>
-          <input type="date" class="form-control" id="ppr_dateOfInsertion">
-        </div>
-        <div class="form-group"><label class="form-label">Insertion Site</label>
-          <select class="form-control" id="ppr_insertionSite">
-            <option value="">Select</option>
-            <option>Right Upper Arm</option>
-            <option>Left Upper Arm</option>
-            <option>Right Upper Chest</option>
-            <option>Left Upper Chest</option>
-            <option>Right Basilic Vein</option>
-            <option>Left Basilic Vein</option>
-            <option>Right Internal Jugular Vein</option>
-            <option>Left Internal Jugular Vein</option>
-            <option>Right Cephalic Vein</option>
-            <option>Left Cephalic Vein</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Inserted By</label>
-          <input class="form-control" id="ppr_insertedBy" placeholder="Physician/Hospital name">
-        </div>
-        <div class="form-group"><label class="form-label">Catheter Size (Fr)</label>
-          <input class="form-control" id="ppr_catheterSize" placeholder="e.g. 4Fr">
-        </div>
-        <div class="form-group"><label class="form-label">No. of Lumens</label>
-          <select class="form-control" id="ppr_lumens">
-            <option value="">Select</option>
-            <option>Single</option>
-            <option>Double</option>
-            <option>Triple</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Tip Position Confirmed (Y/N)</label>
-          <select class="form-control" id="ppr_tipPositionConfirmed">
-            <option value="">Select</option>
-            <option>Yes</option>
-            <option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Confirmation Method</label>
-          <select class="form-control" id="ppr_confirmationMethod">
-            <option value="">Select</option>
-            <option>Chest X-Ray</option>
-            <option>Fluoroscopy</option>
-            <option>Ultrasound</option>
-            <option>ECG</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Purpose</label>
-          <select class="form-control" id="ppr_purpose">
-            <option value="">Select</option>
-            <option>For Chemotherapy</option>
-            <option>Fluids/Nutrition Balance</option>
-            <option>Port Flush</option>
-            <option>Blood Transfusion</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
-          <select class="form-control" id="ppr_dressingClean">
-            <option value="">Select</option>
-            <option>Yes</option>
-            <option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Signs of Infection</label>
-          <select class="form-control" id="ppr_signsOfInfection">
-            <option value="">Select</option>
-            <option>Yes</option>
-            <option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Phlebitis Score</label>
-          <select class="form-control" id="ppr_phlebitisScore">
-            <option value="">Select</option>
-            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Hep Flush</label>
-          <select class="form-control" id="ppr_hepFlush">
-            <option value="">Select</option>
-            <option>HEPFLUSH 5mL</option>
-            <option>HEPFLUSH 10mL</option>
-            <option>HEPFLUSH 20mL</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">PossiFLUSH</label>
-          <select class="form-control" id="ppr_possiFlush">
-            <option value="">Select</option>
-            <option>POSSIFLUSH 10mL</option>
-            <option>POSSIFLUSH 20mL</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Aseptic Technique</label>
-          <select class="form-control" id="ppr_asepticTechnique">
-            <option value="">Select</option>
-            <option>Yes</option>
-            <option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Complication</label>
-          <input class="form-control" id="ppr_complication" placeholder="Describe if any">
-        </div>
-        <div class="form-group"><label class="form-label">Action Taken</label>
-          <input class="form-control" id="ppr_actionTaken" placeholder="Actions if any">
-        </div>
-        <div class="form-group"><label class="form-label">Physician Notified</label>
-          <select class="form-control" id="ppr_physicianNotified">
-            <option value="">Select</option>
-            <option>Yes</option>
-            <option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Date of Removal</label>
-          <input type="date" class="form-control" id="ppr_dateOfRemoval">
-        </div>
-        <div class="form-group"><label class="form-label">Reason for Removal</label>
-          <input class="form-control" id="ppr_reasonForRemoval" placeholder="Reason if removed">
-        </div>
-        <div class="form-group"><label class="form-label">Nurse Initial</label>
-          <input class="form-control" id="ppr_nurseInitial" placeholder="Nurse initials">
-        </div>
-        <div class="form-group full"><label class="form-label">Remarks</label>
-          <textarea class="form-control" id="ppr_remarks" rows="2"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('ppRegisterModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePPRegister()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- PORT FLUSH & DRESSING MODAL -->
-<div class="modal-overlay" id="portFlushModal" style="display:none">
-  <div class="modal" style="max-width:700px">
-    <div class="modal-header">
-      <span class="modal-title" id="portFlushModalTitle">Add Port Flush &amp; Dressing Record</span>
-      <button class="modal-close" onclick="closeModal('portFlushModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
-          <input class="form-control" id="pf_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pf', this.value)">
-        </div>
-        <div class="form-group"><label class="form-label">Patient Name</label>
-          <input class="form-control" id="pf_patientName" placeholder="Auto-filled">
-        </div>
-        <div class="form-group"><label class="form-label">Diagnosis</label>
-          <input class="form-control" id="pf_diagnosis" readonly placeholder="Auto-filled">
-        </div>
-        <div class="form-group"><label class="form-label">Date of Flush <span class="req">*</span></label>
-          <input type="date" class="form-control" id="pf_dateOfFlush">
-        </div>
-        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
-          <select class="form-control" id="pf_dressingClean">
-            <option value="">Select</option><option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Signs of Infection</label>
-          <select class="form-control" id="pf_signsOfInfection">
-            <option value="">Select</option><option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="form-group full"><label class="form-label">Backflow/Inflow Status</label>
-          <select class="form-control" id="pf_backflowStatus">
-            <option value="">Select</option>
-            <option>Backflow Present / Inflow Good</option>
-            <option>Backflow Absent / Inflow Good</option>
-            <option>Backflow Not Present / Inflow Good</option>
-            <option>No Backflow / No Inflow</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Phlebitis Score</label>
-          <select class="form-control" id="pf_phlebitisScore">
-            <option value="">Select</option>
-            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Flush Given</label>
-          <select class="form-control" id="pf_flushGiven">
-            <option value="">Select</option>
-            <option>HEPFLUSH 5mL</option>
-            <option>HEPFLUSH 10mL</option>
-            <option>HEPFLUSH 20mL</option>
-            <option>POSSIFLUSH 10mL</option>
-            <option>POSSIFLUSH 20mL</option>
-            <option>Normal Saline 10mL</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Aseptic Technique Followed</label>
-          <select class="form-control" id="pf_asepticTechnique">
-            <option value="">Select</option><option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Action Taken</label>
-          <input class="form-control" id="pf_actionTaken" placeholder="e.g. No Action Required">
-        </div>
-        <div class="form-group"><label class="form-label">Nurse Initial</label>
-          <input class="form-control" id="pf_nurseInitial" placeholder="Nurse initials">
-        </div>
-        <div class="form-group full"><label class="form-label">Remarks</label>
-          <textarea class="form-control" id="pf_remarks" rows="2"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('portFlushModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePortFlush()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- PICC FLUSH & DRESSING MODAL -->
-<div class="modal-overlay" id="piccFlushModal" style="display:none">
-  <div class="modal" style="max-width:700px">
-    <div class="modal-header">
-      <span class="modal-title" id="piccFlushModalTitle">Add PICC Flush &amp; Dressing Record</span>
-      <button class="modal-close" onclick="closeModal('piccFlushModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
-          <input class="form-control" id="pc_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pc', this.value)">
-        </div>
-        <div class="form-group"><label class="form-label">Patient Name</label>
-          <input class="form-control" id="pc_patientName" placeholder="Auto-filled">
-        </div>
-        <div class="form-group"><label class="form-label">Diagnosis</label>
-          <input class="form-control" id="pc_diagnosis" readonly placeholder="Auto-filled">
-        </div>
-        <div class="form-group"><label class="form-label">Date of Flush/Dressing <span class="req">*</span></label>
-          <input type="date" class="form-control" id="pc_dateOfFlush">
-        </div>
-        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
-          <select class="form-control" id="pc_dressingClean">
-            <option value="">Select</option><option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Signs of Infection</label>
-          <select class="form-control" id="pc_signsOfInfection">
-            <option value="">Select</option><option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="form-group full"><label class="form-label">Backflow/Inflow Status</label>
-          <select class="form-control" id="pc_backflowStatus">
-            <option value="">Select</option>
-            <option>Backflow Present / Inflow Good</option>
-            <option>Backflow Absent / Inflow Good</option>
-            <option>Backflow Not Present / Inflow Good</option>
-            <option>No Backflow / No Inflow</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Phlebitis Score</label>
-          <select class="form-control" id="pc_phlebitisScore">
-            <option value="">Select</option>
-            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Flush Given</label>
-          <select class="form-control" id="pc_flushGiven">
-            <option value="">Select</option>
-            <option>POSSIFLUSH 20mL</option>
-            <option>POSSIFLUSH 10mL</option>
-            <option>HEPFLUSH 10mL</option>
-            <option>Normal Saline 10mL</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Aseptic Technique Followed</label>
-          <select class="form-control" id="pc_asepticTechnique">
-            <option value="">Select</option><option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Action Taken</label>
-          <input class="form-control" id="pc_actionTaken" placeholder="e.g. No Action Required">
-        </div>
-        <div class="form-group"><label class="form-label">Nurse Initial</label>
-          <input class="form-control" id="pc_nurseInitial" placeholder="Nurse initials">
-        </div>
-        <div class="form-group full"><label class="form-label">Remarks</label>
-          <textarea class="form-control" id="pc_remarks" rows="2"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('piccFlushModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePiccFlush()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
