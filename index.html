@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-052520">
+<meta name="version" content="v20260707-053238">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-052520</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-053238</span></div>
     </div>
   </div>
 </div>
@@ -5000,6 +5000,17 @@ function switchScheduleView(view) {
     monthView.style.display = 'none';
     yearView.style.display = '';
     monthStats.style.display = 'none';
+    // Populate year selector with current year selected
+    const ySel = document.getElementById('opYearSelect');
+    if (ySel && !ySel.options.length) {
+      const curYear = new Date().getFullYear();
+      for (let y = curYear - 2; y <= curYear + 2; y++) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        if (y === curYear) opt.selected = true;
+        ySel.appendChild(opt);
+      }
+    }
     renderOPSchedule();
   }
 }
@@ -5163,34 +5174,55 @@ function renderMonthView() {
 }
 
 function getSuggestedDate(record, year, monthIdx) {
-  if (!record.periodicity || !record.doses) return null;
-  const days = PERIODICITY_DAYS[record.periodicity];
-  if (!days) return null;
-  // Find last given dose before this month
-  const allDoses = Object.entries(record.doses)
-    .filter(([k, v]) => v.type === 'given' && v.date)
-    .sort(([a],[b]) => a.localeCompare(b));
-  if (!allDoses.length && record.startDate) {
-    const next = calcNextDue(record.startDate, record.periodicity);
-    if (next) {
-      const [ny,nm,nd_] = next.slice(0,10).split('-').map(Number);
-      const nd = new Date(ny, nm-1, nd_);
-      if (nd.getFullYear() === year && nd.getMonth() === monthIdx) {
-        const [sny,snm,snd_] = next2.slice(0,10).split('-').map(Number);
-        const snDate2 = new Date(sny, snm-1, snd_);
-        return snDate2.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-      }
-    }
-    return null;
+  if (!record.periodicity) return null;
+
+  // Helper: parse ISO date as local date
+  function parseLocal(iso) {
+    if (!iso) return null;
+    const parts = iso.slice(0,10).split('-').map(Number);
+    if (parts.length !== 3) return null;
+    return new Date(parts[0], parts[1]-1, parts[2]);
   }
-  const last = allDoses[allDoses.length - 1];
-  if (!last) return null;
-  const next = calcNextDue(last[1].date, record.periodicity);
-  if (!next) return null;
-  const nd = new Date(next);
+
+  // Helper: format date as DD Mon
+  function fmt(d) {
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  }
+
+  // Find last given dose
+  const allDoses = record.doses
+    ? Object.entries(record.doses)
+        .filter(([k,v]) => v.type === 'given' && v.date)
+        .sort(([a],[b]) => a.localeCompare(b))
+    : [];
+
+  // Determine the base date to calculate from
+  const baseDate = allDoses.length
+    ? allDoses[allDoses.length-1][1].date
+    : record.startDate;
+
+  if (!baseDate) return null;
+
+  // Calculate next due date
+  const nextISO = calcNextDue(baseDate, record.periodicity);
+  if (!nextISO) return null;
+
+  const nd = parseLocal(nextISO);
+  if (!nd) return null;
+
+  // Check if it falls in the requested month/year
   if (nd.getFullYear() === year && nd.getMonth() === monthIdx) {
-    return nd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+    return fmt(nd);
   }
+
+  // If no doses yet and start date is in this month, suggest start date
+  if (!allDoses.length && record.startDate) {
+    const sd = parseLocal(record.startDate);
+    if (sd && sd.getFullYear() === year && sd.getMonth() === monthIdx) {
+      return fmt(sd);
+    }
+  }
+
   return null;
 }
 
