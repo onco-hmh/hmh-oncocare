@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-073734">
+<meta name="version" content="v20260707-074458">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4626,12 +4626,16 @@ function calcNextDue(lastDate, periodicity) {
 }
 
 function switchOPTabForPatient(hn) {
-  // Switch to schedule tab and filter to specific patient
+  // Switch to schedule tab, filter to patient, show Full Year view
   opScheduleFilter = hn;
   switchOPTab('schedule');
-  // Set search box to hospital number
-  const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
-  if (searchEl) searchEl.value = hn;
+  // Switch to Full Year view so patient cards are visible
+  setTimeout(() => {
+    switchScheduleView('year');
+    // Set search box to hospital number
+    const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
+    if (searchEl) searchEl.value = hn;
+  }, 50);
 }
 
 function switchOPTab(tab) {
