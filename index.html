@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-032923">
+<meta name="version" content="v20260707-040420">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-032923</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-040420</span></div>
     </div>
   </div>
 </div>
@@ -1651,6 +1651,23 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Blood Group</label>
           <select class="form-control" id="chemo_bloodGroup"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Unknown</option></select>
         </div>
+        <div class="form-group full"><label class="form-label">Drug &amp; Dosage</label>
+          <input class="form-control" id="chemo_drugDosage" placeholder="e.g. Cyclophosphamide 600mg/m², Doxorubicin 60mg/m²">
+        </div>
+        <div class="form-group full"><label class="form-label">Frequency</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)" id="chemo_frequency_group">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="Weekly" style="accent-color:var(--primary)"> Weekly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="2 Weekly" style="accent-color:var(--primary)"> 2 Weekly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="3 Weekly" style="accent-color:var(--primary)"> 3 Weekly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="4 Weekly" style="accent-color:var(--primary)"> 4 Weekly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="5 Weekly" style="accent-color:var(--primary)"> 5 Weekly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="6 Weekly" style="accent-color:var(--primary)"> 6 Weekly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="Monthly" style="accent-color:var(--primary)"> Monthly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="2 Monthly" style="accent-color:var(--primary)"> 2 Monthly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="3 Monthly" style="accent-color:var(--primary)"> 3 Monthly</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg)"><input type="checkbox" class="chemo-freq-cb" value="4 Monthly" style="accent-color:var(--primary)"> 4 Monthly</label>
+          </div>
+        </div>
         <div class="form-group"><label class="form-label">Status <span class="req">*</span></label>
           <select class="form-control" id="chemo_status" onchange="toggleChemoExpiredDate()"><option value="">Select</option></select>
         </div>
@@ -2096,7 +2113,7 @@ function save(key) {
 // Column definitions for each table - ensures consistent keys
 const TABLE_COLS = {
   patients: ['id','hospitalNumber','registryNumber','registrationDate','fullName','gender','dob','age','ageGroup','nationality','nationalId','contactNumber','bloodGroup','atoll','island','address','diagnosis','diagnosisDetails','diagnosisDate','stage','riskFactors','histopathology','medicalHistory','surgicalHistory','treatmentHistory','status','expiredDate','remarks'],
-  chemo: ['id','hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','status','expiredDate','startedDate','completedDate','remarks'],
+  chemo: ['id','hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','drugDosage','frequency','status','expiredDate','startedDate','completedDate','remarks'],
   adr: ['id','hospitalNumber','patientName','reactionDate','drugName','drugCategory','doseRoute','cycleDay','description','onsetTime','severity','reactionType','action','treatment','outcome','rechallenge','physicianNotified','reporter','reviewedBy','remarks'],
   extravasation: ['id','date','hospitalNumber','patientName','diagnosis','drug','drugType','doseDilution','route','site','nurse','time','signs','occurred','severity','action','antidote','compress','physician','incidentReport','education','outcome','remarks'],
   spill: ['id','datetime','location','drugName','drugCategory','quantity','cause','staff','detectedBy','action','kit','isolated','ppe','decon','waste','exposure','nature','medical','incident','reported','capa','reviewedBy','reviewDate','remarks'],
@@ -2649,7 +2666,7 @@ function printProfile() { window.print(); }
 function openChemoModal(id = null) {
   populateChemoStatusSelect();
   state.editId = id;
-  ['hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','status','expiredDate','startedDate','completedDate','remarks'].forEach(f => {
+  ['hospitalNumber','patientName','diagnosis','g6pd','bloodGroup','drugDosage','status','expiredDate','startedDate','completedDate','remarks'].forEach(f => {
     const el = document.getElementById('chemo_' + f); if (el) el.value = '';
   });
   document.getElementById('chemoModalTitle').textContent = id ? 'Edit Chemo Record' : 'Add Chemotherapy Record';
@@ -2664,6 +2681,12 @@ function openChemoModal(id = null) {
       document.getElementById('chemo_startedDate').value = r.startedDate||'';
       document.getElementById('chemo_completedDate').value = r.completedDate||'';
       document.getElementById('chemo_remarks').value = r.remarks||'';
+      document.getElementById('chemo_drugDosage').value = r.drugDosage||'';
+      // Load frequency checkboxes
+      const savedFreqs = (r.frequency||'').split(',').map(f=>f.trim()).filter(Boolean);
+      document.querySelectorAll('.chemo-freq-cb').forEach(cb => {
+        cb.checked = savedFreqs.includes(cb.value);
+      });
       // Auto-fill blood group from patient registry if missing in chemo record
       const pat = DB.patients.find(p => p.hospitalNumber === r.hospitalNumber);
       const bg = r.bloodGroup || (pat ? pat.bloodGroup : '') || '';
@@ -2682,7 +2705,8 @@ function saveChemo() {
   const status = document.getElementById('chemo_status').value;
   if (!hn || !status) { toast('Hospital Number and Status are required', 'error'); return; }
   const expiredDate = document.getElementById('chemo_expiredDate') ? document.getElementById('chemo_expiredDate').value : '';
-  const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, status: status, expiredDate: expiredDate, startedDate: document.getElementById('chemo_startedDate').value, completedDate: document.getElementById('chemo_completedDate').value, remarks: document.getElementById('chemo_remarks').value };
+  const freqChecked = [...document.querySelectorAll('.chemo-freq-cb:checked')].map(cb => cb.value);
+  const obj = { id: state.editId || genId('CHM'), hospitalNumber: hn, patientName: document.getElementById('chemo_patientName').value, diagnosis: document.getElementById('chemo_diagnosis').value, g6pd: document.getElementById('chemo_g6pd').value, bloodGroup: document.getElementById('chemo_bloodGroup').value, drugDosage: document.getElementById('chemo_drugDosage').value, frequency: freqChecked.join(', '), status: status, expiredDate: expiredDate, startedDate: document.getElementById('chemo_startedDate').value, completedDate: document.getElementById('chemo_completedDate').value, remarks: document.getElementById('chemo_remarks').value };
   if (state.editId) { const idx = DB.chemo.findIndex(x => x.id === state.editId); DB.chemo[idx] = obj; toast('Record updated'); }
   else { DB.chemo.unshift(obj); toast('Chemo record added'); }
   save('chemo');
@@ -2863,6 +2887,7 @@ const tableConfigs = {
       <td>${fmtDate(r.startedDate)}</td>
       <td>${fmtDate(r.completedDate)||'—'}</td>
       <td class="no-print"><div class="flex gap-2">
+        <button class="btn btn-xs btn-outline" onclick="viewChemoProfile('${r.id}')"><i class="fas fa-eye"></i></button>
         <button class="btn btn-xs btn-outline" onclick="openChemoModal('${r.id}')"><i class="fas fa-edit"></i></button>
         <button class="btn btn-xs btn-danger" onclick="confirmDelete('chemo','${r.id}')"><i class="fas fa-trash"></i></button>
       </div></td>`
@@ -5290,6 +5315,67 @@ function exportOPData() {
   }
   XLSX.writeFile(wb, `OncoCare_OP_Injection_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('OP Injection data exported');
+}
+
+// ==================== CHEMO VIEW PROFILE ====================
+function viewChemoProfile(id) {
+  const r = DB.chemo.find(x => x.id === id);
+  if (!r) return;
+  // Get patient details from registry
+  const p = DB.patients.find(x => x.hospitalNumber === r.hospitalNumber);
+
+  const row = (label, val) => val ? `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val}</span></div>` : '';
+
+  let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--primary)">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${(r.patientName||'?').charAt(0)}</div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--text)">${r.patientName||'—'}</div>
+    <div style="font-size:12px;color:var(--text-muted)">${r.hospitalNumber} ${p&&p.registryNumber?'· '+p.registryNumber:''}</div></div>
+  </div>`;
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">';
+
+  // Chemo specific info
+  html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 4px">Chemotherapy Details</div>`;
+  html += row('Diagnosis', r.diagnosis);
+  html += row('Drug & Dosage', r.drugDosage);
+  html += row('Frequency', r.frequency);
+  html += row('G6PD Status', r.g6pd);
+  html += row('Blood Group', r.bloodGroup||(p&&p.bloodGroup));
+  html += row('Status', r.status||r.chemoStatus);
+  html += row('Started Date', fmtDate(r.startedDate));
+  html += row('Completed Date', fmtDate(r.completedDate));
+  html += row('Expired Date', fmtDate(r.expiredDate));
+  html += row('Remarks', r.remarks);
+
+  // Patient registry info
+  if (p) {
+    html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 4px">Patient Registry Details</div>`;
+    html += row('Full Name', p.fullName);
+    html += row('Gender', p.gender);
+    html += row('Age', p.age ? p.age + ' years' : '');
+    html += row('Date of Birth', fmtDate(p.dob));
+    html += row('National ID', p.nationalId);
+    html += row('Contact', p.contactNumber);
+    html += row('Atoll', p.atoll);
+    html += row('Island', p.island);
+    html += row('Address', p.address);
+    html += row('Diagnosis', p.diagnosis);
+    html += row('Stage', p.stage);
+    html += row('Diagnosis Date', fmtDate(p.diagnosisDate));
+    html += row('Patient Status', p.status);
+    html += row('Registry No', p.registryNumber);
+    html += row('Registration Date', fmtDate(p.registrationDate));
+    html += row('Histopathology', p.histopathology);
+    html += row('Medical History', p.medicalHistory);
+    html += row('Surgical History', p.surgicalHistory);
+    html += row('Treatment History', p.treatmentHistory);
+    html += row('Risk Factors', p.riskFactors);
+    html += row('Remarks', p.remarks);
+  }
+  html += '</div>';
+
+  document.getElementById('profileContent').innerHTML = html;
+  openModal('profileModal');
 }
 
 // ==================== CHEMO STATUS HELPERS ====================
