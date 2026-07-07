@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-074458">
+<meta name="version" content="v20260707-074834">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -5003,6 +5003,22 @@ function renderOPSchedule() {
 }
 
 // ==================== OPTION B: THIS MONTH VIEW ====================
+function populateYearSelector() {
+  const ySel = document.getElementById('opYearSelect');
+  if (!ySel) return;
+  const curYear = new Date().getFullYear();
+  // Only repopulate if empty or wrong year selected
+  if (ySel.options.length === 0 || !ySel.value) {
+    ySel.innerHTML = '';
+    for (let y = curYear - 2; y <= curYear + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === curYear) opt.selected = true;
+      ySel.appendChild(opt);
+    }
+  }
+}
+
 let currentScheduleView = 'month';
 let currentViewMonth = new Date().getMonth();
 let currentViewYear = new Date().getFullYear();
@@ -5037,17 +5053,7 @@ function switchScheduleView(view) {
     monthView.style.display = 'none';
     yearView.style.display = '';
     monthStats.style.display = 'none';
-    // Populate year selector with current year selected
-    const ySel = document.getElementById('opYearSelect');
-    if (ySel && !ySel.options.length) {
-      const curYear = new Date().getFullYear();
-      for (let y = curYear - 2; y <= curYear + 2; y++) {
-        const opt = document.createElement('option');
-        opt.value = y; opt.textContent = y;
-        if (y === curYear) opt.selected = true;
-        ySel.appendChild(opt);
-      }
-    }
+    populateYearSelector();
     renderOPSchedule();
   }
 }
