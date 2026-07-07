@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260706-090623">
+<meta name="version" content="v20260707-025257">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260706-090623</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-025257</span></div>
     </div>
   </div>
 </div>
@@ -2075,7 +2075,7 @@ const SB_TABLES = {
 // ==================== DATA STORE ====================
 const DB = {
   patients: JSON.parse(localStorage.getItem('oms_patients') || '[]'),
-  chemo: JSON.parse(localStorage.getItem('oms_chemo') || '[]'),
+  chemo: JSON.parse(localStorage.getItem('oms_chemo') || '[]').map(r => { if (r.chemoStatus && !r.status) { r.status = r.chemoStatus; } return r; }),
   adr: JSON.parse(localStorage.getItem('oms_adr') || '[]'),
   extravasation: JSON.parse(localStorage.getItem('oms_extravasation') || '[]'),
   spill: JSON.parse(localStorage.getItem('oms_spill') || '[]'),
@@ -2214,7 +2214,9 @@ async function gsSyncBackground() {
         if (rows.length > localCount) {
           // Supabase has MORE records - merge new ones in without overwriting existing
           const localIds = new Set((DB[key] || []).map(r => r.id));
-          const newRows = rows.filter(r => !localIds.has(r.id));
+          let newRows = rows.filter(r => !localIds.has(r.id));
+          // Normalize chemoStatus → status for chemo records
+          if (key === 'chemo') newRows = newRows.map(r => { if (r.chemoStatus && !r.status) r.status = r.chemoStatus; return r; });
           if (newRows.length > 0) {
             DB[key] = [...(DB[key] || []), ...newRows];
             localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
