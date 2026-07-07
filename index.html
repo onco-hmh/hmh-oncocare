@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-081849">
+<meta name="version" content="v20260707-091105">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -710,6 +710,9 @@ body.dark .login-input:focus { background: var(--card-bg); }
       </div>
       <div class="nav-item" onclick="navigate('incident')">
         <i class="fas fa-clipboard-list"></i><span class="nav-label">Incident Log</span>
+      </div>
+      <div class="nav-item" onclick="navigate('portpicc')">
+        <i class="fas fa-procedures"></i><span class="nav-label">Port &amp; PICC Line</span>
       </div>
     </div>
     <div class="nav-section">
@@ -1967,6 +1970,15 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-info-circle"></i> For multiple injections, add a separate treatment plan for each injection</div>
         </div>
         <div class="form-group"><label class="form-label">Dosage <span class="req">*</span></label><input class="form-control" id="ops_dosage" placeholder="e.g. 4mg IV"></div>
+        <div class="form-group"><label class="form-label">Route</label>
+          <select class="form-control" id="ops_route">
+            <option value="">Select</option>
+            <option>IM</option>
+            <option>IV</option>
+            <option>SC</option>
+            <option>SC/IM</option>
+          </select>
+        </div>
         <div class="form-group"><label class="form-label">Periodicity <span class="req">*</span></label>
           <select class="form-control" id="ops_periodicity">
             <option value="">Select</option>
@@ -2090,6 +2102,9 @@ const SB_TABLES = {
   incident:      'incident',
   opPatients:    'op_patients',
   opSchedule:    'op_schedule',
+  portpiccRegister: 'portpicc_register',
+  portFlush:     'port_flush',
+  piccFlush:     'picc_flush',
   users:         'users',
 };
 
@@ -2125,7 +2140,10 @@ const TABLE_COLS = {
   spill: ['id','datetime','location','drugName','drugCategory','quantity','cause','staff','detectedBy','action','kit','isolated','ppe','decon','waste','exposure','nature','medical','incident','reported','capa','reviewedBy','reviewDate','remarks'],
   incident: ['id','date','type','staff','action'],
   opPatients: ['id','serial','hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'],
-  opSchedule: ['id','hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','periodicity','startDate','firstDose','remarks','doses'],
+  portpiccRegister: ['id','idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','hepFlush','possiFlush','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'],
+  portFlush: ['id','idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'],
+  piccFlush: ['id','idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'],
+  opSchedule: ['id','hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','route','periodicity','startDate','firstDose','remarks','doses'],
 };
 
 // Normalize a record to use only known columns
@@ -2455,6 +2473,9 @@ function navigate(page) {
   if (page === 'dashboard') refreshDashboard();
   else if (page === 'opinjection') {
     renderOPRegister();
+  }
+  else if (page === 'portpicc') {
+    switchPPTab('register');
   }
   else if (page === 'admin') {
     const isSA = isSuperAdmin();
@@ -4820,6 +4841,8 @@ function openScheduleModal(id = null) {
   const injCustom = document.getElementById('ops_injectionName_custom');
   if (injSel) injSel.value = '';
   if (injCustom) injCustom.value = '';
+  const routeSel = document.getElementById('ops_route');
+  if (routeSel) routeSel.value = '';
   populateInjectionNameDropdown('');
   document.getElementById('ops_firstDose').value = '1';
   document.getElementById('opScheduleModalTitle').textContent = id ? 'Edit Treatment Plan' : 'Add Treatment Plan';
@@ -4868,6 +4891,7 @@ function saveOPSchedule() {
     diagnosis: document.getElementById('ops_diagnosis').value,
     injectionName: inj,
     dosage,
+    route: document.getElementById('ops_route')?.value || '',
     periodicity: period,
     startDate: document.getElementById('ops_startDate').value,
     firstDose: parseInt(document.getElementById('ops_firstDose').value) || 1,
@@ -5006,6 +5030,7 @@ function renderOPSchedule() {
           <span style="font-size:13px;font-weight:600;color:var(--primary)"><i class="fas fa-prescription-bottle-alt" style="margin-right:4px"></i>${r.injectionName}</span>
           <span style="font-size:12px;color:var(--text-muted)">${r.dosage}</span>
           <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>
+          ${r.route ? `<span class="badge badge-secondary" style="font-size:10px">${r.route}</span>` : ''}
           <span style="font-size:11px;color:var(--success);margin-left:auto"><i class="fas fa-check-circle"></i> ${givenCount} given · Next: Dose ${nextDoseNum}</span>
           <div class="flex gap-2 no-print">
             <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openScheduleModal('${r.id}')"><i class="fas fa-edit"></i></button>
@@ -5764,6 +5789,789 @@ async function gsSaveRecord(sheetKey, record) {
 
 
 
+
+
+// ==================== PORT & PICC LINE MODULE ====================
+
+let ppRegisterFilter = '', ppRegisterTypeFilter = '';
+
+function switchPPTab(tab) {
+  ['register','portflush','piccflush'].forEach(t => {
+    const panel = document.getElementById('ppPanel_' + t);
+    const btn = document.getElementById('ppTab_' + t + '_btn');
+    if (panel) panel.style.display = t === tab ? '' : 'none';
+    if (btn) {
+      btn.style.background = t === tab ? 'var(--primary)' : 'transparent';
+      btn.style.color = t === tab ? 'white' : 'var(--text-muted)';
+      btn.style.fontWeight = t === tab ? '600' : '500';
+    }
+  });
+  if (tab === 'register') renderPPRegister();
+  if (tab === 'portflush') { initMonthFilter('portFlushMonth'); renderPortFlush(); }
+  if (tab === 'piccflush') { initMonthFilter('piccFlushMonth'); renderPiccFlush(); }
+}
+
+function initMonthFilter(id) {
+  const el = document.getElementById(id);
+  if (el && !el.value) {
+    const now = new Date();
+    el.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  }
+}
+
+// ── Lookup patient from registry ──
+function lookupPPPatient(val) {
+  const p = DB.patients.find(x => x.hospitalNumber === val || x.nationalId === val);
+  document.getElementById('ppr_patientName').value = p ? (p.fullName||'') : '';
+  document.getElementById('ppr_diagnosis').value = p ? (p.diagnosis||'') : '';
+}
+
+function lookupPPPatientFlush(prefix, val) {
+  const p = DB.patients.find(x => x.hospitalNumber === val || x.nationalId === val);
+  document.getElementById(prefix + '_patientName').value = p ? (p.fullName||'') : '';
+  document.getElementById(prefix + '_diagnosis').value = p ? (p.diagnosis||'') : '';
+}
+
+// ── LINE REGISTER ──
+function renderPPRegister(search, typeFilter) {
+  if (search !== undefined && search !== null) ppRegisterFilter = search;
+  if (typeFilter !== undefined && typeFilter !== null) ppRegisterTypeFilter = typeFilter;
+  let data = [...DB.portpiccRegister];
+  if (ppRegisterFilter) data = data.filter(r => [r.idNo,r.patientName,r.diagnosis,r.insertedBy].some(v => v && v.toLowerCase().includes(ppRegisterFilter.toLowerCase())));
+  if (ppRegisterTypeFilter) data = data.filter(r => r.lineType === ppRegisterTypeFilter);
+  data.sort((a,b) => (b.dateOfInsertion||'').localeCompare(a.dateOfInsertion||''));
+
+  const tbody = document.getElementById('ppRegisterTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="17"><div class="empty-state"><div class="empty-icon"><i class="fas fa-procedures"></i></div><div class="empty-title">No line entries</div><div class="empty-text">Click "+ Add Entry" to record a line insertion</div></div></td></tr>`;
+    document.getElementById('ppRegisterPagination').innerHTML = '';
+    return;
+  }
+
+  const page = 1, pageSize = 15;
+  const paged = data.slice(0, pageSize * page);
+
+  tbody.innerHTML = data.map((r, i) => {
+    const lineColor = r.lineType === 'PORT' ? 'var(--primary)' : '#8B5CF6';
+    const infectionBadge = r.signsOfInfection === 'Yes'
+      ? '<span class="badge badge-danger">Yes</span>'
+      : '<span class="badge badge-success">No</span>';
+    const phScore = parseInt(r.phlebitisScore);
+    const phBadge = phScore >= 2
+      ? `<span class="badge badge-danger">${phScore}</span>`
+      : `<span class="badge badge-success">${phScore||0}</span>`;
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
+      <td style="font-weight:600;color:var(--primary)">${r.idNo}</td>
+      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td style="font-size:12px">${r.diagnosis||'—'}</td>
+      <td><span class="badge" style="background:${lineColor}20;color:${lineColor};font-size:11px">${r.lineType||'—'}</span></td>
+      <td style="font-size:12px">${fmtDate(r.dateOfInsertion)}</td>
+      <td style="font-size:12px">${r.insertionSite||'—'}</td>
+      <td style="font-size:12px">${r.insertedBy||'—'}</td>
+      <td style="font-size:12px">${r.catheterSize||'—'}</td>
+      <td style="font-size:12px">${r.lumens||'—'}</td>
+      <td style="font-size:12px">${r.tipPositionConfirmed||'—'}</td>
+      <td style="font-size:12px">${r.purpose||'—'}</td>
+      <td>${infectionBadge}</td>
+      <td>${phBadge}</td>
+      <td style="font-size:12px;font-weight:600">${r.nurseInitial||'—'}</td>
+      <td style="font-size:12px;color:${r.dateOfRemoval?'var(--danger)':'var(--text-muted)'}">${r.dateOfRemoval ? fmtDate(r.dateOfRemoval) : '—'}</td>
+      <td class="no-print"><div class="flex gap-2">
+        <button class="btn btn-xs btn-outline" onclick="openPPRegisterModal('${r.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portpiccRegister','${r.id}')"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openPPRegisterModal(id = null) {
+  state.editId = id;
+  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','hepFlush','possiFlush','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
+  fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) el.value = ''; });
+  document.getElementById('ppRegisterModalTitle').textContent = id ? 'Edit Line Entry' : 'Add Line Entry';
+  if (id) {
+    const r = DB.portpiccRegister.find(x => x.id === id);
+    if (r) fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) el.value = r[f]||''; });
+  }
+  openModal('ppRegisterModal');
+}
+
+function savePPRegister() {
+  const idNo = document.getElementById('ppr_idNo').value.trim();
+  const lineType = document.getElementById('ppr_lineType').value;
+  if (!idNo || !lineType) { toast('ID No and Line Type are required', 'error'); return; }
+  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','hepFlush','possiFlush','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
+  const obj = { id: state.editId || genId('PPR') };
+  fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
+  if (state.editId) {
+    const idx = DB.portpiccRegister.findIndex(x => x.id === state.editId);
+    DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
+  } else {
+    DB.portpiccRegister.push(obj); toast('Entry saved ✅');
+  }
+  save('portpiccRegister');
+  if (GS_ENABLED) gsSaveRecord('portpiccRegister', obj);
+  closeModal('ppRegisterModal'); renderPPRegister();
+}
+
+// ── PORT FLUSH & DRESSING ──
+let portFlushFilter = '';
+function renderPortFlush(search) {
+  if (search !== undefined && search !== null) portFlushFilter = search;
+  const monthEl = document.getElementById('portFlushMonth');
+  const selectedMonth = monthEl ? monthEl.value : '';
+  let data = [...DB.portFlush];
+  if (portFlushFilter) data = data.filter(r => [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(v => v && v.toLowerCase().includes(portFlushFilter.toLowerCase())));
+  if (selectedMonth) data = data.filter(r => r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth));
+  data.sort((a,b) => (b.dateOfFlush||'').localeCompare(a.dateOfFlush||''));
+
+  // KPIs
+  const kpiEl = document.getElementById('portFlushKPIs');
+  if (kpiEl) {
+    const total = data.length;
+    const infections = data.filter(r => r.signsOfInfection === 'Yes').length;
+    const highPhlebitis = data.filter(r => parseInt(r.phlebitisScore) >= 2).length;
+    kpiEl.innerHTML = [
+      { label:'Total Flushes', val: total, color:'#0F766E', bg:'#f0fdfa' },
+      { label:'Signs of Infection', val: infections, color:'#EF4444', bg:'#fee2e2' },
+      { label:'Phlebitis ≥2', val: highPhlebitis, color:'#F59E0B', bg:'#fef3c7' },
+    ].map(k => `<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:${k.bg};border-radius:8px">
+      <span style="font-size:18px;font-weight:700;color:${k.color}">${k.val}</span>
+      <span style="font-size:12px;color:${k.color}">${k.label}</span>
+    </div>`).join('');
+  }
+
+  const tbody = document.getElementById('portFlushTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="15"><div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div></td></tr>`;
+    document.getElementById('portFlushPagination').innerHTML = ''; return;
+  }
+  tbody.innerHTML = data.map((r,i) => {
+    const infBadge = r.signsOfInfection==='Yes' ? '<span class="badge badge-danger">Yes</span>' : '<span class="badge badge-success">No</span>';
+    const phScore = parseInt(r.phlebitisScore||0);
+    const phBadge = phScore >= 2 ? `<span class="badge badge-danger">${phScore}</span>` : `<span class="badge badge-success">${phScore}</span>`;
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
+      <td style="font-weight:600;color:var(--primary)">${r.idNo}</td>
+      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td style="font-size:12px">${r.diagnosis||'—'}</td>
+      <td style="font-size:12px">${fmtDate(r.dateOfFlush)}</td>
+      <td style="font-size:12px">${r.dressingClean||'—'}</td>
+      <td>${infBadge}</td>
+      <td style="font-size:12px">${r.backflowStatus||'—'}</td>
+      <td>${phBadge}</td>
+      <td style="font-size:12px;font-weight:500;color:var(--primary)">${r.flushGiven||'—'}</td>
+      <td style="font-size:12px">${r.asepticTechnique||'—'}</td>
+      <td style="font-size:12px">${r.actionTaken||'—'}</td>
+      <td style="font-size:12px;font-weight:600">${r.nurseInitial||'—'}</td>
+      <td style="font-size:12px">${r.remarks||'—'}</td>
+      <td class="no-print"><div class="flex gap-2">
+        <button class="btn btn-xs btn-outline" onclick="openPortFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portFlush','${r.id}')"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openPortFlushModal(id = null) {
+  state.editId = id;
+  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) el.value = ''; });
+  document.getElementById('portFlushModalTitle').textContent = id ? 'Edit Flush Record' : 'Add Port Flush & Dressing Record';
+  document.getElementById('pf_dateOfFlush').value = new Date().toISOString().slice(0,10);
+  if (id) {
+    const r = DB.portFlush.find(x => x.id === id);
+    if (r) fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) el.value = r[f]||''; });
+  }
+  openModal('portFlushModal');
+}
+
+function savePortFlush() {
+  const idNo = document.getElementById('pf_idNo').value.trim();
+  const date = document.getElementById('pf_dateOfFlush').value;
+  if (!idNo || !date) { toast('ID No and Date are required', 'error'); return; }
+  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  const obj = { id: state.editId || genId('PFL') };
+  fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) obj[f] = el.value; });
+  if (state.editId) {
+    const idx = DB.portFlush.findIndex(x => x.id === state.editId);
+    DB.portFlush[idx] = obj; toast('Record updated ✅');
+  } else { DB.portFlush.push(obj); toast('Flush record saved ✅'); }
+  save('portFlush');
+  if (GS_ENABLED) gsSaveRecord('portFlush', obj);
+  closeModal('portFlushModal'); renderPortFlush();
+}
+
+// ── PICC FLUSH & DRESSING ──
+let piccFlushFilter = '';
+function renderPiccFlush(search) {
+  if (search !== undefined && search !== null) piccFlushFilter = search;
+  const monthEl = document.getElementById('piccFlushMonth');
+  const selectedMonth = monthEl ? monthEl.value : '';
+  let data = [...DB.piccFlush];
+  if (piccFlushFilter) data = data.filter(r => [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(v => v && v.toLowerCase().includes(piccFlushFilter.toLowerCase())));
+  if (selectedMonth) data = data.filter(r => r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth));
+  data.sort((a,b) => (b.dateOfFlush||'').localeCompare(a.dateOfFlush||''));
+
+  // KPIs
+  const kpiEl = document.getElementById('piccFlushKPIs');
+  if (kpiEl) {
+    const total = data.length;
+    const infections = data.filter(r => r.signsOfInfection === 'Yes').length;
+    const highPhlebitis = data.filter(r => parseInt(r.phlebitisScore) >= 2).length;
+    kpiEl.innerHTML = [
+      { label:'Total Flushes', val: total, color:'#0F766E', bg:'#f0fdfa' },
+      { label:'Signs of Infection', val: infections, color:'#EF4444', bg:'#fee2e2' },
+      { label:'Phlebitis ≥2', val: highPhlebitis, color:'#F59E0B', bg:'#fef3c7' },
+    ].map(k => `<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:${k.bg};border-radius:8px">
+      <span style="font-size:18px;font-weight:700;color:${k.color}">${k.val}</span>
+      <span style="font-size:12px;color:${k.color}">${k.label}</span>
+    </div>`).join('');
+  }
+
+  const tbody = document.getElementById('piccFlushTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="15"><div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div></td></tr>`;
+    document.getElementById('piccFlushPagination').innerHTML = ''; return;
+  }
+  tbody.innerHTML = data.map((r,i) => {
+    const infBadge = r.signsOfInfection==='Yes' ? '<span class="badge badge-danger">Yes</span>' : '<span class="badge badge-success">No</span>';
+    const phScore = parseInt(r.phlebitisScore||0);
+    const phBadge = phScore >= 2 ? `<span class="badge badge-danger">${phScore}</span>` : `<span class="badge badge-success">${phScore}</span>`;
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
+      <td style="font-weight:600;color:var(--primary)">${r.idNo}</td>
+      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td style="font-size:12px">${r.diagnosis||'—'}</td>
+      <td style="font-size:12px">${fmtDate(r.dateOfFlush)}</td>
+      <td style="font-size:12px">${r.dressingClean||'—'}</td>
+      <td>${infBadge}</td>
+      <td style="font-size:12px">${r.backflowStatus||'—'}</td>
+      <td>${phBadge}</td>
+      <td style="font-size:12px;font-weight:500;color:var(--primary)">${r.flushGiven||'—'}</td>
+      <td style="font-size:12px">${r.asepticTechnique||'—'}</td>
+      <td style="font-size:12px">${r.actionTaken||'—'}</td>
+      <td style="font-size:12px;font-weight:600">${r.nurseInitial||'—'}</td>
+      <td style="font-size:12px">${r.remarks||'—'}</td>
+      <td class="no-print"><div class="flex gap-2">
+        <button class="btn btn-xs btn-outline" onclick="openPiccFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="deletePPRecord('piccFlush','${r.id}')"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openPiccFlushModal(id = null) {
+  state.editId = id;
+  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) el.value = ''; });
+  document.getElementById('piccFlushModalTitle').textContent = id ? 'Edit PICC Flush Record' : 'Add PICC Flush & Dressing Record';
+  document.getElementById('pc_dateOfFlush').value = new Date().toISOString().slice(0,10);
+  if (id) {
+    const r = DB.piccFlush.find(x => x.id === id);
+    if (r) fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) el.value = r[f]||''; });
+  }
+  openModal('piccFlushModal');
+}
+
+function savePiccFlush() {
+  const idNo = document.getElementById('pc_idNo').value.trim();
+  const date = document.getElementById('pc_dateOfFlush').value;
+  if (!idNo || !date) { toast('ID No and Date are required', 'error'); return; }
+  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  const obj = { id: state.editId || genId('PCF') };
+  fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) obj[f] = el.value; });
+  if (state.editId) {
+    const idx = DB.piccFlush.findIndex(x => x.id === state.editId);
+    DB.piccFlush[idx] = obj; toast('Record updated ✅');
+  } else { DB.piccFlush.push(obj); toast('PICC flush record saved ✅'); }
+  save('piccFlush');
+  if (GS_ENABLED) gsSaveRecord('piccFlush', obj);
+  closeModal('piccFlushModal'); renderPiccFlush();
+}
+
+function deletePPRecord(dbKey, id) {
+  if (!confirm('Delete this record?')) return;
+  DB[dbKey] = DB[dbKey].filter(r => r.id !== id);
+  save(dbKey);
+  if (GS_ENABLED) {
+    const table = SB_TABLES[dbKey];
+    if (table) fetch(`${SB_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+    });
+  }
+  if (dbKey === 'portpiccRegister') renderPPRegister();
+  else if (dbKey === 'portFlush') renderPortFlush();
+  else if (dbKey === 'piccFlush') renderPiccFlush();
+  toast('Deleted');
+}
+
+function exportPortPicc() {
+  const tab = document.querySelector('.pp-tab-btn[style*="var(--primary)"]');
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(DB.portpiccRegister), 'Line Register');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(DB.portFlush), 'Port Flush');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(DB.piccFlush), 'PICC Flush');
+  XLSX.writeFile(wb, 'OncoCare_PortPICC_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  toast('Exported successfully');
+}
+
 </script>
+
+<!-- ==================== PORT & PICC LINE PAGE ==================== -->
+<div class="page" id="page-portpicc">
+  <div class="print-header"><img src="" id="printLogo2" style="height:60px"><div><div style="font-size:18px;font-weight:700">Hulhumale' Hospital</div><div style="font-size:13px">Oncology Unit</div></div></div>
+
+  <div class="page-header flex justify-between items-center">
+    <div>
+      <h1>Port &amp; PICC Line</h1>
+      <p>Vascular access device management</p>
+    </div>
+    <div class="flex gap-2 no-print">
+      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="exportPortPicc()"><i class="fas fa-file-export"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- Sub Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:12px;padding:4px;width:fit-content;border:1px solid var(--border)">
+    <button id="ppTab_register_btn" onclick="switchPPTab('register')" class="pp-tab-btn active-pp-tab" style="padding:8px 16px;border-radius:9px;border:none;background:var(--primary);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-list-alt"></i> Line Register</button>
+    <button id="ppTab_portflush_btn" onclick="switchPPTab('portflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> Port Flush &amp; Dressing</button>
+    <button id="ppTab_piccflush_btn" onclick="switchPPTab('piccflush')" class="pp-tab-btn" style="padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:6px"><i class="fas fa-tint"></i> PICC Flush &amp; Dressing</button>
+  </div>
+
+  <!-- ── TAB 1: LINE REGISTER ── -->
+  <div id="ppPanel_register">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPPRegister(this.value)"></div>
+      <select class="filter-select" onchange="renderPPRegister(null,this.value)">
+        <option value="">All Types</option>
+        <option>PORT</option>
+        <option>PICC</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openPPRegisterModal()"><i class="fas fa-plus"></i> Add Entry</button>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="ppRegisterTable">
+          <thead><tr>
+            <th>#</th>
+            <th>ID No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Line Type</th>
+            <th>Date Inserted</th>
+            <th>Insertion Site</th>
+            <th>Inserted By</th>
+            <th>Catheter Size</th>
+            <th>Lumens</th>
+            <th>Tip Confirmed</th>
+            <th>Purpose</th>
+            <th>Signs of Infection</th>
+            <th>Phlebitis Score</th>
+            <th>Nurse Initial</th>
+            <th>Date Removed</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="ppRegisterTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="ppRegisterPagination"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: PORT FLUSH & DRESSING ── -->
+  <div id="ppPanel_portflush" style="display:none">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPortFlush(this.value)"></div>
+      <input type="month" class="filter-select" id="portFlushMonth" onchange="renderPortFlush()" style="max-width:160px">
+      <button class="btn btn-primary btn-sm" onclick="openPortFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
+    </div>
+    <!-- KPI row -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="portFlushKPIs"></div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="portFlushTable">
+          <thead><tr>
+            <th>#</th>
+            <th>ID No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Date of Flush</th>
+            <th>Dressing Clean</th>
+            <th>Signs of Infection</th>
+            <th>Backflow/Inflow Status</th>
+            <th>Phlebitis Score</th>
+            <th>Flush Given</th>
+            <th>Aseptic Technique</th>
+            <th>Action Taken</th>
+            <th>Nurse Initial</th>
+            <th>Remarks</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="portFlushTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="portFlushPagination"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB 3: PICC FLUSH & DRESSING ── -->
+  <div id="ppPanel_piccflush" style="display:none">
+    <div class="toolbar">
+      <div class="toolbar-search"><i class="fas fa-search"></i><input type="text" placeholder="Search by ID or name…" oninput="renderPiccFlush(this.value)"></div>
+      <input type="month" class="filter-select" id="piccFlushMonth" onchange="renderPiccFlush()" style="max-width:160px">
+      <button class="btn btn-primary btn-sm" onclick="openPiccFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
+    </div>
+    <!-- KPI row -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="piccFlushKPIs"></div>
+    <div class="card" style="padding:0">
+      <div class="table-wrapper">
+        <table id="piccFlushTable">
+          <thead><tr>
+            <th>#</th>
+            <th>ID No</th>
+            <th>Patient Name</th>
+            <th>Diagnosis</th>
+            <th>Date of Flush/Dressing</th>
+            <th>Dressing Clean</th>
+            <th>Signs of Infection</th>
+            <th>Backflow/Inflow Status</th>
+            <th>Phlebitis Score</th>
+            <th>Flush Given</th>
+            <th>Aseptic Technique</th>
+            <th>Action Taken</th>
+            <th>Nurse Initial</th>
+            <th>Remarks</th>
+            <th class="no-print">Actions</th>
+          </tr></thead>
+          <tbody id="piccFlushTbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-wrap" id="piccFlushPagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PORT & PICC LINE REGISTER MODAL -->
+<div class="modal-overlay" id="ppRegisterModal" style="display:none">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header">
+      <span class="modal-title" id="ppRegisterModalTitle">Add Line Entry</span>
+      <button class="modal-close" onclick="closeModal('ppRegisterModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
+          <input class="form-control" id="ppr_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatient(this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label>
+          <input class="form-control" id="ppr_patientName" placeholder="Auto-filled or enter name">
+        </div>
+        <div class="form-group"><label class="form-label">Diagnosis</label>
+          <input class="form-control" id="ppr_diagnosis" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Line Type <span class="req">*</span></label>
+          <select class="form-control" id="ppr_lineType">
+            <option value="">Select</option>
+            <option>PORT</option>
+            <option>PICC</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Date of Insertion</label>
+          <input type="date" class="form-control" id="ppr_dateOfInsertion">
+        </div>
+        <div class="form-group"><label class="form-label">Insertion Site</label>
+          <select class="form-control" id="ppr_insertionSite">
+            <option value="">Select</option>
+            <option>Right Upper Arm</option>
+            <option>Left Upper Arm</option>
+            <option>Right Upper Chest</option>
+            <option>Left Upper Chest</option>
+            <option>Right Basilic Vein</option>
+            <option>Left Basilic Vein</option>
+            <option>Right Internal Jugular Vein</option>
+            <option>Left Internal Jugular Vein</option>
+            <option>Right Cephalic Vein</option>
+            <option>Left Cephalic Vein</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Inserted By</label>
+          <input class="form-control" id="ppr_insertedBy" placeholder="Physician/Hospital name">
+        </div>
+        <div class="form-group"><label class="form-label">Catheter Size (Fr)</label>
+          <input class="form-control" id="ppr_catheterSize" placeholder="e.g. 4Fr">
+        </div>
+        <div class="form-group"><label class="form-label">No. of Lumens</label>
+          <select class="form-control" id="ppr_lumens">
+            <option value="">Select</option>
+            <option>Single</option>
+            <option>Double</option>
+            <option>Triple</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Tip Position Confirmed (Y/N)</label>
+          <select class="form-control" id="ppr_tipPositionConfirmed">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Confirmation Method</label>
+          <select class="form-control" id="ppr_confirmationMethod">
+            <option value="">Select</option>
+            <option>Chest X-Ray</option>
+            <option>Fluoroscopy</option>
+            <option>Ultrasound</option>
+            <option>ECG</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Purpose</label>
+          <select class="form-control" id="ppr_purpose">
+            <option value="">Select</option>
+            <option>For Chemotherapy</option>
+            <option>Fluids/Nutrition Balance</option>
+            <option>Port Flush</option>
+            <option>Blood Transfusion</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
+          <select class="form-control" id="ppr_dressingClean">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Signs of Infection</label>
+          <select class="form-control" id="ppr_signsOfInfection">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Phlebitis Score</label>
+          <select class="form-control" id="ppr_phlebitisScore">
+            <option value="">Select</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Hep Flush</label>
+          <select class="form-control" id="ppr_hepFlush">
+            <option value="">Select</option>
+            <option>HEPFLUSH 5mL</option>
+            <option>HEPFLUSH 10mL</option>
+            <option>HEPFLUSH 20mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">PossiFLUSH</label>
+          <select class="form-control" id="ppr_possiFlush">
+            <option value="">Select</option>
+            <option>POSSIFLUSH 10mL</option>
+            <option>POSSIFLUSH 20mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Aseptic Technique</label>
+          <select class="form-control" id="ppr_asepticTechnique">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Complication</label>
+          <input class="form-control" id="ppr_complication" placeholder="Describe if any">
+        </div>
+        <div class="form-group"><label class="form-label">Action Taken</label>
+          <input class="form-control" id="ppr_actionTaken" placeholder="Actions if any">
+        </div>
+        <div class="form-group"><label class="form-label">Physician Notified</label>
+          <select class="form-control" id="ppr_physicianNotified">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Date of Removal</label>
+          <input type="date" class="form-control" id="ppr_dateOfRemoval">
+        </div>
+        <div class="form-group"><label class="form-label">Reason for Removal</label>
+          <input class="form-control" id="ppr_reasonForRemoval" placeholder="Reason if removed">
+        </div>
+        <div class="form-group"><label class="form-label">Nurse Initial</label>
+          <input class="form-control" id="ppr_nurseInitial" placeholder="Nurse initials">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label>
+          <textarea class="form-control" id="ppr_remarks" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('ppRegisterModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePPRegister()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PORT FLUSH & DRESSING MODAL -->
+<div class="modal-overlay" id="portFlushModal" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title" id="portFlushModalTitle">Add Port Flush &amp; Dressing Record</span>
+      <button class="modal-close" onclick="closeModal('portFlushModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
+          <input class="form-control" id="pf_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pf', this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label>
+          <input class="form-control" id="pf_patientName" placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Diagnosis</label>
+          <input class="form-control" id="pf_diagnosis" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Date of Flush <span class="req">*</span></label>
+          <input type="date" class="form-control" id="pf_dateOfFlush">
+        </div>
+        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
+          <select class="form-control" id="pf_dressingClean">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Signs of Infection</label>
+          <select class="form-control" id="pf_signsOfInfection">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Backflow/Inflow Status</label>
+          <select class="form-control" id="pf_backflowStatus">
+            <option value="">Select</option>
+            <option>Backflow Present / Inflow Good</option>
+            <option>Backflow Absent / Inflow Good</option>
+            <option>Backflow Not Present / Inflow Good</option>
+            <option>No Backflow / No Inflow</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Phlebitis Score</label>
+          <select class="form-control" id="pf_phlebitisScore">
+            <option value="">Select</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Flush Given</label>
+          <select class="form-control" id="pf_flushGiven">
+            <option value="">Select</option>
+            <option>HEPFLUSH 5mL</option>
+            <option>HEPFLUSH 10mL</option>
+            <option>HEPFLUSH 20mL</option>
+            <option>POSSIFLUSH 10mL</option>
+            <option>POSSIFLUSH 20mL</option>
+            <option>Normal Saline 10mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Aseptic Technique Followed</label>
+          <select class="form-control" id="pf_asepticTechnique">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Action Taken</label>
+          <input class="form-control" id="pf_actionTaken" placeholder="e.g. No Action Required">
+        </div>
+        <div class="form-group"><label class="form-label">Nurse Initial</label>
+          <input class="form-control" id="pf_nurseInitial" placeholder="Nurse initials">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label>
+          <textarea class="form-control" id="pf_remarks" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('portFlushModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePortFlush()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PICC FLUSH & DRESSING MODAL -->
+<div class="modal-overlay" id="piccFlushModal" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title" id="piccFlushModalTitle">Add PICC Flush &amp; Dressing Record</span>
+      <button class="modal-close" onclick="closeModal('piccFlushModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
+          <input class="form-control" id="pc_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pc', this.value)">
+        </div>
+        <div class="form-group"><label class="form-label">Patient Name</label>
+          <input class="form-control" id="pc_patientName" placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Diagnosis</label>
+          <input class="form-control" id="pc_diagnosis" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group"><label class="form-label">Date of Flush/Dressing <span class="req">*</span></label>
+          <input type="date" class="form-control" id="pc_dateOfFlush">
+        </div>
+        <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
+          <select class="form-control" id="pc_dressingClean">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Signs of Infection</label>
+          <select class="form-control" id="pc_signsOfInfection">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group full"><label class="form-label">Backflow/Inflow Status</label>
+          <select class="form-control" id="pc_backflowStatus">
+            <option value="">Select</option>
+            <option>Backflow Present / Inflow Good</option>
+            <option>Backflow Absent / Inflow Good</option>
+            <option>Backflow Not Present / Inflow Good</option>
+            <option>No Backflow / No Inflow</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Phlebitis Score</label>
+          <select class="form-control" id="pc_phlebitisScore">
+            <option value="">Select</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Flush Given</label>
+          <select class="form-control" id="pc_flushGiven">
+            <option value="">Select</option>
+            <option>POSSIFLUSH 20mL</option>
+            <option>POSSIFLUSH 10mL</option>
+            <option>HEPFLUSH 10mL</option>
+            <option>Normal Saline 10mL</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Aseptic Technique Followed</label>
+          <select class="form-control" id="pc_asepticTechnique">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Action Taken</label>
+          <input class="form-control" id="pc_actionTaken" placeholder="e.g. No Action Required">
+        </div>
+        <div class="form-group"><label class="form-label">Nurse Initial</label>
+          <input class="form-control" id="pc_nurseInitial" placeholder="Nurse initials">
+        </div>
+        <div class="form-group full"><label class="form-label">Remarks</label>
+          <textarea class="form-control" id="pc_remarks" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('piccFlushModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePiccFlush()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
