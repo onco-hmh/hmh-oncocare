@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-031914">
+<meta name="version" content="v20260707-032923">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -662,7 +662,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       <div class="login-error" id="loginError"></div>
 
-      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-031914</span></div>
+      <div class="login-footer">OncoCare · Oncology Management System · <span style="opacity:0.6">v20260707-032923</span></div>
     </div>
   </div>
 </div>
@@ -2655,7 +2655,25 @@ function openChemoModal(id = null) {
   document.getElementById('chemoModalTitle').textContent = id ? 'Edit Chemo Record' : 'Add Chemotherapy Record';
   if (id) {
     const r = DB.chemo.find(x => x.id === id);
-    if (r) { document.getElementById('chemo_hospitalNumber').value = r.hospitalNumber||''; document.getElementById('chemo_patientName').value = r.patientName||''; document.getElementById('chemo_diagnosis').value = r.diagnosis||''; document.getElementById('chemo_g6pd').value = r.g6pd||''; document.getElementById('chemo_bloodGroup').value = r.bloodGroup||''; document.getElementById('chemo_status').value = r.status||r.chemoStatus||''; document.getElementById('chemo_startedDate').value = r.startedDate||''; document.getElementById('chemo_completedDate').value = r.completedDate||''; document.getElementById('chemo_remarks').value = r.remarks||''; }
+    if (r) {
+      document.getElementById('chemo_hospitalNumber').value = r.hospitalNumber||'';
+      document.getElementById('chemo_patientName').value = r.patientName||'';
+      document.getElementById('chemo_diagnosis').value = r.diagnosis||'';
+      document.getElementById('chemo_g6pd').value = r.g6pd||'';
+      document.getElementById('chemo_status').value = r.status||r.chemoStatus||'';
+      document.getElementById('chemo_startedDate').value = r.startedDate||'';
+      document.getElementById('chemo_completedDate').value = r.completedDate||'';
+      document.getElementById('chemo_remarks').value = r.remarks||'';
+      // Auto-fill blood group from patient registry if missing in chemo record
+      const pat = DB.patients.find(p => p.hospitalNumber === r.hospitalNumber);
+      const bg = r.bloodGroup || (pat ? pat.bloodGroup : '') || '';
+      document.getElementById('chemo_bloodGroup').value = bg;
+      // Also auto-fill expired date if status is Expired
+      if (r.status === 'Expired' || r.chemoStatus === 'Expired') {
+        toggleChemoExpiredDate();
+        document.getElementById('chemo_expiredDate').value = r.expiredDate || (pat ? pat.expiredDate : '') || '';
+      }
+    }
   }
   openModal('chemoModal');
 }
