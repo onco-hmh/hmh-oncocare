@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-080927">
+<meta name="version" content="v20260707-081849">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4717,8 +4717,20 @@ function saveOPPatient() {
     injections: document.getElementById('op_injections').value,
     remarks: document.getElementById('op_remarks').value,
   };
-  if (state.editId) { const idx = DB.opPatients.findIndex(x => x.id === state.editId); DB.opPatients[idx] = obj; toast('Patient updated'); }
-  else { DB.opPatients.push(obj); toast('Patient added'); }
+  if (state.editId) {
+    const idx = DB.opPatients.findIndex(x => x.id === state.editId);
+    DB.opPatients[idx] = obj;
+    toast('Patient updated ✅');
+  } else {
+    // Block duplicate hospital number
+    const existing = DB.opPatients.find(x => x.hospitalNumber === hn);
+    if (existing) {
+      toast(`❌ Patient ${hn} already exists in OP Register — use Edit to update`, 'error');
+      return;
+    }
+    DB.opPatients.push(obj);
+    toast('Patient added to OP Register ✅');
+  }
   save_op('opPatients'); closeModal('opPatientModal'); renderOPRegister();
 }
 
