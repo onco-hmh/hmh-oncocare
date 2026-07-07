@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-094753">
+<meta name="version" content="v20260707-095617">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2564,6 +2564,9 @@ const DB = {
   incident: JSON.parse(localStorage.getItem('oms_incident') || '[]'),
   opPatients: JSON.parse(localStorage.getItem('oms_opPatients') || '[]'),
   opSchedule: JSON.parse(localStorage.getItem('oms_opSchedule') || '[]'),
+  portpiccRegister: JSON.parse(localStorage.getItem('oms_portpiccRegister') || '[]'),
+  portFlush: JSON.parse(localStorage.getItem('oms_portFlush') || '[]'),
+  piccFlush: JSON.parse(localStorage.getItem('oms_piccFlush') || '[]'),
 };
 
 // Always save locally (instant) AND push to Google Sheets (async)
