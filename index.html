@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260707-101005">
+<meta name="version" content="v20260708-175034">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4689,6 +4689,53 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('appWrapper').style.display = 'none';
 });
+
+// ==================== SUPABASE API ====================
+async function sbFetch(table, options = {}) {
+  const { method = 'GET', body, params = '' } = options;
+  try {
+    // For POST (upsert), add on_conflict=id to properly upsert by primary key
+    const url = method === 'POST' && !params.includes('on_conflict')
+      ? `${SB_URL}/rest/v1/${table}?on_conflict=id`
+      : `${SB_URL}/rest/v1/${table}${params}`;
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn('Supabase error:', err);
+      return { success: false, error: err };
+    }
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : [];
+    return { success: true, data };
+  } catch (err) {
+    console.warn('Supabase fetch error:', err);
+    GS_ENABLED = false;
+    return { success: false, error: err.message };
+  }
+}
+
+// Save a single record to Supabase (upsert)
+async function gsSaveRecord(sheetKey, record) {
+  if (!GS_ENABLED) return;
+  const table = SB_TABLES[sheetKey];
+  if (!table) return;
+  const data = normalizeRecord(sheetKey, record);
+  await sbFetch(table, { method: 'POST', body: data });
+}
+
+
+
+
+
 </script>
 
 <!-- User Form Modal -->
@@ -5180,33 +5227,26 @@ function deleteOPPatient(id) {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function populateInjectionNameDropdown(hn) {
-  const sel = document.getElementById('ops_injectionName');
+  var sel = document.getElementById('ops_injectionName');
   if (!sel) return;
-
-  // Get injections from OP Register for this patient
-  const opPatient = hn ? DB.opPatients.find(p => p.hospitalNumber === hn) : null;
-  const patientRegInjections = opPatient && opPatient.injections
-    ? opPatient.injections.split(',').map(i => i.trim()).filter(Boolean)
-    : [];
-
-  // Get injections already used by this patient in schedule
-  const patientScheduleInjections = hn
-    ? [...new Set(DB.opSchedule.filter(r => r.hospitalNumber === hn).map(r => r.injectionName).filter(Boolean))]
-    : [];
-
-  // Merge patient-specific injections (register + schedule)
-  const patientInjections = [...new Set([...patientRegInjections, ...patientScheduleInjections])];
-
-  // All injections ever used across all patients
-  const allInjections = [...new Set(DB.opSchedule.map(r => r.injectionName).filter(Boolean))].sort();
-
-  sel.innerHTML = '<option value="">Select injection…</option>' +
-    (patientInjections.length > 0
-      ? `<optgroup label="This Patient's Injections">${patientInjections.map(i => `<option value="${i}">${i}</option>`).join('')}</optgroup>`
-      : '') +
-    (allInjections.length > 0
-      ? `<optgroup label="All Injections">${allInjections.filter(i => !patientInjections.includes(i)).map(i => `<option value="${i}">${i}</option>`).join('')}</optgroup>`
-      : '');
+  var opPatient = hn ? DB.opPatients.find(function(p) { return p.hospitalNumber === hn; }) : null;
+  var patientRegInj = (opPatient && opPatient.injections) ? opPatient.injections.split(',').map(function(i){return i.trim();}).filter(Boolean) : [];
+  var patientSchInj = hn ? DB.opSchedule.filter(function(r){return r.hospitalNumber===hn;}).map(function(r){return r.injectionName;}).filter(Boolean) : [];
+  var patientInj = patientRegInj.concat(patientSchInj).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var allInj = DB.opSchedule.map(function(r){return r.injectionName;}).filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+  var html = '<option value="">Select injection...</option>';
+  if (patientInj.length > 0) {
+    html += '<optgroup label="This Patient Injections">';
+    patientInj.forEach(function(i){ html += '<option value="' + i + '">' + i + '</option>'; });
+    html += '</optgroup>';
+  }
+  var others = allInj.filter(function(i){ return patientInj.indexOf(i) === -1; });
+  if (others.length > 0) {
+    html += '<optgroup label="All Injections">';
+    others.forEach(function(i){ html += '<option value="' + i + '">' + i + '</option>'; });
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
 }
 
 
@@ -6123,51 +6163,6 @@ function genImportId(prefix, rowIndex) {
   const rnd = Math.random().toString(36).slice(2,8);
   return (prefix + '-' + ts + idx + rnd).toUpperCase();
 }
-
-// ==================== SUPABASE API ====================
-async function sbFetch(table, options = {}) {
-  const { method = 'GET', body, params = '' } = options;
-  try {
-    // For POST (upsert), add on_conflict=id to properly upsert by primary key
-    const url = method === 'POST' && !params.includes('on_conflict')
-      ? `${SB_URL}/rest/v1/${table}?on_conflict=id`
-      : `${SB_URL}/rest/v1/${table}${params}`;
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal'
-      },
-      body: body ? JSON.stringify(body) : undefined
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.warn('Supabase error:', err);
-      return { success: false, error: err };
-    }
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : [];
-    return { success: true, data };
-  } catch (err) {
-    console.warn('Supabase fetch error:', err);
-    GS_ENABLED = false;
-    return { success: false, error: err.message };
-  }
-}
-
-// Save a single record to Supabase (upsert)
-async function gsSaveRecord(sheetKey, record) {
-  if (!GS_ENABLED) return;
-  const table = SB_TABLES[sheetKey];
-  if (!table) return;
-  const data = normalizeRecord(sheetKey, record);
-  await sbFetch(table, { method: 'POST', body: data });
-}
-
-
-
 
 
 // ==================== PORT & PICC LINE MODULE ====================
