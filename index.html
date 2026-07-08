@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260708-175034">
+<meta name="version" content="v20260708-182614">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2463,6 +2463,1361 @@ body.dark .login-input:focus { background: var(--card-bg); }
 
 <script>
 // ==================== DATA STORE ====================
+// ==================== LISTS MANAGEMENT ====================
+const DEFAULT_CHEMO_STATUSES = ['Ongoing','Completed','Paused','Discontinued','Expired'];
+const DEFAULT_DIAGNOSES = ['Breast Cancer','Cervical Cancer','Colorectal Cancer','Leukemia','Lymphoma','Lung Cancer','Ovarian Cancer','Gastric Cancer','Thyroid Cancer','Liver Cancer','Prostate Cancer','Brain Tumor','Uterine Cancer','Bladder Cancer','Kidney Cancer','Multiple Myeloma','Pancreatic Cancer','Other'];
+const DEFAULT_STATUSES = ['Active','In Remission','Palliative Care','Lost to Follow-up','Transferred Out','Expired'];
+const DEFAULT_ATOLLS = ["Haa Alifu (HA)", "Haa Dhaalu (HDh)", "Shaviyani (Sh)", "Noonu (N)", "Raa (R)", "Baa (B)", "Lhaviyani (Lh)", "Kaafu (K)", "Alifu Alifu (AA)", "Alifu Dhaalu (ADh)", "Vaavu (V)", "Meemu (M)", "Faafu (F)", "Dhaalu (Dh)", "Thaa (Th)", "Laamu (L)", "Gaafu Alifu (GA)", "Gaafu Dhaalu (GDh)", "Gnaviyani (Gn)", "Seenu (S)"];
+
+const DEFAULT_ISLANDS = [{"name": "HA. Baarah", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Berinmadhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Dhidhdhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Filladhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Hoarafushi", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Ihavandhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Kelaa", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Maarandhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Molhadhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Muraidhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Thakandhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Thuraakunu", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Uligamu", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Utheemu", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Vashafaru", "atoll": "Haa Alifu (HA)"}, {"name": "HDh. Finey", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Hanimaadhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Hirimaradhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Kulhudhuffushi", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Kumundhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Kurinbi", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Naivaadhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Nellaidhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Neykurendhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Nolhivaram", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Nolhivaranfaru", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Vaikaradhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "Sh. Bilehffahi", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Feevah", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Feydhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Foakaidhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Funadhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Goidhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Kanditheemu", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Komandoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Lhaimagu", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Maakandoodhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Maroshi", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Milandhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Narudhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Noomaraa", "atoll": "Shaviyani (Sh)"}, {"name": "N. Fodhdhoo", "atoll": "Noonu (N)"}, {"name": "N. Holhudhoo", "atoll": "Noonu (N)"}, {"name": "N. Kedhikolhudhoo", "atoll": "Noonu (N)"}, {"name": "N. Kendhikulhudhoo", "atoll": "Noonu (N)"}, {"name": "N. Landhoo", "atoll": "Noonu (N)"}, {"name": "N. Lhohi", "atoll": "Noonu (N)"}, {"name": "N. Maalhendhoo", "atoll": "Noonu (N)"}, {"name": "N. Maalhoss", "atoll": "Noonu (N)"}, {"name": "N. Magoodhoo", "atoll": "Noonu (N)"}, {"name": "N. Manadhoo", "atoll": "Noonu (N)"}, {"name": "N. Miladhoo", "atoll": "Noonu (N)"}, {"name": "N. Orimas", "atoll": "Noonu (N)"}, {"name": "N. Velidhoo", "atoll": "Noonu (N)"}, {"name": "R. Alifushi", "atoll": "Raa (R)"}, {"name": "R. Dhuvaafaru", "atoll": "Raa (R)"}, {"name": "R. Fainu", "atoll": "Raa (R)"}, {"name": "R. Hulhudhuffaaru", "atoll": "Raa (R)"}, {"name": "R. Inguraidhoo", "atoll": "Raa (R)"}, {"name": "R. Innamaadhoo", "atoll": "Raa (R)"}, {"name": "R. Kinolhas", "atoll": "Raa (R)"}, {"name": "R. Maakurathu", "atoll": "Raa (R)"}, {"name": "R. Maamigili", "atoll": "Raa (R)"}, {"name": "R. Meedhoo", "atoll": "Raa (R)"}, {"name": "R. Rasmaadhoo", "atoll": "Raa (R)"}, {"name": "R. Ungoofaaru", "atoll": "Raa (R)"}, {"name": "R. Vaadhoo", "atoll": "Raa (R)"}, {"name": "B. Daravan", "atoll": "Baa (B)"}, {"name": "B. Dhonfanu", "atoll": "Baa (B)"}, {"name": "B. Eydhafushi", "atoll": "Baa (B)"}, {"name": "B. Fehendhoo", "atoll": "Baa (B)"}, {"name": "B. Goidhoo", "atoll": "Baa (B)"}, {"name": "B. Hithaadhoo", "atoll": "Baa (B)"}, {"name": "B. Kamadhoo", "atoll": "Baa (B)"}, {"name": "B. Kendhoo", "atoll": "Baa (B)"}, {"name": "B. Kihaadhoo", "atoll": "Baa (B)"}, {"name": "B. Kudarikilu", "atoll": "Baa (B)"}, {"name": "B. Maalhos", "atoll": "Baa (B)"}, {"name": "B. Thulhaadhoo", "atoll": "Baa (B)"}, {"name": "Lh. Hinnavaru", "atoll": "Lhaviyani (Lh)"}, {"name": "Lh. Kurendhoo", "atoll": "Lhaviyani (Lh)"}, {"name": "Lh. Naifaru", "atoll": "Lhaviyani (Lh)"}, {"name": "Lh. Olhuvelifushi", "atoll": "Lhaviyani (Lh)"}, {"name": "K. Mal\u00e9", "atoll": "Kaafu (K)"}, {"name": "K. Hulhumal\u00e9", "atoll": "Kaafu (K)"}, {"name": "K. Vilimal\u00e9", "atoll": "Kaafu (K)"}, {"name": "K. Guraidhoo", "atoll": "Kaafu (K)"}, {"name": "K. Gulhi", "atoll": "Kaafu (K)"}, {"name": "K. Kaashidhoo", "atoll": "Kaafu (K)"}, {"name": "K. Maafushi", "atoll": "Kaafu (K)"}, {"name": "K. Thulusdhoo", "atoll": "Kaafu (K)"}, {"name": "K. Himmafushi", "atoll": "Kaafu (K)"}, {"name": "K. Dhiffushi", "atoll": "Kaafu (K)"}, {"name": "AA. Bodufolhudhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Feridhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Himandhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Maalhos", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Mathiveri", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Rasdhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Thoddoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Ukulhas", "atoll": "Alifu Alifu (AA)"}, {"name": "ADh. Dhangethi", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Dhidhdhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Fenfushi", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Hanggnaameedhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Kunburudhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Mahibadhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Mandhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Omadhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "V. Felidhoo", "atoll": "Vaavu (V)"}, {"name": "V. Fulidhoo", "atoll": "Vaavu (V)"}, {"name": "V. Keyodhoo", "atoll": "Vaavu (V)"}, {"name": "V. Rakeedhoo", "atoll": "Vaavu (V)"}, {"name": "V. Thinadhoo", "atoll": "Vaavu (V)"}, {"name": "M. Dhiggaru", "atoll": "Meemu (M)"}, {"name": "M. Kolhufushi", "atoll": "Meemu (M)"}, {"name": "M. Maduvvari", "atoll": "Meemu (M)"}, {"name": "M. Muli", "atoll": "Meemu (M)"}, {"name": "M. Naalaafushi", "atoll": "Meemu (M)"}, {"name": "M. Raiymandhoo", "atoll": "Meemu (M)"}, {"name": "M. Veyvah", "atoll": "Meemu (M)"}, {"name": "F. Bilehdhoo", "atoll": "Faafu (F)"}, {"name": "F. Dharanboodhoo", "atoll": "Faafu (F)"}, {"name": "F. Feeali", "atoll": "Faafu (F)"}, {"name": "F. Magoodhoo", "atoll": "Faafu (F)"}, {"name": "F. Nilandhoo", "atoll": "Faafu (F)"}, {"name": "Dh. Bandidhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Hulhudheli", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Kudahuvadhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Maaenboodhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Meedhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Rinbudhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Vaanee", "atoll": "Dhaalu (Dh)"}, {"name": "Th. Buruni", "atoll": "Thaa (Th)"}, {"name": "Th. Dhiyamigili", "atoll": "Thaa (Th)"}, {"name": "Th. Gaadhiffushi", "atoll": "Thaa (Th)"}, {"name": "Th. Guraidhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Hirilandhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Kandoodhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Kinbidhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Madifushi", "atoll": "Thaa (Th)"}, {"name": "Th. Omadhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Thimarafushi", "atoll": "Thaa (Th)"}, {"name": "Th. Vandhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Veymandoo", "atoll": "Thaa (Th)"}, {"name": "Th. Vilufushi", "atoll": "Thaa (Th)"}, {"name": "L. Dhanbidhoo", "atoll": "Laamu (L)"}, {"name": "L. Fonadhoo", "atoll": "Laamu (L)"}, {"name": "L. Gaadhoo", "atoll": "Laamu (L)"}, {"name": "L. Gan", "atoll": "Laamu (L)"}, {"name": "L. Hithadhoo", "atoll": "Laamu (L)"}, {"name": "L. Isdhoo", "atoll": "Laamu (L)"}, {"name": "L. Kalaidhoo", "atoll": "Laamu (L)"}, {"name": "L. Kunahandhoo", "atoll": "Laamu (L)"}, {"name": "L. Maabaidhoo", "atoll": "Laamu (L)"}, {"name": "L. Maamendhoo", "atoll": "Laamu (L)"}, {"name": "L. Maavah", "atoll": "Laamu (L)"}, {"name": "L. Mundoo", "atoll": "Laamu (L)"}, {"name": "L. Olhuveli", "atoll": "Laamu (L)"}, {"name": "GA. Dhaandhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Gemanafushi", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Kanduhulhudhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Kolamaafushi", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Kondey", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Maamendhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Nilandhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Vilingili", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Villingili", "atoll": "Gaafu Alifu (GA)"}, {"name": "GDh. Fares", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Faresmaathodaa", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Gadhdhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Hoadedhdhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Madaveli", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Nadellaa", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Rathafandhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Thinadhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Vaadhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "Gn. Fuvahmulah", "atoll": "Gnaviyani (Gn)"}, {"name": "S. Feydhoo", "atoll": "Seenu (S)"}, {"name": "S. Gan", "atoll": "Seenu (S)"}, {"name": "S. Hithadhoo", "atoll": "Seenu (S)"}, {"name": "S. Hulhumeedhoo", "atoll": "Seenu (S)"}, {"name": "S. Maradhoo", "atoll": "Seenu (S)"}, {"name": "S. Maradhoo-Feydhoo", "atoll": "Seenu (S)"}, {"name": "S. Meedhoo", "atoll": "Seenu (S)"}];
+
+const LISTS = {
+  diagnoses: JSON.parse(localStorage.getItem('oms_list_diagnoses') || JSON.stringify(DEFAULT_DIAGNOSES)),
+  patientStatuses: JSON.parse(localStorage.getItem('oms_list_statuses') || JSON.stringify(DEFAULT_STATUSES)),
+  chemoStatuses: JSON.parse(localStorage.getItem('oms_list_chemoStatuses') || JSON.stringify(DEFAULT_CHEMO_STATUSES)),
+  islands: (() => {
+    const stored = localStorage.getItem('oms_list_islands');
+    if (stored) {
+      const arr = JSON.parse(stored);
+      // Reset if islands don't have atoll code prefix format
+      const needsUpdate = arr.length === 0 || (arr[0] && !arr[0].name.includes('. '));
+      if (needsUpdate) { localStorage.removeItem('oms_list_islands'); return DEFAULT_ISLANDS; }
+    }
+    return stored ? JSON.parse(stored) : DEFAULT_ISLANDS;
+  })(),
+  atolls: (() => {
+    const stored = localStorage.getItem('oms_list_atolls');
+    // Force update if stored list has old format (without short codes)
+    if (stored) {
+      const arr = JSON.parse(stored);
+      const hasOldFormat = arr.some(a => a === 'Haa Alifu' || a === 'Haa Dhaal' || a === 'North Malé (Kaafu)' || a === 'Malé' || !a.includes('('));
+      if (hasOldFormat) { localStorage.removeItem('oms_list_atolls'); return DEFAULT_ATOLLS; }
+    }
+    return stored ? JSON.parse(stored) : DEFAULT_ATOLLS;
+  })(),
+};
+
+function saveList(key) { localStorage.setItem('oms_list_' + (key === 'patientStatuses' ? 'statuses' : key), JSON.stringify(LISTS[key])); }
+
+function addListItem(listKey, inputId) {
+  const val = document.getElementById(inputId).value.trim();
+  if (!val) return;
+  if (LISTS[listKey].includes(val)) { toast('Already exists', 'warning'); return; }
+  LISTS[listKey].push(val);
+  saveList(listKey);
+  document.getElementById(inputId).value = '';
+  renderAllLists();
+  populateDynamicSelects();
+  toast('Added successfully');
+}
+
+function removeListItem(listKey, val) {
+  if (!confirm('Remove "' + val + '" from the list?')) return;
+  LISTS[listKey] = LISTS[listKey].filter(x => x !== val);
+  saveList(listKey);
+  renderAllLists();
+  populateDynamicSelects();
+  toast('Removed');
+}
+
+function editListItem(listKey, oldVal) {
+  const newVal = prompt('Edit:', oldVal);
+  if (!newVal || newVal === oldVal) return;
+  if (LISTS[listKey].includes(newVal)) { toast('Already exists', 'warning'); return; }
+  const idx = LISTS[listKey].indexOf(oldVal);
+  LISTS[listKey][idx] = newVal;
+  saveList(listKey);
+  renderAllLists();
+  populateDynamicSelects();
+  toast('Updated');
+}
+
+function addIsland() {
+  const name = document.getElementById('newIsland').value.trim();
+  const atoll = document.getElementById('newIslandAtoll').value;
+  if (!name || !atoll) { toast('Enter island name and select atoll', 'warning'); return; }
+  const entry = { name, atoll };
+  if (LISTS.islands.find(i => i.name === name && i.atoll === atoll)) { toast('Already exists', 'warning'); return; }
+  LISTS.islands.push(entry);
+  saveList('islands');
+  document.getElementById('newIsland').value = '';
+  renderIslandList();
+  populateDynamicSelects();
+  toast('Island added');
+}
+
+function removeIsland(name, atoll) {
+  if (!confirm('Remove "' + name + '"?')) return;
+  LISTS.islands = LISTS.islands.filter(i => !(i.name === name && i.atoll === atoll));
+  saveList('islands');
+  renderIslandList();
+  populateDynamicSelects();
+  toast('Island removed');
+}
+
+function renderListItems(containerId, listKey) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!LISTS[listKey].length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:12px">No items yet</div>'; return; }
+  el.innerHTML = LISTS[listKey].map(val => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+      <span style="font-size:13px">${val}</span>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-xs btn-outline" onclick="editListItem('${listKey}','${val.replace(/'/g,"\\'")}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="removeListItem('${listKey}','${val.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function renderIslandList() {
+  const filter = document.getElementById('islandAtollFilter');
+  const filterVal = filter ? filter.value : '';
+  const el = document.getElementById('islandList');
+  if (!el) return;
+  const filtered = filterVal ? LISTS.islands.filter(i => i.atoll === filterVal) : LISTS.islands;
+  if (!filtered.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:12px">No islands yet. Add some above.</div>'; return; }
+  el.innerHTML = [...filtered].sort((a,b) => a.atoll.localeCompare(b.atoll) || a.name.localeCompare(b.name)).map(i => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+      <div><span style="font-size:13px;font-weight:500">${i.name}</span> <span style="font-size:11px;color:var(--text-muted)">${i.atoll}</span></div>
+      <button class="btn btn-xs btn-danger" onclick="removeIsland('${i.name.replace(/'/g,"\\'")}','${i.atoll.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+    </div>`).join('');
+}
+
+function renderAllLists() {
+  renderListItems('diagnosisList', 'diagnoses');
+  renderListItems('statusList', 'patientStatuses');
+  renderListItems('chemoStatusList', 'chemoStatuses');
+  renderListItems('atollList', 'atolls');
+  renderIslandList();
+  // Populate atoll filters in island admin panel
+  const atollFilter = document.getElementById('islandAtollFilter');
+  const newIslandAtoll = document.getElementById('newIslandAtoll');
+  if (atollFilter) atollFilter.innerHTML = '<option value="">All Atolls</option>' + LISTS.atolls.map(a => `<option>${a}</option>`).join('');
+  if (newIslandAtoll) newIslandAtoll.innerHTML = '<option value="">Select Atoll</option>' + LISTS.atolls.map(a => `<option>${a}</option>`).join('');
+}
+
+// Populate diagnosis, status and island dropdowns in patient form
+function populateDynamicSelects() {
+  // Diagnosis
+  const diagSel = document.getElementById('pat_diagnosis');
+  if (diagSel) {
+    const cur = diagSel.value;
+    diagSel.innerHTML = '<option value="">Select Diagnosis</option>' + LISTS.diagnoses.map(d => `<option${d===cur?' selected':''}>${d}</option>`).join('');
+  }
+  // Patient Status
+  const statSel = document.getElementById('pat_status');
+  if (statSel) {
+    const cur = statSel.value;
+    statSel.innerHTML = '<option value="">Select Status</option>' + LISTS.patientStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+  // Chemo status dropdown
+  populateChemoStatusSelect();
+  // Atoll dropdown
+  const atollSel = document.getElementById('pat_atoll');
+  if (atollSel) {
+    const curAtoll = atollSel.value;
+    atollSel.innerHTML = '<option value="">Select Atoll</option>' + LISTS.atolls.map(a => `<option${a===curAtoll?' selected':''}>${a}</option>`).join('');
+  }
+  // Island dropdown
+  const islandSel = document.getElementById('pat_island');
+  if (islandSel) {
+    const cur = islandSel.value;
+    const atoll = document.getElementById('pat_atoll') ? document.getElementById('pat_atoll').value : '';
+    const filtered = atoll ? LISTS.islands.filter(i => i.atoll === atoll) : LISTS.islands;
+    const opts = filtered.sort((a,b) => a.name.localeCompare(b.name)).map(i => `<option value="${i.name}"${i.name===cur?' selected':''}>${i.name}</option>`).join('');
+    islandSel.innerHTML = '<option value="">Select Island</option>' + opts;
+  }
+  // Filter dropdowns in patient table
+  populateFilters();
+}
+
+function syncIslandValue(val) {
+  // Sync manually typed island back to the hidden select value
+  const sel = document.getElementById('pat_island');
+  if (sel) sel.setAttribute('data-manual', val);
+}
+
+// Update island dropdown when atoll changes
+function onAtollChange(val) {
+  populateDynamicSelects();
+}
+
+// ==================== FIX 7: SURVIVAL YEARS ====================
+function calcSurvival(p) {
+  if (!p.diagnosisDate) return '—';
+  const start = new Date(p.diagnosisDate);
+  const end = p.status === 'Expired' && p.expiredDate ? new Date(p.expiredDate) : new Date();
+  const diff = end - start;
+  if (diff < 0) return '—';
+  const years = Math.floor(diff / (365.25 * 24 * 3600 * 1000));
+  const months = Math.floor((diff % (365.25 * 24 * 3600 * 1000)) / (30.44 * 24 * 3600 * 1000));
+  if (years === 0) return months + ' month' + (months !== 1 ? 's' : '');
+  return years + ' yr' + (years !== 1 ? 's' : '') + (months > 0 ? ' ' + months + ' mo' : '');
+}
+
+
+// ==================== OP INJECTION REGISTER ====================
+
+function save_op(key) {
+  localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
+  if (GS_ENABLED) {
+    DB[key].forEach(r => {
+      // For opSchedule, stringify the doses object for Google Sheets storage
+      const record = key === 'opSchedule' ? { ...r, doses: JSON.stringify(r.doses || {}) } : r;
+      gsSaveRecord(key, record);
+    });
+  }
+}
+
+// Parse doses back from string when loading from Sheets
+function parseOPScheduleFromSheets(records) {
+  return records.map(r => {
+    if (r.doses && typeof r.doses === 'string') {
+      try { r.doses = JSON.parse(r.doses); } catch(e) { r.doses = {}; }
+    }
+    if (!r.doses) r.doses = {};
+    return r;
+  });
+}
+
+const PERIODICITY_DAYS = {
+  'Weekly': 7, '2 Weekly': 14, '3 Weekly': 21, 'Monthly': 30,
+  '2 Monthly': 60, '3 Monthly': 91, '6 Monthly': 182, 'Yearly': 365,
+  '12 Weeks': 84, 'Once a year for 2 years, then 5 Yearly': 365,
+};
+
+// Month-based periodicities - add calendar months instead of fixed days
+const PERIODICITY_MONTHS = {
+  'Monthly': 1, '2 Monthly': 2, '3 Monthly': 3,
+  '4 Monthly': 4, '6 Monthly': 6, 'Yearly': 12,
+  '12 Weeks': null, // use days
+};
+
+function calcNextDue(lastDate, periodicity) {
+  if (!lastDate || !periodicity) return null;
+  // Parse as local date to avoid UTC timezone shift
+  const s = String(lastDate).slice(0,10);
+  let d;
+  if (s.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)) {
+    const parts = s.split('-').map(Number);
+    d = new Date(parts[0], parts[1]-1, parts[2]);
+  } else {
+    d = new Date(lastDate);
+  }
+  if (isNaN(d.getTime())) return null;
+
+  // Use calendar months for monthly-based periodicities (same date next N months)
+  const months = PERIODICITY_MONTHS[periodicity];
+  if (months !== undefined && months !== null) {
+    d.setMonth(d.getMonth() + months);
+  } else {
+    // Use days for weekly-based periodicities
+    const days = PERIODICITY_DAYS[periodicity];
+    if (!days) return null;
+    d.setDate(d.getDate() + days);
+  }
+
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,'0');
+  const dy = String(d.getDate()).padStart(2,'0');
+  return yr + '-' + mo + '-' + dy;
+}
+
+function switchOPTabForPatient(hn) {
+  // Switch to schedule tab, filter to patient, show Full Year view
+  opScheduleFilter = hn;
+  switchOPTab('schedule');
+  // Switch to Full Year view so patient cards are visible
+  setTimeout(() => {
+    switchScheduleView('year');
+    // Set search box to hospital number
+    const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
+    if (searchEl) searchEl.value = hn;
+  }, 50);
+}
+
+function switchOPTab(tab) {
+  // Clear schedule filter when switching away from schedule tab
+  if (tab !== 'schedule') {
+    opScheduleFilter = '';
+    const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
+    if (searchEl) searchEl.value = '';
+  }
+  document.querySelectorAll('#opTabs .section-tab').forEach(t => t.classList.remove('active'));
+  ['register','schedule','ongoing','dashboard'].forEach(t => {
+    const el = document.getElementById('opTab_' + t);
+    if (el) el.style.display = 'none';
+  });
+  const activeTab = document.querySelector(`#opTabs .section-tab:nth-child(${['register','schedule','ongoing','dashboard'].indexOf(tab)+1})`);
+  if (activeTab) activeTab.classList.add('active');
+  const panel = document.getElementById('opTab_' + tab);
+  if (panel) panel.style.display = '';
+  if (tab === 'register') renderOPRegister();
+  if (tab === 'schedule') {
+    switchScheduleView('month');
+  }
+  if (tab === 'ongoing') renderOPOngoing();
+  if (tab === 'dashboard') renderOPDashboard();
+}
+
+// ── REGISTER ──────────────────────────────────────────────────
+function openOPPatientModal(id = null) {
+  state.editId = id;
+  ['hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'].forEach(f => {
+    const el = document.getElementById('op_' + f);
+    if (el) el.value = '';
+  });
+  document.getElementById('opPatientModalTitle').textContent = id ? 'Edit OP Patient' : 'Add OP Injection Patient';
+  if (id) {
+    const r = DB.opPatients.find(x => x.id === id);
+    if (r) Object.keys(r).forEach(k => { const el = document.getElementById('op_' + k); if (el) el.value = r[k]||''; });
+  }
+  openModal('opPatientModal');
+}
+
+function lookupOPPatient(hn) {
+  const p = DB.patients.find(x => x.hospitalNumber === hn);
+  if (p) {
+    document.getElementById('op_patientName').value = p.fullName||'';
+    document.getElementById('op_gender').value = p.gender||'';
+    document.getElementById('op_dob').value = p.dob||'';
+    document.getElementById('op_age').value = p.age||'';
+    document.getElementById('op_idNumber').value = p.nationalId||'';
+    document.getElementById('op_contact').value = p.contactNumber||'';
+    document.getElementById('op_diagnosis').value = p.diagnosis||'';
+  }
+}
+
+function calcOPAge() {
+  const dob = document.getElementById('op_dob').value;
+  if (!dob) return;
+  const age = Math.floor((Date.now() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
+  document.getElementById('op_age').value = age;
+}
+
+function saveOPPatient() {
+  const hn = document.getElementById('op_hospitalNumber').value.trim();
+  const status = document.getElementById('op_status').value;
+  if (!hn || !status) { toast('Hospital Number and Status are required', 'error'); return; }
+  const serial = state.editId ? DB.opPatients.find(x => x.id === state.editId)?.serial : (DB.opPatients.length + 1);
+  const obj = {
+    id: state.editId || genId('OPP'), serial,
+    hospitalNumber: hn,
+    patientName: document.getElementById('op_patientName').value,
+    gender: document.getElementById('op_gender').value,
+    dob: document.getElementById('op_dob').value,
+    age: document.getElementById('op_age').value,
+    idNumber: document.getElementById('op_idNumber').value,
+    contact: document.getElementById('op_contact').value,
+    diagnosis: document.getElementById('op_diagnosis').value,
+    status,
+    injections: document.getElementById('op_injections').value,
+    remarks: document.getElementById('op_remarks').value,
+  };
+  if (state.editId) {
+    const idx = DB.opPatients.findIndex(x => x.id === state.editId);
+    DB.opPatients[idx] = obj;
+    toast('Patient updated ✅');
+  } else {
+    // Block duplicate hospital number
+    const existing = DB.opPatients.find(x => x.hospitalNumber === hn);
+    if (existing) {
+      toast(`❌ Patient ${hn} already exists in OP Register — use Edit to update`, 'error');
+      return;
+    }
+    DB.opPatients.push(obj);
+    toast('Patient added to OP Register ✅');
+  }
+  save_op('opPatients'); closeModal('opPatientModal'); renderOPRegister();
+}
+
+let opRegisterFilter = '', opRegisterStatusFilter = '';
+function filterOPRegister(val, field, fieldVal) {
+  if (val !== null && val !== undefined) opRegisterFilter = val;
+  if (field === 'status') opRegisterStatusFilter = fieldVal || '';
+  renderOPRegister();
+}
+
+function renderOPRegister() {
+  let data = [...DB.opPatients];
+  if (opRegisterFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opRegisterFilter.toLowerCase())));
+  if (opRegisterStatusFilter) data = data.filter(r => r.status === opRegisterStatusFilter);
+  const tbody = document.getElementById('opRegisterTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon"><i class="fas fa-prescription-bottle-alt"></i></div><div class="empty-title">No patients registered</div><div class="empty-text">Add OP injection patients to get started</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map((r, i) => `<tr>
+    <td>${r.serial || i+1}</td>
+    <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
+    <td style="font-weight:500">${r.patientName||'—'}</td>
+    <td>${r.gender||'—'}</td>
+    <td>${r.age||'—'}</td>
+    <td>${r.idNumber||'—'}</td>
+    <td>${r.contact||'—'}</td>
+    <td>${r.diagnosis||'—'}</td>
+    <td><span style="font-size:12px">${r.injections||'—'}</span></td>
+    <td>${statusBadge(r.status||'—')}</td>
+    <td style="font-size:12px;color:var(--text-muted)">${r.remarks||'—'}</td>
+    <td class="no-print"><div class="flex gap-2">
+      <button class="btn btn-xs btn-outline" onclick="openOPPatientModal('${r.id}')"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-xs btn-danger" onclick="deleteOPPatient('${r.id}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function deleteOPPatient(id) {
+  if (!confirm('Delete this patient from OP register?')) return;
+  DB.opPatients = DB.opPatients.filter(x => x.id !== id);
+  save_op('opPatients'); renderOPRegister(); toast('Patient removed');
+}
+
+// ── SCHEDULE ──────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function populateInjectionNameDropdown(hn) {
+  var sel = document.getElementById('ops_injectionName');
+  if (!sel) return;
+  var opPatient = hn ? DB.opPatients.find(function(p) { return p.hospitalNumber === hn; }) : null;
+  var patientRegInj = (opPatient && opPatient.injections) ? opPatient.injections.split(',').map(function(i){return i.trim();}).filter(Boolean) : [];
+  var patientSchInj = hn ? DB.opSchedule.filter(function(r){return r.hospitalNumber===hn;}).map(function(r){return r.injectionName;}).filter(Boolean) : [];
+  var patientInj = patientRegInj.concat(patientSchInj).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var allInj = DB.opSchedule.map(function(r){return r.injectionName;}).filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+  var html = '<option value="">Select injection...</option>';
+  if (patientInj.length > 0) {
+    html += '<optgroup label="This Patient Injections">';
+    patientInj.forEach(function(i){ html += '<option value="' + i + '">' + i + '</option>'; });
+    html += '</optgroup>';
+  }
+  var others = allInj.filter(function(i){ return patientInj.indexOf(i) === -1; });
+  if (others.length > 0) {
+    html += '<optgroup label="All Injections">';
+    others.forEach(function(i){ html += '<option value="' + i + '">' + i + '</option>'; });
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+
+function openScheduleModal(id = null) {
+  state.editId = id;
+  ['hospitalNumber','patientName','gender','age','idNumber','diagnosis','dosage','periodicity','startDate','remarks'].forEach(f => {
+    const el = document.getElementById('ops_' + f);
+    if (el) el.value = '';
+  });
+  const injSel = document.getElementById('ops_injectionName');
+  const injCustom = document.getElementById('ops_injectionName_custom');
+  if (injSel) injSel.value = '';
+  if (injCustom) injCustom.value = '';
+  const routeSel = document.getElementById('ops_route');
+  if (routeSel) routeSel.value = '';
+  populateInjectionNameDropdown('');
+  document.getElementById('ops_firstDose').value = '1';
+  document.getElementById('opScheduleModalTitle').textContent = id ? 'Edit Treatment Plan' : 'Add Treatment Plan';
+  if (id) {
+    const r = DB.opSchedule.find(x => x.id === id);
+    if (r) {
+      ['hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','periodicity','startDate','remarks'].forEach(f => {
+        const el = document.getElementById('ops_' + f);
+        if (el) el.value = r[f]||'';
+      });
+      document.getElementById('ops_firstDose').value = r.firstDose||'1';
+    }
+  }
+  openModal('opScheduleModal');
+}
+
+function lookupOPSchedulePatient(hn) {
+  // Try OP patients first, then main registry
+  const op = DB.opPatients.find(x => x.hospitalNumber === hn);
+  const p = op || DB.patients.find(x => x.hospitalNumber === hn);
+  if (p) {
+    document.getElementById('ops_patientName').value = p.patientName || p.fullName || '';
+    document.getElementById('ops_gender').value = p.gender||'';
+    // Populate injection name dropdown from existing OP schedule records for this patient
+    populateInjectionNameDropdown(hn);
+    document.getElementById('ops_age').value = p.age||'';
+    document.getElementById('ops_idNumber').value = p.idNumber || p.nationalId||'';
+    document.getElementById('ops_diagnosis').value = p.diagnosis||'';
+  }
+}
+
+function saveOPSchedule() {
+  const hn = document.getElementById('ops_hospitalNumber').value.trim();
+  const injCustom = document.getElementById('ops_injectionName_custom');
+  const inj = (injCustom && injCustom.value.trim()) || document.getElementById('ops_injectionName').value.trim();
+  const dosage = document.getElementById('ops_dosage').value.trim();
+  const period = document.getElementById('ops_periodicity').value;
+  if (!hn || !inj || !dosage || !period) { toast('Please fill required fields', 'error'); return; }
+  const obj = {
+    id: state.editId || genId('OPS'),
+    hospitalNumber: hn,
+    patientName: document.getElementById('ops_patientName').value,
+    gender: document.getElementById('ops_gender').value,
+    age: document.getElementById('ops_age').value,
+    idNumber: document.getElementById('ops_idNumber').value,
+    diagnosis: document.getElementById('ops_diagnosis').value,
+    injectionName: inj,
+    dosage,
+    route: document.getElementById('ops_route')?.value || '',
+    periodicity: period,
+    startDate: document.getElementById('ops_startDate').value,
+    firstDose: parseInt(document.getElementById('ops_firstDose').value) || 1,
+    remarks: document.getElementById('ops_remarks').value,
+    doses: state.editId ? (DB.opSchedule.find(x => x.id === state.editId)?.doses || {}) : {},
+  };
+  if (state.editId) {
+    const idx = DB.opSchedule.findIndex(x => x.id === state.editId);
+    DB.opSchedule[idx] = obj;
+    toast('Treatment plan updated ✅');
+  } else {
+    // Check duplicate: same patient + same injection
+    const dupCheck = DB.opSchedule.find(x => x.hospitalNumber === hn && x.injectionName.toLowerCase() === inj.toLowerCase() && x.id !== state.editId);
+    if (dupCheck) {
+      if (!confirm(`${inj} is already scheduled for this patient.\n\nAdd another entry anyway? (e.g. different dosage)`)) return;
+    }
+    DB.opSchedule.push(obj);
+    toast('Treatment plan added ✅');
+  }
+  save_op('opSchedule'); closeModal('opScheduleModal'); renderOPSchedule();
+}
+
+let opScheduleFilter = '';
+function filterOPSchedule(val) { opScheduleFilter = val; renderOPSchedule(); }
+
+function expandAllCards()  { document.querySelectorAll('.op-patient-card').forEach(c => c.classList.remove('op-card-collapsed')); }
+function collapseAllCards(){ document.querySelectorAll('.op-patient-card').forEach(c => c.classList.add('op-card-collapsed')); }
+function toggleCard(id) { document.getElementById('opc-' + id)?.classList.toggle('op-card-collapsed'); }
+
+const TYPE_STYLES = {
+  given:     { bg:'given',     icon:'<i class="fas fa-check-circle"></i>',   label:'Given' },
+  scheduled: { bg:'scheduled', icon:'<i class="fas fa-calendar-day"></i>',   label:'Scheduled' },
+  expired:   { bg:'expired',   icon:'<i class="fas fa-times-circle"></i>',   label:'Expired' },
+  stopped:   { bg:'stopped',   icon:'<i class="fas fa-stop-circle"></i>',    label:'Stopped' },
+  chemo:     { bg:'chemo',     icon:'<i class="fas fa-syringe"></i>',        label:'Chemo' },
+  missed:    { bg:'missed',    icon:'<i class="fas fa-exclamation-triangle"></i>', label:'Missed' },
+  onhold:    { bg:'onhold',    icon:'<i class="fas fa-pause-circle"></i>',   label:'On Hold' },
+};
+
+function renderOPSchedule() {
+  const year = parseInt(document.getElementById('opYearSelect')?.value || new Date().getFullYear());
+  const container = document.getElementById('opScheduleCards');
+  if (!container) return;
+
+  let data = [...DB.opSchedule];
+  if (opScheduleFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opScheduleFilter.toLowerCase())));
+
+  // Filter to only show patients that have activity (doses given OR suggested dates) in selected year
+  data = data.filter(r => {
+    // Check if any doses were recorded in this year
+    const hasDosesThisYear = Object.keys(r.doses||{}).some(k => k.startsWith(year + '-'));
+    if (hasDosesThisYear) return true;
+    // Check if any suggested dates fall in this year
+    for (let mi = 0; mi < 12; mi++) {
+      const suggested = getSuggestedDate(r, year, mi);
+      if (suggested) return true;
+    }
+    // Check if treatment started in or before this year and is still active
+    if (r.startDate) {
+      const startYear = parseInt((r.startDate||'').slice(0,4));
+      if (startYear <= year) return true;
+    }
+    return false;
+  });
+
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-calendar-alt"></i></div><div class="empty-title">No treatment plans yet</div><div class="empty-text">Click "+ Add Treatment" to get started</div></div>`;
+    return;
+  }
+
+  // Group by hospital number
+  const grouped = {};
+  data.forEach(r => {
+    if (!grouped[r.hospitalNumber]) grouped[r.hospitalNumber] = { info: r, treatments: [] };
+    grouped[r.hospitalNumber].treatments.push(r);
+  });
+
+  container.innerHTML = Object.entries(grouped).map(([hn, grp]) => {
+    const info = grp.info;
+    const initial = (info.patientName||'?').charAt(0).toUpperCase();
+    const today = new Date();
+    const thisMonth = `${year}-${String(today.getMonth()+1).padStart(2,'0')}`;
+
+    // Check if any treatment is overdue this month
+    const hasOverdue = grp.treatments.some(r => {
+      const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
+      const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
+      const nextDue = calcNextDue(lastDate, r.periodicity);
+      return nextDue && new Date(nextDue) < today && !(r.doses && r.doses[thisMonth]);
+    });
+
+    const treatmentRows = grp.treatments.map(r => {
+      const monthCells = MONTHS.map((m, mi) => {
+        const key = `${year}-${String(mi+1).padStart(2,'0')}`;
+        const dose = r.doses && r.doses[key];
+        const isCurrentMonth = key === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+        const currentMonthStyle = isCurrentMonth ? 'outline: 2px solid var(--primary); outline-offset: 1px;' : '';
+
+        if (dose) {
+          const ts = TYPE_STYLES[dose.type] || { bg:'empty', icon:'', label:'' };
+          const [ddy,ddm,ddd] = (dose.date||'').slice(0,10).split('-').map(Number);
+          const dateStr = dose.date ? new Date(ddy,ddm-1,ddd).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
+          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} — ${ts.label}${dose.doseNumber?' · Dose '+dose.doseNumber:''}${dose.notes?' · '+dose.notes:''}">
+            <span class="op-month-label">${m}</span>
+            <div class="op-month-box ${ts.bg}" style="${currentMonthStyle}">
+              <div class="op-month-icon">${ts.icon}</div>
+              ${dateStr ? `<div class="op-month-date">${dateStr}</div>` : ''}
+              ${dose.doseNumber ? `<div class="op-month-dose">D${dose.doseNumber}</div>` : ''}
+            </div>
+          </div>`;
+        }
+        const suggested = getSuggestedDate(r, year, mi);
+        if (suggested) {
+          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="Suggested: ${suggested} — click to record">
+            <span class="op-month-label">${m}</span>
+            <div class="op-month-box suggested" style="${currentMonthStyle}">
+              <i class="fas fa-calendar" style="font-size:10px"></i>
+              <div class="op-month-date">${suggested.split(' ')[0]}</div>
+            </div>
+          </div>`;
+        }
+        return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} — click to record">
+          <span class="op-month-label">${m}</span>
+          <div class="op-month-box empty" style="${currentMonthStyle}">
+            <i class="fas fa-plus" style="font-size:12px;opacity:0.4"></i>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Calculate stats for this treatment
+      const givenCount = Object.values(r.doses||{}).filter(d => d.type === 'given').length;
+      const nextDoseNum = getNextDoseNumber(r);
+
+      return `<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600;color:var(--primary)"><i class="fas fa-prescription-bottle-alt" style="margin-right:4px"></i>${r.injectionName}</span>
+          <span style="font-size:12px;color:var(--text-muted)">${r.dosage}</span>
+          <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>
+          ${r.route ? `<span class="badge badge-secondary" style="font-size:10px">${r.route}</span>` : ''}
+          <span style="font-size:11px;color:var(--success);margin-left:auto"><i class="fas fa-check-circle"></i> ${givenCount} given · Next: Dose ${nextDoseNum}</span>
+          <div class="flex gap-2 no-print">
+            <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openScheduleModal('${r.id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteOPSchedule('${r.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="op-months-grid">${monthCells}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="op-patient-card" id="opc-${hn.replace(/[^a-z0-9]/gi,'_')}">
+      <div class="op-card-header" onclick="toggleCard('${hn.replace(/[^a-z0-9]/gi,'_')}')">
+        <div class="op-card-avatar">${initial}</div>
+        <div class="op-card-info">
+          <div class="op-card-name">${info.patientName||'Unknown'} <span style="font-size:12px;color:var(--primary);font-weight:400">· ${hn}</span></div>
+          <div class="op-card-meta">
+            <span><i class="fas fa-dna" style="margin-right:3px"></i>${info.diagnosis||'—'}</span>
+            ${info.gender ? `<span><i class="fas fa-user" style="margin-right:3px"></i>${info.gender}</span>` : ''}
+            ${info.age ? `<span>Age ${info.age}</span>` : ''}
+            ${info.idNumber ? `<span><i class="fas fa-id-card" style="margin-right:3px"></i>${info.idNumber}</span>` : ''}
+            <span style="margin-left:4px">${grp.treatments.length} injection${grp.treatments.length!==1?'s':''}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+          ${hasOverdue ? `<span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> Overdue</span>` : ''}
+          <div class="flex gap-2 no-print" onclick="event.stopPropagation()">
+            <button class="btn btn-xs btn-primary" onclick="openScheduleModal();document.getElementById('ops_hospitalNumber').value='${hn}';lookupOPSchedulePatient('${hn}')"><i class="fas fa-plus"></i> Add Injection</button>
+          </div>
+          <i class="fas fa-chevron-down op-card-toggle"></i>
+        </div>
+      </div>
+      <div class="op-card-body">${treatmentRows}</div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== OPTION B: THIS MONTH VIEW ====================
+function populateYearSelector() {
+  const ySel = document.getElementById('opYearSelect');
+  if (!ySel) return;
+  const curYear = new Date().getFullYear();
+  // Only repopulate if empty or wrong year selected
+  if (ySel.options.length === 0 || !ySel.value) {
+    ySel.innerHTML = '';
+    for (let y = curYear - 2; y <= curYear + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === curYear) opt.selected = true;
+      ySel.appendChild(opt);
+    }
+  }
+}
+
+let currentScheduleView = 'month';
+let currentViewMonth = new Date().getMonth();
+let currentViewYear = new Date().getFullYear();
+let monthTypeFilter = 'all';
+let opMonthPage = 1;
+const OP_MONTH_PAGE_SIZE = 20;
+
+function switchScheduleView(view) {
+  currentScheduleView = view;
+  const monthBtn = document.getElementById('viewBtn_month');
+  const yearBtn = document.getElementById('viewBtn_year');
+  const monthNav = document.getElementById('monthNavBar');
+  const yearNav = document.getElementById('yearNavBar');
+  const monthView = document.getElementById('opMonthView');
+  const yearView = document.getElementById('opYearView');
+  const monthStats = document.getElementById('monthSummaryBar');
+
+  if (view === 'month') {
+    monthBtn.style.background = 'var(--primary)'; monthBtn.style.color = 'white';
+    yearBtn.style.background = 'transparent'; yearBtn.style.color = 'var(--text-muted)';
+    monthNav.style.display = 'flex';
+    yearNav.style.display = 'none';
+    monthView.style.display = '';
+    yearView.style.display = 'none';
+    monthStats.style.display = 'flex';
+    renderMonthView();
+  } else {
+    yearBtn.style.background = 'var(--primary)'; yearBtn.style.color = 'white';
+    monthBtn.style.background = 'transparent'; monthBtn.style.color = 'var(--text-muted)';
+    monthNav.style.display = 'none';
+    yearNav.style.display = 'flex';
+    monthView.style.display = 'none';
+    yearView.style.display = '';
+    monthStats.style.display = 'none';
+    populateYearSelector();
+    renderOPSchedule();
+  }
+}
+
+function changeMonth(delta) {
+  currentViewMonth += delta;
+  if (currentViewMonth > 11) { currentViewMonth = 0; currentViewYear++; }
+  if (currentViewMonth < 0) { currentViewMonth = 11; currentViewYear--; }
+  opMonthPage = 1;
+  monthTypeFilter = 'all';
+  renderMonthView();
+}
+
+function goToToday() {
+  currentViewMonth = new Date().getMonth();
+  currentViewYear = new Date().getFullYear();
+  opMonthPage = 1;
+  monthTypeFilter = 'all';
+  renderMonthView();
+}
+
+function filterMonthByType(type) {
+  monthTypeFilter = type;
+  opMonthPage = 1;
+  renderMonthView();
+}
+
+function renderMonthView() {
+  const monthKey = `${currentViewYear}-${String(currentViewMonth+1).padStart(2,'0')}`;
+  const monthName = new Date(currentViewYear, currentViewMonth, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+  const label = document.getElementById('currentMonthLabel');
+  if (label) label.textContent = monthName;
+
+  const today = new Date();
+
+  // Build list of all treatments relevant this month
+  let rows = [];
+  DB.opSchedule.forEach(r => {
+    const dose = r.doses && r.doses[monthKey];
+    const suggested = getSuggestedDate(r, currentViewYear, currentViewMonth);
+    // Include if: has a dose entry OR has a suggested date for this month
+    if (!dose && !suggested) return;
+
+    const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
+    const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
+    const nextDue = calcNextDue(lastDate, r.periodicity);
+    const isOverdue = !dose && nextDue && new Date(nextDue) < today;
+
+    let rowType = 'scheduled';
+    let dateDisplay = suggested || '';
+    let doseNum = dose?.doseNumber || getNextDoseNumber(r);
+
+    if (dose) {
+      rowType = dose.type;
+      dateDisplay = dose.date ? fmtDate(dose.date) : '';
+      doseNum = dose.doseNumber || '';
+    } else if (isOverdue) {
+      rowType = 'overdue';
+    }
+
+    rows.push({ r, dose, rowType, dateDisplay, doseNum, monthKey, suggested });
+  });
+
+  // Apply search filter
+  if (opScheduleFilter) {
+    rows = rows.filter(row => Object.values(row.r).some(v => v && v.toString().toLowerCase().includes(opScheduleFilter.toLowerCase())));
+  }
+
+  // Update stat counts
+  const counts = { overdue: 0, scheduled: 0, given: 0, all: rows.length };
+  rows.forEach(row => {
+    if (row.rowType === 'overdue') counts.overdue++;
+    else if (row.rowType === 'given') counts.given++;
+    else if (['scheduled',''].includes(row.rowType)) counts.scheduled++;
+  });
+  ['overdue','scheduled','given','all'].forEach(k => {
+    const el = document.getElementById('statCount_' + k);
+    if (el) el.textContent = counts[k];
+  });
+
+  // Apply type filter
+  if (monthTypeFilter !== 'all') {
+    if (monthTypeFilter === 'overdue') rows = rows.filter(r => r.rowType === 'overdue');
+    else if (monthTypeFilter === 'given') rows = rows.filter(r => r.rowType === 'given');
+    else if (monthTypeFilter === 'scheduled') rows = rows.filter(r => !['given','overdue'].includes(r.rowType));
+  }
+
+  // Sort: overdue first, then by date, then scheduled
+  const sortOrder = { overdue: 0, missed: 1, scheduled: 2, given: 3, stopped: 4, chemo: 5, expired: 6, onhold: 7 };
+  rows.sort((a, b) => (sortOrder[a.rowType]||5) - (sortOrder[b.rowType]||5));
+
+  // Pagination
+  const total = rows.length;
+  const pages = Math.ceil(total / OP_MONTH_PAGE_SIZE);
+  const start = (opMonthPage - 1) * OP_MONTH_PAGE_SIZE;
+  const pageRows = rows.slice(start, start + OP_MONTH_PAGE_SIZE);
+
+  const tbody = document.getElementById('opMonthTbody');
+  if (!tbody) return;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-calendar-check"></i></div>
+      <div class="empty-title">No injections for ${monthName}</div>
+      <div class="empty-text">No treatments scheduled or recorded this month</div>
+    </div></td></tr>`;
+    document.getElementById('opMonthPagination').innerHTML = '';
+    return;
+  }
+
+  const typeStyles = {
+    given:     { badge:'badge-success', label:'Given', icon:'fa-check-circle' },
+    overdue:   { badge:'badge-danger',  label:'Overdue', icon:'fa-exclamation-circle' },
+    scheduled: { badge:'badge-info',    label:'Scheduled', icon:'fa-calendar-day' },
+    expired:   { badge:'badge-danger',  label:'Expired', icon:'fa-times-circle' },
+    stopped:   { badge:'badge-secondary', label:'Stopped', icon:'fa-stop-circle' },
+    chemo:     { badge:'badge-purple',  label:'Chemo Started', icon:'fa-syringe' },
+    missed:    { badge:'badge-warning', label:'Missed', icon:'fa-exclamation-triangle' },
+    onhold:    { badge:'badge-secondary', label:'On Hold', icon:'fa-pause-circle' },
+  };
+
+  tbody.innerHTML = pageRows.map((row, i) => {
+    const { r, rowType, dateDisplay, doseNum, monthKey } = row;
+    const ts = typeStyles[rowType] || typeStyles.scheduled;
+    const rowBg = rowType === 'overdue' ? 'background:rgba(239,68,68,0.04)' : rowType === 'given' ? 'background:rgba(16,185,129,0.04)' : '';
+    return `<tr style="${rowBg}">
+      <td style="font-size:12px;color:var(--text-muted)">${start+i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${(r.patientName||'?').charAt(0)}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${r.patientName||'—'}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${r.hospitalNumber} ${r.idNumber ? '· '+r.idNumber : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px">${r.diagnosis||'—'}</td>
+      <td style="font-weight:500;color:var(--primary);font-size:13px">${r.injectionName}</td>
+      <td style="font-size:12px">${r.dosage}</td>
+      <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
+      <td><span class="badge ${ts.badge}"><i class="fas ${ts.icon}" style="margin-right:3px"></i>${ts.label}</span></td>
+      <td style="font-size:13px;font-weight:${rowType==='given'?'600':'400'};color:${rowType==='overdue'?'var(--danger)':rowType==='given'?'var(--success)':'var(--text)'}">${dateDisplay||'—'}</td>
+      <td style="font-size:13px;font-weight:600;color:var(--primary)">${doseNum ? 'D'+doseNum : '—'}</td>
+      <td class="no-print">
+        <button class="btn btn-xs btn-primary" onclick="openDoseEntry('${r.id}','${monthKey}')">
+          <i class="fas fa-${rowType==='given'?'edit':'plus'}"></i> ${rowType==='given'?'Edit':'Record'}
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const pg = document.getElementById('opMonthPagination');
+  if (pg) {
+    const btnHtml = (label, p, disabled, active) => `<button class="page-btn${active?' active':''}" ${disabled?'disabled':''} onclick="opMonthPage=${p};renderMonthView()">${label}</button>`;
+    let btns = btnHtml('‹', opMonthPage-1, opMonthPage<=1, false);
+    for (let i = Math.max(1,opMonthPage-2); i <= Math.min(pages,opMonthPage+2); i++) btns += btnHtml(i,i,false,i===opMonthPage);
+    btns += btnHtml('›', opMonthPage+1, opMonthPage>=pages, false);
+    pg.innerHTML = `<span class="pagination-info">Showing ${total?start+1:0}–${Math.min(start+OP_MONTH_PAGE_SIZE,total)} of ${total} treatments</span><div class="pagination-btns">${btns}</div>`;
+  }
+}
+
+function getSuggestedDate(record, year, monthIdx) {
+  if (!record.periodicity) return null;
+
+  // Helper: parse ISO date as local date
+  function parseLocal(iso) {
+    if (!iso) return null;
+    const parts = iso.slice(0,10).split('-').map(Number);
+    if (parts.length !== 3) return null;
+    return new Date(parts[0], parts[1]-1, parts[2]);
+  }
+
+  // Helper: format date as DD Mon
+  function fmt(d) {
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  }
+
+  // Find last given dose
+  const allDoses = record.doses
+    ? Object.entries(record.doses)
+        .filter(([k,v]) => v.type === 'given' && v.date)
+        .sort(([a],[b]) => a.localeCompare(b))
+    : [];
+
+  // Determine the base date to calculate from
+  const baseDate = allDoses.length
+    ? allDoses[allDoses.length-1][1].date
+    : record.startDate;
+
+  if (!baseDate) return null;
+
+  // Calculate next due date
+  const nextISO = calcNextDue(baseDate, record.periodicity);
+  if (!nextISO) return null;
+
+  const nd = parseLocal(nextISO);
+  if (!nd) return null;
+
+  // Check if it falls in the requested month/year
+  if (nd.getFullYear() === year && nd.getMonth() === monthIdx) {
+    return fmt(nd);
+  }
+
+  // If no doses yet and start date is in this month, suggest start date
+  if (!allDoses.length && record.startDate) {
+    const sd = parseLocal(record.startDate);
+    if (sd && sd.getFullYear() === year && sd.getMonth() === monthIdx) {
+      return fmt(sd);
+    }
+  }
+
+  return null;
+}
+
+function deleteOPSchedule(id) {
+  if (!confirm('Delete this treatment plan?')) return;
+  DB.opSchedule = DB.opSchedule.filter(x => x.id !== id);
+  save_op('opSchedule'); renderOPSchedule(); toast('Treatment plan deleted');
+}
+
+// ── DOSE ENTRY ────────────────────────────────────────────────
+let currentDoseRecord = null, currentDoseKey = null;
+
+function openDoseEntry(scheduleId, monthKey) {
+  const r = DB.opSchedule.find(x => x.id === scheduleId);
+  if (!r) return;
+  currentDoseRecord = r;
+  currentDoseKey = monthKey;
+  const existing = r.doses && r.doses[monthKey];
+  const [yr, mo] = monthKey.split('-');
+  document.getElementById('opDoseModalTitle').textContent = `Record Dose — ${MONTHS[parseInt(mo)-1]} ${yr}`;
+  document.getElementById('opDosePatientInfo').innerHTML = `
+    <strong>${r.patientName}</strong> · ${r.hospitalNumber}<br>
+    <span style="color:var(--primary)">${r.injectionName}</span> · ${r.dosage} · <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>`;
+  // Pre-fill
+  if (existing) {
+    document.getElementById('opd_date').value = existing.date||'';
+    document.getElementById('opd_doseNumber').value = existing.doseNumber||'';
+    document.getElementById('opd_type').value = existing.type||'given';
+    document.getElementById('opd_notes').value = existing.notes||'';
+  } else {
+    // Auto-suggest date and dose number
+    const suggested = getSuggestedDate(r, parseInt(yr), parseInt(mo)-1);
+    if (suggested) {
+      // suggested is like "12 Apr" - convert to YYYY-MM-DD
+      try {
+        const parts = suggested.split(' ');
+        const day = parts[0].padStart(2,'0');
+        const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+        const month = months[parts[1]] || '01';
+        document.getElementById('opd_date').value = `${yr}-${month}-${day}`;
+      } catch(e) { document.getElementById('opd_date').value = ''; }
+    } else {
+      document.getElementById('opd_date').value = '';
+    }
+    document.getElementById('opd_doseNumber').value = getNextDoseNumber(r);
+    document.getElementById('opd_type').value = 'given';
+    document.getElementById('opd_notes').value = '';
+  }
+  openModal('opDoseModal');
+}
+
+function getNextDoseNumber(record) {
+  const givenDoses = Object.values(record.doses || {}).filter(d => d.type === 'given' && d.doseNumber);
+  if (!givenDoses.length) return record.firstDose || 1;
+  return Math.max(...givenDoses.map(d => parseInt(d.doseNumber)||0)) + 1;
+}
+
+function saveDoseEntry() {
+  if (!currentDoseRecord || !currentDoseKey) return;
+  const date = document.getElementById('opd_date').value;
+  const doseNumber = document.getElementById('opd_doseNumber').value;
+  const type = document.getElementById('opd_type').value;
+  const notes = document.getElementById('opd_notes').value;
+  if (!currentDoseRecord.doses) currentDoseRecord.doses = {};
+  currentDoseRecord.doses[currentDoseKey] = { date, doseNumber: parseInt(doseNumber)||null, type, notes };
+  const idx = DB.opSchedule.findIndex(x => x.id === currentDoseRecord.id);
+  if (idx >= 0) DB.opSchedule[idx] = currentDoseRecord;
+  save_op('opSchedule'); closeModal('opDoseModal'); renderOPSchedule();
+  toast(type === 'given' ? '✅ Dose recorded' : 'Entry saved');
+}
+
+function toggleDoseFields() {}
+
+// ── ONGOING ───────────────────────────────────────────────────
+let opOngoingFilter = '';
+function filterOPOngoing(val) { opOngoingFilter = val; renderOPOngoing(); }
+
+function renderOPOngoing() {
+  const tbody = document.getElementById('opOngoingTbody');
+  if (!tbody) return;
+  // Group by hospital number - show all unique patients with treatment plans
+  const seen = new Set();
+  let data = DB.opSchedule.filter(r => {
+    if (seen.has(r.hospitalNumber)) return false;
+    seen.add(r.hospitalNumber);
+    return true;
+  });
+  if (opOngoingFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opOngoingFilter.toLowerCase())));
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon"><i class="fas fa-user-check"></i></div><div class="empty-title">No ongoing patients</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map((r, i) => {
+    const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
+    const lastEntry = givenDoses[0];
+    const lastDate = lastEntry ? lastEntry[1].date : r.startDate;
+    const nextDue = calcNextDue(lastDate, r.periodicity);
+    const totalDoses = givenDoses.length;
+    const today = new Date();
+    const nextDate = nextDue ? new Date(nextDue) : null;
+    const isOverdue = nextDate && nextDate < today;
+    const isDueSoon = nextDate && !isOverdue && (nextDate - today) < 7 * 24 * 3600 * 1000;
+    return `<tr>
+      <td>${i+1}</td>
+      <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
+      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td>${r.diagnosis||'—'}</td>
+      <td style="color:var(--primary);font-weight:500">${r.injectionName}</td>
+      <td>${r.dosage}</td>
+      <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
+      <td>${lastDate ? fmtDate(lastDate) : '—'}</td>
+      <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '—'}${isOverdue?' ⚠️':isDueSoon?' 🔔':''}</td>
+      <td><span class="badge badge-info">${totalDoses} doses</span></td>
+      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTabForPatient('${r.hospitalNumber}')"><i class="fas fa-calendar"></i> Schedule</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── OP DASHBOARD ──────────────────────────────────────────────
+function renderOPDashboard() {
+  const today = new Date();
+  const thisMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+
+  // KPIs
+  const totalPatients = DB.opPatients.length;
+  const ongoingPatients = DB.opPatients.filter(p => p.status === 'Ongoing').length;
+  const thisMonthScheduled = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth]).length;
+  const thisMonthGiven = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth] && r.doses[thisMonth].type === 'given').length;
+
+  const kpiGrid = document.getElementById('opKpiGrid');
+  if (kpiGrid) {
+    kpiGrid.innerHTML = [
+      { label:'Total OP Patients', value:totalPatients, icon:'fa-users', color:'#0F766E', bg:'#f0fdfa' },
+      { label:'Ongoing', value:ongoingPatients, icon:'fa-user-check', color:'#10B981', bg:'#d1fae5' },
+      { label:'This Month Scheduled', value:thisMonthScheduled, icon:'fa-calendar-check', color:'#3B82F6', bg:'#dbeafe' },
+      { label:'This Month Given', value:thisMonthGiven, icon:'fa-syringe', color:'#8B5CF6', bg:'#ede9fe' },
+    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
+      <div class="kpi-icon"><i class="fas ${k.icon}"></i></div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+  }
+
+  // This month's list
+  const monthEl = document.getElementById('opThisMonth');
+  if (monthEl) {
+    const list = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth]);
+    if (!list.length) { monthEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">No entries this month</p>'; }
+    else monthEl.innerHTML = list.map(r => {
+      const d = r.doses[thisMonth];
+      const typeColors = { given:'badge-success', scheduled:'badge-info', expired:'badge-danger', stopped:'badge-secondary', chemo:'badge-purple', missed:'badge-warning' };
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · ${d.date ? fmtDate(d.date) : 'No date'}</div></div>
+        <span class="badge ${typeColors[d.type]||'badge-secondary'}">${d.type||'—'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Upcoming / overdue
+  const upcomingEl = document.getElementById('opUpcoming');
+  if (upcomingEl) {
+    const upcoming = DB.opSchedule.map(r => {
+      const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
+      const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
+      const nextDue = calcNextDue(lastDate, r.periodicity);
+      if (!nextDue) return null;
+      const nd = new Date(nextDue);
+      const diff = nd - today;
+      const isOverdue = diff < 0;
+      const isDueSoon = !isOverdue && diff < 7 * 24 * 3600 * 1000;
+      if (!isOverdue && !isDueSoon) return null;
+      return { ...r, nextDue, isOverdue, diff };
+    }).filter(Boolean).sort((a,b) => a.diff - b.diff);
+
+    if (!upcoming.length) { upcomingEl.innerHTML = '<p style="color:var(--success);font-size:13px;text-align:center;padding:20px">✅ No overdue or upcoming injections</p>'; }
+    else upcomingEl.innerHTML = upcoming.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · Due: ${fmtDate(r.nextDue)}</div></div>
+        <span class="badge ${r.isOverdue?'badge-danger':'badge-warning'}">${r.isOverdue?'Overdue':'Due Soon'}</span>
+      </div>`).join('');
+  }
+
+  // Periodicity chart
+  const periodicityCount = {};
+  DB.opSchedule.forEach(r => { periodicityCount[r.periodicity] = (periodicityCount[r.periodicity]||0)+1; });
+  const ctx = document.getElementById('opPeriodicityChart');
+  if (ctx && Object.keys(periodicityCount).length) {
+    if (window._opPeriodicityChart) window._opPeriodicityChart.destroy();
+    window._opPeriodicityChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: Object.keys(periodicityCount), datasets: [{ data: Object.values(periodicityCount), backgroundColor: ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1'], borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+    });
+  }
+}
+
+function exportOPData() {
+  const wb = XLSX.utils.book_new();
+  // Register sheet
+  if (DB.opPatients.length) {
+    const ws1 = XLSX.utils.json_to_sheet(DB.opPatients);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Register');
+  }
+  // Schedule sheet
+  if (DB.opSchedule.length) {
+    const year = parseInt(document.getElementById('opYearSelect')?.value || new Date().getFullYear());
+    const rows = DB.opSchedule.map(r => {
+      const row = { 'Hospital No': r.hospitalNumber, 'Patient Name': r.patientName, 'Gender': r.gender, 'Age': r.age, 'ID/PP No': r.idNumber, 'Diagnosis': r.diagnosis, 'Injection': r.injectionName, 'Dosage': r.dosage, 'Periodicity': r.periodicity };
+      MONTHS.forEach((m, mi) => {
+        const key = `${year}-${String(mi+1).padStart(2,'0')}`;
+        const dose = r.doses && r.doses[key];
+        row[`${m} ${year}`] = dose ? `${dose.date||''} ${dose.doseNumber?'(Dose '+dose.doseNumber+')':''} ${dose.type!=='given'?'['+dose.type+']':''} ${dose.notes||''}`.trim() : '';
+      });
+      return row;
+    });
+    const ws2 = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws2, `Schedule ${year}`);
+  }
+  XLSX.writeFile(wb, `OncoCare_OP_Injection_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('OP Injection data exported');
+}
+
+// ==================== CHEMO VIEW PROFILE ====================
+function viewChemoProfile(id) {
+  const r = DB.chemo.find(x => x.id === id);
+  if (!r) return;
+  // Get patient details from registry
+  const p = DB.patients.find(x => x.hospitalNumber === r.hospitalNumber);
+
+  const row = (label, val) => val ? `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val}</span></div>` : '';
+  const rowAlways = (label, val) => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val||'—'}</span></div>`;
+
+  let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--primary)">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${(r.patientName||'?').charAt(0)}</div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--text)">${r.patientName||'—'}</div>
+    <div style="font-size:12px;color:var(--text-muted)">${r.hospitalNumber} ${p&&p.registryNumber?'· '+p.registryNumber:''}</div></div>
+  </div>`;
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">';
+
+  // Chemo specific info
+  html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 4px">Chemotherapy Details</div>`;
+  html += row('Diagnosis', r.diagnosis);
+  html += rowAlways('Drug & Dosage', r.drugDosage || '—');
+  html += rowAlways('Frequency', r.frequency || '—');
+  html += row('G6PD Status', r.g6pd);
+  html += row('Blood Group', r.bloodGroup||(p&&p.bloodGroup));
+  html += row('Status', r.status||r.chemoStatus);
+  html += row('Started Date', fmtDate(r.startedDate));
+  html += row('Completed Date', fmtDate(r.completedDate));
+  html += row('Expired Date', fmtDate(r.expiredDate));
+  html += row('Remarks', r.remarks);
+
+  // Patient registry info
+  if (p) {
+    html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 4px">Patient Registry Details</div>`;
+    html += row('Full Name', p.fullName);
+    html += row('Gender', p.gender);
+    html += row('Age', p.age ? p.age + ' years' : '');
+    html += row('Date of Birth', fmtDate(p.dob));
+    html += row('National ID', p.nationalId);
+    html += row('Contact', p.contactNumber);
+    html += row('Atoll', p.atoll);
+    html += row('Island', p.island);
+    html += row('Address', p.address);
+    html += row('Diagnosis', p.diagnosis);
+    html += row('Stage', p.stage);
+    html += row('Diagnosis Date', fmtDate(p.diagnosisDate));
+    html += row('Patient Status', p.status);
+    html += row('Registry No', p.registryNumber);
+    html += row('Registration Date', fmtDate(p.registrationDate));
+    html += row('Histopathology', p.histopathology);
+    html += row('Medical History', p.medicalHistory);
+    html += row('Surgical History', p.surgicalHistory);
+    html += row('Treatment History', p.treatmentHistory);
+    html += row('Risk Factors', p.riskFactors);
+    html += row('Remarks', p.remarks);
+  }
+  html += '</div>';
+
+  document.getElementById('profileContent').innerHTML = html;
+  openModal('profileModal');
+}
+
+// ==================== CHEMO STATUS HELPERS ====================
+
+function toggleChemoExpiredDate() {
+  const status = document.getElementById('chemo_status')?.value;
+  const grp = document.getElementById('chemoExpiredDateGroup');
+  if (grp) grp.style.display = status === 'Expired' ? '' : 'none';
+}
+
+function populateChemoStatusSelect() {
+  // Populate form status select
+  const sel = document.getElementById('chemo_status');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select</option>' +
+      LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+  // Populate filter dropdown
+  const filterSel = document.getElementById('chemoStatusFilter');
+  if (filterSel) {
+    const cur = filterSel.value;
+    filterSel.innerHTML = '<option value="">All Statuses</option>' +
+      LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+}
+
+// ==================== DATE FORMAT ====================
+function forceDateFormat() {
+  // Set all date inputs to use en-GB locale via lang attribute
+  document.querySelectorAll('input[type="date"]').forEach(el => el.setAttribute('lang','en-GB'));
+}
+
+// ==================== BACKUP REMINDER ====================
+function checkBackupReminder() {
+  const lastBackup = localStorage.getItem('oms_last_backup');
+  if (!lastBackup) {
+    // First time — set today as last backup date
+    localStorage.setItem('oms_last_backup', Date.now().toString());
+    return;
+  }
+  const daysSince = (Date.now() - parseInt(lastBackup)) / (1000 * 60 * 60 * 24);
+  if (daysSince >= 7) {
+    setTimeout(() => {
+      const msg = `⚠️ Last backup was ${Math.floor(daysSince)} days ago.\n\nIt is recommended to download a backup weekly.\n\nDownload backup now?`;
+      if (confirm(msg)) {
+        backupData();
+        localStorage.setItem('oms_last_backup', Date.now().toString());
+      }
+    }, 3000);
+  }
+}
+
+// Login helpers
+function fillLogin(u, p) { document.getElementById('loginUsername').value = u; document.getElementById('loginPassword').value = p; }
+function togglePw() { const inp = document.getElementById('loginPassword'); const icon = document.getElementById('pwToggle'); inp.type = inp.type === 'password' ? 'text' : 'password'; icon.className = inp.type === 'password' ? 'fas fa-eye login-pw-toggle' : 'fas fa-eye-slash login-pw-toggle'; }
+
+// User menu toggle
+function toggleUserMenu() { document.getElementById('userMenuDropdown').classList.toggle('show'); }
+function closeUserMenu() { document.getElementById('userMenuDropdown').classList.remove('show'); }
+document.addEventListener('click', e => { if (!e.target.closest('#userMenuWrap')) closeUserMenu(); });
+
+// Navigate override handled inside main navigate function
+
+function filterAdminUsers(q) {
+  const rows = document.querySelectorAll('#adminUsersTbody tr');
+  rows.forEach(r => { r.style.display = !q || r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
+}
+
+function previewSettings() { applySettings(); toast('Preview applied — save to persist'); }
+
+function refreshSecurityPanel() {
+  const si = document.getElementById('sessionInfo');
+  const ss = document.getElementById('sysStats');
+  if (!si || !ss) return;
+  const u = getCurrentUser();
+  si.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Current User</span><span style="font-weight:600">${u?.fullName||'—'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Role</span><span class="badge badge-primary">${u?.role||'—'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Login Time</span><span style="font-weight:500">${AUTH.session?.loginTime ? new Date(AUTH.session.loginTime).toLocaleTimeString() : '—'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Session</span><span class="badge badge-success">Active</span></div>
+    </div>`;
+  const totalSize = Object.keys(localStorage).filter(k => k.startsWith('oms_')).reduce((a, k) => a + (localStorage[k]||'').length, 0);
+  ss.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Patients</span><span style="font-weight:600">${DB.patients.length}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Chemo Records</span><span style="font-weight:600">${DB.chemo.length}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">ADR Reports</span><span style="font-weight:600">${DB.adr.length}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Total Users</span><span style="font-weight:600">${AUTH.users.length}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Storage Used</span><span style="font-weight:600">${(totalSize/1024).toFixed(1)} KB</span></div>
+    </div>`;
+}
+
+
+async function flushPendingSync() {
+  if (!GS_ENABLED) return;
+  try {
+    const pending = JSON.parse(localStorage.getItem('oms_pending_sync') || '[]');
+    if (!pending.length) return;
+    for (const key of pending) {
+      if (!DB[key] || !DB[key].length) continue;
+      await sbBatchUpsert(key, DB[key]);
+    }
+    localStorage.setItem('oms_pending_sync', '[]');
+  } catch(e) { console.warn('flushPendingSync error:', e); }
+}
+window.flushPendingSync = flushPendingSync;
+window.sbBatchUpsert = sbBatchUpsert;
+window.normalizeRecord = normalizeRecord;
+
+let _idCounter = 0;
+function genId(prefix) {
+  _idCounter++;
+  const ts = Date.now().toString(36);
+  const cnt = _idCounter.toString(36).padStart(4,'0');
+  const rnd = Math.random().toString(36).slice(2,6);
+  return (prefix + '-' + ts + cnt + rnd).toUpperCase();
+}
+
+// Generate unique ID for import (guaranteed unique per row)
+function genImportId(prefix, rowIndex) {
+  const ts = Date.now().toString(36);
+  const idx = rowIndex.toString(36).padStart(4,'0');
+  const rnd = Math.random().toString(36).slice(2,8);
+  return (prefix + '-' + ts + idx + rnd).toUpperCase();
+}
+
+
+
+
+
 // ==================== SUPABASE CONFIG ====================
 const SB_URL = 'https://ulqqmdkrvcanvqbqyarl.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscXFtZGtydmNhbnZxYnF5YXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMjI0MTksImV4cCI6MjA5ODc5ODQxOX0.ubL84w4zrQdPiqBvBw5oysLjDZbvD-KUsrtLzWtom_g';
@@ -4736,6 +6091,8 @@ async function gsSaveRecord(sheetKey, record) {
 
 
 
+
+
 </script>
 
 <!-- User Form Modal -->
@@ -4812,1360 +6169,7 @@ async function gsSaveRecord(sheetKey, record) {
 
 </div><!-- end appWrapper -->
 
-<script>
-// ==================== LISTS MANAGEMENT ====================
-const DEFAULT_CHEMO_STATUSES = ['Ongoing','Completed','Paused','Discontinued','Expired'];
-const DEFAULT_DIAGNOSES = ['Breast Cancer','Cervical Cancer','Colorectal Cancer','Leukemia','Lymphoma','Lung Cancer','Ovarian Cancer','Gastric Cancer','Thyroid Cancer','Liver Cancer','Prostate Cancer','Brain Tumor','Uterine Cancer','Bladder Cancer','Kidney Cancer','Multiple Myeloma','Pancreatic Cancer','Other'];
-const DEFAULT_STATUSES = ['Active','In Remission','Palliative Care','Lost to Follow-up','Transferred Out','Expired'];
-const DEFAULT_ATOLLS = ["Haa Alifu (HA)", "Haa Dhaalu (HDh)", "Shaviyani (Sh)", "Noonu (N)", "Raa (R)", "Baa (B)", "Lhaviyani (Lh)", "Kaafu (K)", "Alifu Alifu (AA)", "Alifu Dhaalu (ADh)", "Vaavu (V)", "Meemu (M)", "Faafu (F)", "Dhaalu (Dh)", "Thaa (Th)", "Laamu (L)", "Gaafu Alifu (GA)", "Gaafu Dhaalu (GDh)", "Gnaviyani (Gn)", "Seenu (S)"];
-
-const DEFAULT_ISLANDS = [{"name": "HA. Baarah", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Berinmadhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Dhidhdhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Filladhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Hoarafushi", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Ihavandhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Kelaa", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Maarandhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Molhadhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Muraidhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Thakandhoo", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Thuraakunu", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Uligamu", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Utheemu", "atoll": "Haa Alifu (HA)"}, {"name": "HA. Vashafaru", "atoll": "Haa Alifu (HA)"}, {"name": "HDh. Finey", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Hanimaadhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Hirimaradhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Kulhudhuffushi", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Kumundhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Kurinbi", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Naivaadhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Nellaidhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Neykurendhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Nolhivaram", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Nolhivaranfaru", "atoll": "Haa Dhaalu (HDh)"}, {"name": "HDh. Vaikaradhoo", "atoll": "Haa Dhaalu (HDh)"}, {"name": "Sh. Bilehffahi", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Feevah", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Feydhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Foakaidhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Funadhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Goidhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Kanditheemu", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Komandoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Lhaimagu", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Maakandoodhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Maroshi", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Milandhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Narudhoo", "atoll": "Shaviyani (Sh)"}, {"name": "Sh. Noomaraa", "atoll": "Shaviyani (Sh)"}, {"name": "N. Fodhdhoo", "atoll": "Noonu (N)"}, {"name": "N. Holhudhoo", "atoll": "Noonu (N)"}, {"name": "N. Kedhikolhudhoo", "atoll": "Noonu (N)"}, {"name": "N. Kendhikulhudhoo", "atoll": "Noonu (N)"}, {"name": "N. Landhoo", "atoll": "Noonu (N)"}, {"name": "N. Lhohi", "atoll": "Noonu (N)"}, {"name": "N. Maalhendhoo", "atoll": "Noonu (N)"}, {"name": "N. Maalhoss", "atoll": "Noonu (N)"}, {"name": "N. Magoodhoo", "atoll": "Noonu (N)"}, {"name": "N. Manadhoo", "atoll": "Noonu (N)"}, {"name": "N. Miladhoo", "atoll": "Noonu (N)"}, {"name": "N. Orimas", "atoll": "Noonu (N)"}, {"name": "N. Velidhoo", "atoll": "Noonu (N)"}, {"name": "R. Alifushi", "atoll": "Raa (R)"}, {"name": "R. Dhuvaafaru", "atoll": "Raa (R)"}, {"name": "R. Fainu", "atoll": "Raa (R)"}, {"name": "R. Hulhudhuffaaru", "atoll": "Raa (R)"}, {"name": "R. Inguraidhoo", "atoll": "Raa (R)"}, {"name": "R. Innamaadhoo", "atoll": "Raa (R)"}, {"name": "R. Kinolhas", "atoll": "Raa (R)"}, {"name": "R. Maakurathu", "atoll": "Raa (R)"}, {"name": "R. Maamigili", "atoll": "Raa (R)"}, {"name": "R. Meedhoo", "atoll": "Raa (R)"}, {"name": "R. Rasmaadhoo", "atoll": "Raa (R)"}, {"name": "R. Ungoofaaru", "atoll": "Raa (R)"}, {"name": "R. Vaadhoo", "atoll": "Raa (R)"}, {"name": "B. Daravan", "atoll": "Baa (B)"}, {"name": "B. Dhonfanu", "atoll": "Baa (B)"}, {"name": "B. Eydhafushi", "atoll": "Baa (B)"}, {"name": "B. Fehendhoo", "atoll": "Baa (B)"}, {"name": "B. Goidhoo", "atoll": "Baa (B)"}, {"name": "B. Hithaadhoo", "atoll": "Baa (B)"}, {"name": "B. Kamadhoo", "atoll": "Baa (B)"}, {"name": "B. Kendhoo", "atoll": "Baa (B)"}, {"name": "B. Kihaadhoo", "atoll": "Baa (B)"}, {"name": "B. Kudarikilu", "atoll": "Baa (B)"}, {"name": "B. Maalhos", "atoll": "Baa (B)"}, {"name": "B. Thulhaadhoo", "atoll": "Baa (B)"}, {"name": "Lh. Hinnavaru", "atoll": "Lhaviyani (Lh)"}, {"name": "Lh. Kurendhoo", "atoll": "Lhaviyani (Lh)"}, {"name": "Lh. Naifaru", "atoll": "Lhaviyani (Lh)"}, {"name": "Lh. Olhuvelifushi", "atoll": "Lhaviyani (Lh)"}, {"name": "K. Mal\u00e9", "atoll": "Kaafu (K)"}, {"name": "K. Hulhumal\u00e9", "atoll": "Kaafu (K)"}, {"name": "K. Vilimal\u00e9", "atoll": "Kaafu (K)"}, {"name": "K. Guraidhoo", "atoll": "Kaafu (K)"}, {"name": "K. Gulhi", "atoll": "Kaafu (K)"}, {"name": "K. Kaashidhoo", "atoll": "Kaafu (K)"}, {"name": "K. Maafushi", "atoll": "Kaafu (K)"}, {"name": "K. Thulusdhoo", "atoll": "Kaafu (K)"}, {"name": "K. Himmafushi", "atoll": "Kaafu (K)"}, {"name": "K. Dhiffushi", "atoll": "Kaafu (K)"}, {"name": "AA. Bodufolhudhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Feridhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Himandhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Maalhos", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Mathiveri", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Rasdhoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Thoddoo", "atoll": "Alifu Alifu (AA)"}, {"name": "AA. Ukulhas", "atoll": "Alifu Alifu (AA)"}, {"name": "ADh. Dhangethi", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Dhidhdhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Fenfushi", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Hanggnaameedhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Kunburudhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Mahibadhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Mandhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "ADh. Omadhoo", "atoll": "Alifu Dhaalu (ADh)"}, {"name": "V. Felidhoo", "atoll": "Vaavu (V)"}, {"name": "V. Fulidhoo", "atoll": "Vaavu (V)"}, {"name": "V. Keyodhoo", "atoll": "Vaavu (V)"}, {"name": "V. Rakeedhoo", "atoll": "Vaavu (V)"}, {"name": "V. Thinadhoo", "atoll": "Vaavu (V)"}, {"name": "M. Dhiggaru", "atoll": "Meemu (M)"}, {"name": "M. Kolhufushi", "atoll": "Meemu (M)"}, {"name": "M. Maduvvari", "atoll": "Meemu (M)"}, {"name": "M. Muli", "atoll": "Meemu (M)"}, {"name": "M. Naalaafushi", "atoll": "Meemu (M)"}, {"name": "M. Raiymandhoo", "atoll": "Meemu (M)"}, {"name": "M. Veyvah", "atoll": "Meemu (M)"}, {"name": "F. Bilehdhoo", "atoll": "Faafu (F)"}, {"name": "F. Dharanboodhoo", "atoll": "Faafu (F)"}, {"name": "F. Feeali", "atoll": "Faafu (F)"}, {"name": "F. Magoodhoo", "atoll": "Faafu (F)"}, {"name": "F. Nilandhoo", "atoll": "Faafu (F)"}, {"name": "Dh. Bandidhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Hulhudheli", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Kudahuvadhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Maaenboodhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Meedhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Rinbudhoo", "atoll": "Dhaalu (Dh)"}, {"name": "Dh. Vaanee", "atoll": "Dhaalu (Dh)"}, {"name": "Th. Buruni", "atoll": "Thaa (Th)"}, {"name": "Th. Dhiyamigili", "atoll": "Thaa (Th)"}, {"name": "Th. Gaadhiffushi", "atoll": "Thaa (Th)"}, {"name": "Th. Guraidhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Hirilandhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Kandoodhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Kinbidhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Madifushi", "atoll": "Thaa (Th)"}, {"name": "Th. Omadhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Thimarafushi", "atoll": "Thaa (Th)"}, {"name": "Th. Vandhoo", "atoll": "Thaa (Th)"}, {"name": "Th. Veymandoo", "atoll": "Thaa (Th)"}, {"name": "Th. Vilufushi", "atoll": "Thaa (Th)"}, {"name": "L. Dhanbidhoo", "atoll": "Laamu (L)"}, {"name": "L. Fonadhoo", "atoll": "Laamu (L)"}, {"name": "L. Gaadhoo", "atoll": "Laamu (L)"}, {"name": "L. Gan", "atoll": "Laamu (L)"}, {"name": "L. Hithadhoo", "atoll": "Laamu (L)"}, {"name": "L. Isdhoo", "atoll": "Laamu (L)"}, {"name": "L. Kalaidhoo", "atoll": "Laamu (L)"}, {"name": "L. Kunahandhoo", "atoll": "Laamu (L)"}, {"name": "L. Maabaidhoo", "atoll": "Laamu (L)"}, {"name": "L. Maamendhoo", "atoll": "Laamu (L)"}, {"name": "L. Maavah", "atoll": "Laamu (L)"}, {"name": "L. Mundoo", "atoll": "Laamu (L)"}, {"name": "L. Olhuveli", "atoll": "Laamu (L)"}, {"name": "GA. Dhaandhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Gemanafushi", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Kanduhulhudhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Kolamaafushi", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Kondey", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Maamendhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Nilandhoo", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Vilingili", "atoll": "Gaafu Alifu (GA)"}, {"name": "GA. Villingili", "atoll": "Gaafu Alifu (GA)"}, {"name": "GDh. Fares", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Faresmaathodaa", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Gadhdhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Hoadedhdhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Madaveli", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Nadellaa", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Rathafandhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Thinadhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "GDh. Vaadhoo", "atoll": "Gaafu Dhaalu (GDh)"}, {"name": "Gn. Fuvahmulah", "atoll": "Gnaviyani (Gn)"}, {"name": "S. Feydhoo", "atoll": "Seenu (S)"}, {"name": "S. Gan", "atoll": "Seenu (S)"}, {"name": "S. Hithadhoo", "atoll": "Seenu (S)"}, {"name": "S. Hulhumeedhoo", "atoll": "Seenu (S)"}, {"name": "S. Maradhoo", "atoll": "Seenu (S)"}, {"name": "S. Maradhoo-Feydhoo", "atoll": "Seenu (S)"}, {"name": "S. Meedhoo", "atoll": "Seenu (S)"}];
-
-const LISTS = {
-  diagnoses: JSON.parse(localStorage.getItem('oms_list_diagnoses') || JSON.stringify(DEFAULT_DIAGNOSES)),
-  patientStatuses: JSON.parse(localStorage.getItem('oms_list_statuses') || JSON.stringify(DEFAULT_STATUSES)),
-  chemoStatuses: JSON.parse(localStorage.getItem('oms_list_chemoStatuses') || JSON.stringify(DEFAULT_CHEMO_STATUSES)),
-  islands: (() => {
-    const stored = localStorage.getItem('oms_list_islands');
-    if (stored) {
-      const arr = JSON.parse(stored);
-      // Reset if islands don't have atoll code prefix format
-      const needsUpdate = arr.length === 0 || (arr[0] && !arr[0].name.includes('. '));
-      if (needsUpdate) { localStorage.removeItem('oms_list_islands'); return DEFAULT_ISLANDS; }
-    }
-    return stored ? JSON.parse(stored) : DEFAULT_ISLANDS;
-  })(),
-  atolls: (() => {
-    const stored = localStorage.getItem('oms_list_atolls');
-    // Force update if stored list has old format (without short codes)
-    if (stored) {
-      const arr = JSON.parse(stored);
-      const hasOldFormat = arr.some(a => a === 'Haa Alifu' || a === 'Haa Dhaal' || a === 'North Malé (Kaafu)' || a === 'Malé' || !a.includes('('));
-      if (hasOldFormat) { localStorage.removeItem('oms_list_atolls'); return DEFAULT_ATOLLS; }
-    }
-    return stored ? JSON.parse(stored) : DEFAULT_ATOLLS;
-  })(),
-};
-
-function saveList(key) { localStorage.setItem('oms_list_' + (key === 'patientStatuses' ? 'statuses' : key), JSON.stringify(LISTS[key])); }
-
-function addListItem(listKey, inputId) {
-  const val = document.getElementById(inputId).value.trim();
-  if (!val) return;
-  if (LISTS[listKey].includes(val)) { toast('Already exists', 'warning'); return; }
-  LISTS[listKey].push(val);
-  saveList(listKey);
-  document.getElementById(inputId).value = '';
-  renderAllLists();
-  populateDynamicSelects();
-  toast('Added successfully');
-}
-
-function removeListItem(listKey, val) {
-  if (!confirm('Remove "' + val + '" from the list?')) return;
-  LISTS[listKey] = LISTS[listKey].filter(x => x !== val);
-  saveList(listKey);
-  renderAllLists();
-  populateDynamicSelects();
-  toast('Removed');
-}
-
-function editListItem(listKey, oldVal) {
-  const newVal = prompt('Edit:', oldVal);
-  if (!newVal || newVal === oldVal) return;
-  if (LISTS[listKey].includes(newVal)) { toast('Already exists', 'warning'); return; }
-  const idx = LISTS[listKey].indexOf(oldVal);
-  LISTS[listKey][idx] = newVal;
-  saveList(listKey);
-  renderAllLists();
-  populateDynamicSelects();
-  toast('Updated');
-}
-
-function addIsland() {
-  const name = document.getElementById('newIsland').value.trim();
-  const atoll = document.getElementById('newIslandAtoll').value;
-  if (!name || !atoll) { toast('Enter island name and select atoll', 'warning'); return; }
-  const entry = { name, atoll };
-  if (LISTS.islands.find(i => i.name === name && i.atoll === atoll)) { toast('Already exists', 'warning'); return; }
-  LISTS.islands.push(entry);
-  saveList('islands');
-  document.getElementById('newIsland').value = '';
-  renderIslandList();
-  populateDynamicSelects();
-  toast('Island added');
-}
-
-function removeIsland(name, atoll) {
-  if (!confirm('Remove "' + name + '"?')) return;
-  LISTS.islands = LISTS.islands.filter(i => !(i.name === name && i.atoll === atoll));
-  saveList('islands');
-  renderIslandList();
-  populateDynamicSelects();
-  toast('Island removed');
-}
-
-function renderListItems(containerId, listKey) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  if (!LISTS[listKey].length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:12px">No items yet</div>'; return; }
-  el.innerHTML = LISTS[listKey].map(val => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-      <span style="font-size:13px">${val}</span>
-      <div style="display:flex;gap:4px">
-        <button class="btn btn-xs btn-outline" onclick="editListItem('${listKey}','${val.replace(/'/g,"\\'")}')"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-xs btn-danger" onclick="removeListItem('${listKey}','${val.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
-      </div>
-    </div>`).join('');
-}
-
-function renderIslandList() {
-  const filter = document.getElementById('islandAtollFilter');
-  const filterVal = filter ? filter.value : '';
-  const el = document.getElementById('islandList');
-  if (!el) return;
-  const filtered = filterVal ? LISTS.islands.filter(i => i.atoll === filterVal) : LISTS.islands;
-  if (!filtered.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:12px">No islands yet. Add some above.</div>'; return; }
-  el.innerHTML = [...filtered].sort((a,b) => a.atoll.localeCompare(b.atoll) || a.name.localeCompare(b.name)).map(i => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-      <div><span style="font-size:13px;font-weight:500">${i.name}</span> <span style="font-size:11px;color:var(--text-muted)">${i.atoll}</span></div>
-      <button class="btn btn-xs btn-danger" onclick="removeIsland('${i.name.replace(/'/g,"\\'")}','${i.atoll.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
-    </div>`).join('');
-}
-
-function renderAllLists() {
-  renderListItems('diagnosisList', 'diagnoses');
-  renderListItems('statusList', 'patientStatuses');
-  renderListItems('chemoStatusList', 'chemoStatuses');
-  renderListItems('atollList', 'atolls');
-  renderIslandList();
-  // Populate atoll filters in island admin panel
-  const atollFilter = document.getElementById('islandAtollFilter');
-  const newIslandAtoll = document.getElementById('newIslandAtoll');
-  if (atollFilter) atollFilter.innerHTML = '<option value="">All Atolls</option>' + LISTS.atolls.map(a => `<option>${a}</option>`).join('');
-  if (newIslandAtoll) newIslandAtoll.innerHTML = '<option value="">Select Atoll</option>' + LISTS.atolls.map(a => `<option>${a}</option>`).join('');
-}
-
-// Populate diagnosis, status and island dropdowns in patient form
-function populateDynamicSelects() {
-  // Diagnosis
-  const diagSel = document.getElementById('pat_diagnosis');
-  if (diagSel) {
-    const cur = diagSel.value;
-    diagSel.innerHTML = '<option value="">Select Diagnosis</option>' + LISTS.diagnoses.map(d => `<option${d===cur?' selected':''}>${d}</option>`).join('');
-  }
-  // Patient Status
-  const statSel = document.getElementById('pat_status');
-  if (statSel) {
-    const cur = statSel.value;
-    statSel.innerHTML = '<option value="">Select Status</option>' + LISTS.patientStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
-  }
-  // Chemo status dropdown
-  populateChemoStatusSelect();
-  // Atoll dropdown
-  const atollSel = document.getElementById('pat_atoll');
-  if (atollSel) {
-    const curAtoll = atollSel.value;
-    atollSel.innerHTML = '<option value="">Select Atoll</option>' + LISTS.atolls.map(a => `<option${a===curAtoll?' selected':''}>${a}</option>`).join('');
-  }
-  // Island dropdown
-  const islandSel = document.getElementById('pat_island');
-  if (islandSel) {
-    const cur = islandSel.value;
-    const atoll = document.getElementById('pat_atoll') ? document.getElementById('pat_atoll').value : '';
-    const filtered = atoll ? LISTS.islands.filter(i => i.atoll === atoll) : LISTS.islands;
-    const opts = filtered.sort((a,b) => a.name.localeCompare(b.name)).map(i => `<option value="${i.name}"${i.name===cur?' selected':''}>${i.name}</option>`).join('');
-    islandSel.innerHTML = '<option value="">Select Island</option>' + opts;
-  }
-  // Filter dropdowns in patient table
-  populateFilters();
-}
-
-function syncIslandValue(val) {
-  // Sync manually typed island back to the hidden select value
-  const sel = document.getElementById('pat_island');
-  if (sel) sel.setAttribute('data-manual', val);
-}
-
-// Update island dropdown when atoll changes
-function onAtollChange(val) {
-  populateDynamicSelects();
-}
-
-// ==================== FIX 7: SURVIVAL YEARS ====================
-function calcSurvival(p) {
-  if (!p.diagnosisDate) return '—';
-  const start = new Date(p.diagnosisDate);
-  const end = p.status === 'Expired' && p.expiredDate ? new Date(p.expiredDate) : new Date();
-  const diff = end - start;
-  if (diff < 0) return '—';
-  const years = Math.floor(diff / (365.25 * 24 * 3600 * 1000));
-  const months = Math.floor((diff % (365.25 * 24 * 3600 * 1000)) / (30.44 * 24 * 3600 * 1000));
-  if (years === 0) return months + ' month' + (months !== 1 ? 's' : '');
-  return years + ' yr' + (years !== 1 ? 's' : '') + (months > 0 ? ' ' + months + ' mo' : '');
-}
-
-
-// ==================== OP INJECTION REGISTER ====================
-
-function save_op(key) {
-  localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
-  if (GS_ENABLED) {
-    DB[key].forEach(r => {
-      // For opSchedule, stringify the doses object for Google Sheets storage
-      const record = key === 'opSchedule' ? { ...r, doses: JSON.stringify(r.doses || {}) } : r;
-      gsSaveRecord(key, record);
-    });
-  }
-}
-
-// Parse doses back from string when loading from Sheets
-function parseOPScheduleFromSheets(records) {
-  return records.map(r => {
-    if (r.doses && typeof r.doses === 'string') {
-      try { r.doses = JSON.parse(r.doses); } catch(e) { r.doses = {}; }
-    }
-    if (!r.doses) r.doses = {};
-    return r;
-  });
-}
-
-const PERIODICITY_DAYS = {
-  'Weekly': 7, '2 Weekly': 14, '3 Weekly': 21, 'Monthly': 30,
-  '2 Monthly': 60, '3 Monthly': 91, '6 Monthly': 182, 'Yearly': 365,
-  '12 Weeks': 84, 'Once a year for 2 years, then 5 Yearly': 365,
-};
-
-// Month-based periodicities - add calendar months instead of fixed days
-const PERIODICITY_MONTHS = {
-  'Monthly': 1, '2 Monthly': 2, '3 Monthly': 3,
-  '4 Monthly': 4, '6 Monthly': 6, 'Yearly': 12,
-  '12 Weeks': null, // use days
-};
-
-function calcNextDue(lastDate, periodicity) {
-  if (!lastDate || !periodicity) return null;
-  // Parse as local date to avoid UTC timezone shift
-  const s = String(lastDate).slice(0,10);
-  let d;
-  if (s.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)) {
-    const parts = s.split('-').map(Number);
-    d = new Date(parts[0], parts[1]-1, parts[2]);
-  } else {
-    d = new Date(lastDate);
-  }
-  if (isNaN(d.getTime())) return null;
-
-  // Use calendar months for monthly-based periodicities (same date next N months)
-  const months = PERIODICITY_MONTHS[periodicity];
-  if (months !== undefined && months !== null) {
-    d.setMonth(d.getMonth() + months);
-  } else {
-    // Use days for weekly-based periodicities
-    const days = PERIODICITY_DAYS[periodicity];
-    if (!days) return null;
-    d.setDate(d.getDate() + days);
-  }
-
-  const yr = d.getFullYear();
-  const mo = String(d.getMonth()+1).padStart(2,'0');
-  const dy = String(d.getDate()).padStart(2,'0');
-  return yr + '-' + mo + '-' + dy;
-}
-
-function switchOPTabForPatient(hn) {
-  // Switch to schedule tab, filter to patient, show Full Year view
-  opScheduleFilter = hn;
-  switchOPTab('schedule');
-  // Switch to Full Year view so patient cards are visible
-  setTimeout(() => {
-    switchScheduleView('year');
-    // Set search box to hospital number
-    const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
-    if (searchEl) searchEl.value = hn;
-  }, 50);
-}
-
-function switchOPTab(tab) {
-  // Clear schedule filter when switching away from schedule tab
-  if (tab !== 'schedule') {
-    opScheduleFilter = '';
-    const searchEl = document.querySelector('#opTab_schedule .toolbar-search input');
-    if (searchEl) searchEl.value = '';
-  }
-  document.querySelectorAll('#opTabs .section-tab').forEach(t => t.classList.remove('active'));
-  ['register','schedule','ongoing','dashboard'].forEach(t => {
-    const el = document.getElementById('opTab_' + t);
-    if (el) el.style.display = 'none';
-  });
-  const activeTab = document.querySelector(`#opTabs .section-tab:nth-child(${['register','schedule','ongoing','dashboard'].indexOf(tab)+1})`);
-  if (activeTab) activeTab.classList.add('active');
-  const panel = document.getElementById('opTab_' + tab);
-  if (panel) panel.style.display = '';
-  if (tab === 'register') renderOPRegister();
-  if (tab === 'schedule') {
-    switchScheduleView('month');
-  }
-  if (tab === 'ongoing') renderOPOngoing();
-  if (tab === 'dashboard') renderOPDashboard();
-}
-
-// ── REGISTER ──────────────────────────────────────────────────
-function openOPPatientModal(id = null) {
-  state.editId = id;
-  ['hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'].forEach(f => {
-    const el = document.getElementById('op_' + f);
-    if (el) el.value = '';
-  });
-  document.getElementById('opPatientModalTitle').textContent = id ? 'Edit OP Patient' : 'Add OP Injection Patient';
-  if (id) {
-    const r = DB.opPatients.find(x => x.id === id);
-    if (r) Object.keys(r).forEach(k => { const el = document.getElementById('op_' + k); if (el) el.value = r[k]||''; });
-  }
-  openModal('opPatientModal');
-}
-
-function lookupOPPatient(hn) {
-  const p = DB.patients.find(x => x.hospitalNumber === hn);
-  if (p) {
-    document.getElementById('op_patientName').value = p.fullName||'';
-    document.getElementById('op_gender').value = p.gender||'';
-    document.getElementById('op_dob').value = p.dob||'';
-    document.getElementById('op_age').value = p.age||'';
-    document.getElementById('op_idNumber').value = p.nationalId||'';
-    document.getElementById('op_contact').value = p.contactNumber||'';
-    document.getElementById('op_diagnosis').value = p.diagnosis||'';
-  }
-}
-
-function calcOPAge() {
-  const dob = document.getElementById('op_dob').value;
-  if (!dob) return;
-  const age = Math.floor((Date.now() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
-  document.getElementById('op_age').value = age;
-}
-
-function saveOPPatient() {
-  const hn = document.getElementById('op_hospitalNumber').value.trim();
-  const status = document.getElementById('op_status').value;
-  if (!hn || !status) { toast('Hospital Number and Status are required', 'error'); return; }
-  const serial = state.editId ? DB.opPatients.find(x => x.id === state.editId)?.serial : (DB.opPatients.length + 1);
-  const obj = {
-    id: state.editId || genId('OPP'), serial,
-    hospitalNumber: hn,
-    patientName: document.getElementById('op_patientName').value,
-    gender: document.getElementById('op_gender').value,
-    dob: document.getElementById('op_dob').value,
-    age: document.getElementById('op_age').value,
-    idNumber: document.getElementById('op_idNumber').value,
-    contact: document.getElementById('op_contact').value,
-    diagnosis: document.getElementById('op_diagnosis').value,
-    status,
-    injections: document.getElementById('op_injections').value,
-    remarks: document.getElementById('op_remarks').value,
-  };
-  if (state.editId) {
-    const idx = DB.opPatients.findIndex(x => x.id === state.editId);
-    DB.opPatients[idx] = obj;
-    toast('Patient updated ✅');
-  } else {
-    // Block duplicate hospital number
-    const existing = DB.opPatients.find(x => x.hospitalNumber === hn);
-    if (existing) {
-      toast(`❌ Patient ${hn} already exists in OP Register — use Edit to update`, 'error');
-      return;
-    }
-    DB.opPatients.push(obj);
-    toast('Patient added to OP Register ✅');
-  }
-  save_op('opPatients'); closeModal('opPatientModal'); renderOPRegister();
-}
-
-let opRegisterFilter = '', opRegisterStatusFilter = '';
-function filterOPRegister(val, field, fieldVal) {
-  if (val !== null && val !== undefined) opRegisterFilter = val;
-  if (field === 'status') opRegisterStatusFilter = fieldVal || '';
-  renderOPRegister();
-}
-
-function renderOPRegister() {
-  let data = [...DB.opPatients];
-  if (opRegisterFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opRegisterFilter.toLowerCase())));
-  if (opRegisterStatusFilter) data = data.filter(r => r.status === opRegisterStatusFilter);
-  const tbody = document.getElementById('opRegisterTbody');
-  if (!tbody) return;
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon"><i class="fas fa-prescription-bottle-alt"></i></div><div class="empty-title">No patients registered</div><div class="empty-text">Add OP injection patients to get started</div></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = data.map((r, i) => `<tr>
-    <td>${r.serial || i+1}</td>
-    <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
-    <td style="font-weight:500">${r.patientName||'—'}</td>
-    <td>${r.gender||'—'}</td>
-    <td>${r.age||'—'}</td>
-    <td>${r.idNumber||'—'}</td>
-    <td>${r.contact||'—'}</td>
-    <td>${r.diagnosis||'—'}</td>
-    <td><span style="font-size:12px">${r.injections||'—'}</span></td>
-    <td>${statusBadge(r.status||'—')}</td>
-    <td style="font-size:12px;color:var(--text-muted)">${r.remarks||'—'}</td>
-    <td class="no-print"><div class="flex gap-2">
-      <button class="btn btn-xs btn-outline" onclick="openOPPatientModal('${r.id}')"><i class="fas fa-edit"></i></button>
-      <button class="btn btn-xs btn-danger" onclick="deleteOPPatient('${r.id}')"><i class="fas fa-trash"></i></button>
-    </div></td>
-  </tr>`).join('');
-}
-
-function deleteOPPatient(id) {
-  if (!confirm('Delete this patient from OP register?')) return;
-  DB.opPatients = DB.opPatients.filter(x => x.id !== id);
-  save_op('opPatients'); renderOPRegister(); toast('Patient removed');
-}
-
-// ── SCHEDULE ──────────────────────────────────────────────────
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-function populateInjectionNameDropdown(hn) {
-  var sel = document.getElementById('ops_injectionName');
-  if (!sel) return;
-  var opPatient = hn ? DB.opPatients.find(function(p) { return p.hospitalNumber === hn; }) : null;
-  var patientRegInj = (opPatient && opPatient.injections) ? opPatient.injections.split(',').map(function(i){return i.trim();}).filter(Boolean) : [];
-  var patientSchInj = hn ? DB.opSchedule.filter(function(r){return r.hospitalNumber===hn;}).map(function(r){return r.injectionName;}).filter(Boolean) : [];
-  var patientInj = patientRegInj.concat(patientSchInj).filter(function(v,i,a){return a.indexOf(v)===i;});
-  var allInj = DB.opSchedule.map(function(r){return r.injectionName;}).filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
-  var html = '<option value="">Select injection...</option>';
-  if (patientInj.length > 0) {
-    html += '<optgroup label="This Patient Injections">';
-    patientInj.forEach(function(i){ html += '<option value="' + i + '">' + i + '</option>'; });
-    html += '</optgroup>';
-  }
-  var others = allInj.filter(function(i){ return patientInj.indexOf(i) === -1; });
-  if (others.length > 0) {
-    html += '<optgroup label="All Injections">';
-    others.forEach(function(i){ html += '<option value="' + i + '">' + i + '</option>'; });
-    html += '</optgroup>';
-  }
-  sel.innerHTML = html;
-}
-
-
-function openScheduleModal(id = null) {
-  state.editId = id;
-  ['hospitalNumber','patientName','gender','age','idNumber','diagnosis','dosage','periodicity','startDate','remarks'].forEach(f => {
-    const el = document.getElementById('ops_' + f);
-    if (el) el.value = '';
-  });
-  const injSel = document.getElementById('ops_injectionName');
-  const injCustom = document.getElementById('ops_injectionName_custom');
-  if (injSel) injSel.value = '';
-  if (injCustom) injCustom.value = '';
-  const routeSel = document.getElementById('ops_route');
-  if (routeSel) routeSel.value = '';
-  populateInjectionNameDropdown('');
-  document.getElementById('ops_firstDose').value = '1';
-  document.getElementById('opScheduleModalTitle').textContent = id ? 'Edit Treatment Plan' : 'Add Treatment Plan';
-  if (id) {
-    const r = DB.opSchedule.find(x => x.id === id);
-    if (r) {
-      ['hospitalNumber','patientName','gender','age','idNumber','diagnosis','injectionName','dosage','periodicity','startDate','remarks'].forEach(f => {
-        const el = document.getElementById('ops_' + f);
-        if (el) el.value = r[f]||'';
-      });
-      document.getElementById('ops_firstDose').value = r.firstDose||'1';
-    }
-  }
-  openModal('opScheduleModal');
-}
-
-function lookupOPSchedulePatient(hn) {
-  // Try OP patients first, then main registry
-  const op = DB.opPatients.find(x => x.hospitalNumber === hn);
-  const p = op || DB.patients.find(x => x.hospitalNumber === hn);
-  if (p) {
-    document.getElementById('ops_patientName').value = p.patientName || p.fullName || '';
-    document.getElementById('ops_gender').value = p.gender||'';
-    // Populate injection name dropdown from existing OP schedule records for this patient
-    populateInjectionNameDropdown(hn);
-    document.getElementById('ops_age').value = p.age||'';
-    document.getElementById('ops_idNumber').value = p.idNumber || p.nationalId||'';
-    document.getElementById('ops_diagnosis').value = p.diagnosis||'';
-  }
-}
-
-function saveOPSchedule() {
-  const hn = document.getElementById('ops_hospitalNumber').value.trim();
-  const injCustom = document.getElementById('ops_injectionName_custom');
-  const inj = (injCustom && injCustom.value.trim()) || document.getElementById('ops_injectionName').value.trim();
-  const dosage = document.getElementById('ops_dosage').value.trim();
-  const period = document.getElementById('ops_periodicity').value;
-  if (!hn || !inj || !dosage || !period) { toast('Please fill required fields', 'error'); return; }
-  const obj = {
-    id: state.editId || genId('OPS'),
-    hospitalNumber: hn,
-    patientName: document.getElementById('ops_patientName').value,
-    gender: document.getElementById('ops_gender').value,
-    age: document.getElementById('ops_age').value,
-    idNumber: document.getElementById('ops_idNumber').value,
-    diagnosis: document.getElementById('ops_diagnosis').value,
-    injectionName: inj,
-    dosage,
-    route: document.getElementById('ops_route')?.value || '',
-    periodicity: period,
-    startDate: document.getElementById('ops_startDate').value,
-    firstDose: parseInt(document.getElementById('ops_firstDose').value) || 1,
-    remarks: document.getElementById('ops_remarks').value,
-    doses: state.editId ? (DB.opSchedule.find(x => x.id === state.editId)?.doses || {}) : {},
-  };
-  if (state.editId) {
-    const idx = DB.opSchedule.findIndex(x => x.id === state.editId);
-    DB.opSchedule[idx] = obj;
-    toast('Treatment plan updated ✅');
-  } else {
-    // Check duplicate: same patient + same injection
-    const dupCheck = DB.opSchedule.find(x => x.hospitalNumber === hn && x.injectionName.toLowerCase() === inj.toLowerCase() && x.id !== state.editId);
-    if (dupCheck) {
-      if (!confirm(`${inj} is already scheduled for this patient.\n\nAdd another entry anyway? (e.g. different dosage)`)) return;
-    }
-    DB.opSchedule.push(obj);
-    toast('Treatment plan added ✅');
-  }
-  save_op('opSchedule'); closeModal('opScheduleModal'); renderOPSchedule();
-}
-
-let opScheduleFilter = '';
-function filterOPSchedule(val) { opScheduleFilter = val; renderOPSchedule(); }
-
-function expandAllCards()  { document.querySelectorAll('.op-patient-card').forEach(c => c.classList.remove('op-card-collapsed')); }
-function collapseAllCards(){ document.querySelectorAll('.op-patient-card').forEach(c => c.classList.add('op-card-collapsed')); }
-function toggleCard(id) { document.getElementById('opc-' + id)?.classList.toggle('op-card-collapsed'); }
-
-const TYPE_STYLES = {
-  given:     { bg:'given',     icon:'<i class="fas fa-check-circle"></i>',   label:'Given' },
-  scheduled: { bg:'scheduled', icon:'<i class="fas fa-calendar-day"></i>',   label:'Scheduled' },
-  expired:   { bg:'expired',   icon:'<i class="fas fa-times-circle"></i>',   label:'Expired' },
-  stopped:   { bg:'stopped',   icon:'<i class="fas fa-stop-circle"></i>',    label:'Stopped' },
-  chemo:     { bg:'chemo',     icon:'<i class="fas fa-syringe"></i>',        label:'Chemo' },
-  missed:    { bg:'missed',    icon:'<i class="fas fa-exclamation-triangle"></i>', label:'Missed' },
-  onhold:    { bg:'onhold',    icon:'<i class="fas fa-pause-circle"></i>',   label:'On Hold' },
-};
-
-function renderOPSchedule() {
-  const year = parseInt(document.getElementById('opYearSelect')?.value || new Date().getFullYear());
-  const container = document.getElementById('opScheduleCards');
-  if (!container) return;
-
-  let data = [...DB.opSchedule];
-  if (opScheduleFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opScheduleFilter.toLowerCase())));
-
-  // Filter to only show patients that have activity (doses given OR suggested dates) in selected year
-  data = data.filter(r => {
-    // Check if any doses were recorded in this year
-    const hasDosesThisYear = Object.keys(r.doses||{}).some(k => k.startsWith(year + '-'));
-    if (hasDosesThisYear) return true;
-    // Check if any suggested dates fall in this year
-    for (let mi = 0; mi < 12; mi++) {
-      const suggested = getSuggestedDate(r, year, mi);
-      if (suggested) return true;
-    }
-    // Check if treatment started in or before this year and is still active
-    if (r.startDate) {
-      const startYear = parseInt((r.startDate||'').slice(0,4));
-      if (startYear <= year) return true;
-    }
-    return false;
-  });
-
-  if (!data.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-calendar-alt"></i></div><div class="empty-title">No treatment plans yet</div><div class="empty-text">Click "+ Add Treatment" to get started</div></div>`;
-    return;
-  }
-
-  // Group by hospital number
-  const grouped = {};
-  data.forEach(r => {
-    if (!grouped[r.hospitalNumber]) grouped[r.hospitalNumber] = { info: r, treatments: [] };
-    grouped[r.hospitalNumber].treatments.push(r);
-  });
-
-  container.innerHTML = Object.entries(grouped).map(([hn, grp]) => {
-    const info = grp.info;
-    const initial = (info.patientName||'?').charAt(0).toUpperCase();
-    const today = new Date();
-    const thisMonth = `${year}-${String(today.getMonth()+1).padStart(2,'0')}`;
-
-    // Check if any treatment is overdue this month
-    const hasOverdue = grp.treatments.some(r => {
-      const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
-      const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
-      const nextDue = calcNextDue(lastDate, r.periodicity);
-      return nextDue && new Date(nextDue) < today && !(r.doses && r.doses[thisMonth]);
-    });
-
-    const treatmentRows = grp.treatments.map(r => {
-      const monthCells = MONTHS.map((m, mi) => {
-        const key = `${year}-${String(mi+1).padStart(2,'0')}`;
-        const dose = r.doses && r.doses[key];
-        const isCurrentMonth = key === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-        const currentMonthStyle = isCurrentMonth ? 'outline: 2px solid var(--primary); outline-offset: 1px;' : '';
-
-        if (dose) {
-          const ts = TYPE_STYLES[dose.type] || { bg:'empty', icon:'', label:'' };
-          const [ddy,ddm,ddd] = (dose.date||'').slice(0,10).split('-').map(Number);
-          const dateStr = dose.date ? new Date(ddy,ddm-1,ddd).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
-          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} — ${ts.label}${dose.doseNumber?' · Dose '+dose.doseNumber:''}${dose.notes?' · '+dose.notes:''}">
-            <span class="op-month-label">${m}</span>
-            <div class="op-month-box ${ts.bg}" style="${currentMonthStyle}">
-              <div class="op-month-icon">${ts.icon}</div>
-              ${dateStr ? `<div class="op-month-date">${dateStr}</div>` : ''}
-              ${dose.doseNumber ? `<div class="op-month-dose">D${dose.doseNumber}</div>` : ''}
-            </div>
-          </div>`;
-        }
-        const suggested = getSuggestedDate(r, year, mi);
-        if (suggested) {
-          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="Suggested: ${suggested} — click to record">
-            <span class="op-month-label">${m}</span>
-            <div class="op-month-box suggested" style="${currentMonthStyle}">
-              <i class="fas fa-calendar" style="font-size:10px"></i>
-              <div class="op-month-date">${suggested.split(' ')[0]}</div>
-            </div>
-          </div>`;
-        }
-        return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} — click to record">
-          <span class="op-month-label">${m}</span>
-          <div class="op-month-box empty" style="${currentMonthStyle}">
-            <i class="fas fa-plus" style="font-size:12px;opacity:0.4"></i>
-          </div>
-        </div>`;
-      }).join('');
-
-      // Calculate stats for this treatment
-      const givenCount = Object.values(r.doses||{}).filter(d => d.type === 'given').length;
-      const nextDoseNum = getNextDoseNumber(r);
-
-      return `<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-          <span style="font-size:13px;font-weight:600;color:var(--primary)"><i class="fas fa-prescription-bottle-alt" style="margin-right:4px"></i>${r.injectionName}</span>
-          <span style="font-size:12px;color:var(--text-muted)">${r.dosage}</span>
-          <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>
-          ${r.route ? `<span class="badge badge-secondary" style="font-size:10px">${r.route}</span>` : ''}
-          <span style="font-size:11px;color:var(--success);margin-left:auto"><i class="fas fa-check-circle"></i> ${givenCount} given · Next: Dose ${nextDoseNum}</span>
-          <div class="flex gap-2 no-print">
-            <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openScheduleModal('${r.id}')"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteOPSchedule('${r.id}')"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="op-months-grid">${monthCells}</div>
-      </div>`;
-    }).join('');
-
-    return `<div class="op-patient-card" id="opc-${hn.replace(/[^a-z0-9]/gi,'_')}">
-      <div class="op-card-header" onclick="toggleCard('${hn.replace(/[^a-z0-9]/gi,'_')}')">
-        <div class="op-card-avatar">${initial}</div>
-        <div class="op-card-info">
-          <div class="op-card-name">${info.patientName||'Unknown'} <span style="font-size:12px;color:var(--primary);font-weight:400">· ${hn}</span></div>
-          <div class="op-card-meta">
-            <span><i class="fas fa-dna" style="margin-right:3px"></i>${info.diagnosis||'—'}</span>
-            ${info.gender ? `<span><i class="fas fa-user" style="margin-right:3px"></i>${info.gender}</span>` : ''}
-            ${info.age ? `<span>Age ${info.age}</span>` : ''}
-            ${info.idNumber ? `<span><i class="fas fa-id-card" style="margin-right:3px"></i>${info.idNumber}</span>` : ''}
-            <span style="margin-left:4px">${grp.treatments.length} injection${grp.treatments.length!==1?'s':''}</span>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
-          ${hasOverdue ? `<span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> Overdue</span>` : ''}
-          <div class="flex gap-2 no-print" onclick="event.stopPropagation()">
-            <button class="btn btn-xs btn-primary" onclick="openScheduleModal();document.getElementById('ops_hospitalNumber').value='${hn}';lookupOPSchedulePatient('${hn}')"><i class="fas fa-plus"></i> Add Injection</button>
-          </div>
-          <i class="fas fa-chevron-down op-card-toggle"></i>
-        </div>
-      </div>
-      <div class="op-card-body">${treatmentRows}</div>
-    </div>`;
-  }).join('');
-}
-
-// ==================== OPTION B: THIS MONTH VIEW ====================
-function populateYearSelector() {
-  const ySel = document.getElementById('opYearSelect');
-  if (!ySel) return;
-  const curYear = new Date().getFullYear();
-  // Only repopulate if empty or wrong year selected
-  if (ySel.options.length === 0 || !ySel.value) {
-    ySel.innerHTML = '';
-    for (let y = curYear - 2; y <= curYear + 2; y++) {
-      const opt = document.createElement('option');
-      opt.value = y; opt.textContent = y;
-      if (y === curYear) opt.selected = true;
-      ySel.appendChild(opt);
-    }
-  }
-}
-
-let currentScheduleView = 'month';
-let currentViewMonth = new Date().getMonth();
-let currentViewYear = new Date().getFullYear();
-let monthTypeFilter = 'all';
-let opMonthPage = 1;
-const OP_MONTH_PAGE_SIZE = 20;
-
-function switchScheduleView(view) {
-  currentScheduleView = view;
-  const monthBtn = document.getElementById('viewBtn_month');
-  const yearBtn = document.getElementById('viewBtn_year');
-  const monthNav = document.getElementById('monthNavBar');
-  const yearNav = document.getElementById('yearNavBar');
-  const monthView = document.getElementById('opMonthView');
-  const yearView = document.getElementById('opYearView');
-  const monthStats = document.getElementById('monthSummaryBar');
-
-  if (view === 'month') {
-    monthBtn.style.background = 'var(--primary)'; monthBtn.style.color = 'white';
-    yearBtn.style.background = 'transparent'; yearBtn.style.color = 'var(--text-muted)';
-    monthNav.style.display = 'flex';
-    yearNav.style.display = 'none';
-    monthView.style.display = '';
-    yearView.style.display = 'none';
-    monthStats.style.display = 'flex';
-    renderMonthView();
-  } else {
-    yearBtn.style.background = 'var(--primary)'; yearBtn.style.color = 'white';
-    monthBtn.style.background = 'transparent'; monthBtn.style.color = 'var(--text-muted)';
-    monthNav.style.display = 'none';
-    yearNav.style.display = 'flex';
-    monthView.style.display = 'none';
-    yearView.style.display = '';
-    monthStats.style.display = 'none';
-    populateYearSelector();
-    renderOPSchedule();
-  }
-}
-
-function changeMonth(delta) {
-  currentViewMonth += delta;
-  if (currentViewMonth > 11) { currentViewMonth = 0; currentViewYear++; }
-  if (currentViewMonth < 0) { currentViewMonth = 11; currentViewYear--; }
-  opMonthPage = 1;
-  monthTypeFilter = 'all';
-  renderMonthView();
-}
-
-function goToToday() {
-  currentViewMonth = new Date().getMonth();
-  currentViewYear = new Date().getFullYear();
-  opMonthPage = 1;
-  monthTypeFilter = 'all';
-  renderMonthView();
-}
-
-function filterMonthByType(type) {
-  monthTypeFilter = type;
-  opMonthPage = 1;
-  renderMonthView();
-}
-
-function renderMonthView() {
-  const monthKey = `${currentViewYear}-${String(currentViewMonth+1).padStart(2,'0')}`;
-  const monthName = new Date(currentViewYear, currentViewMonth, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
-  const label = document.getElementById('currentMonthLabel');
-  if (label) label.textContent = monthName;
-
-  const today = new Date();
-
-  // Build list of all treatments relevant this month
-  let rows = [];
-  DB.opSchedule.forEach(r => {
-    const dose = r.doses && r.doses[monthKey];
-    const suggested = getSuggestedDate(r, currentViewYear, currentViewMonth);
-    // Include if: has a dose entry OR has a suggested date for this month
-    if (!dose && !suggested) return;
-
-    const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
-    const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
-    const nextDue = calcNextDue(lastDate, r.periodicity);
-    const isOverdue = !dose && nextDue && new Date(nextDue) < today;
-
-    let rowType = 'scheduled';
-    let dateDisplay = suggested || '';
-    let doseNum = dose?.doseNumber || getNextDoseNumber(r);
-
-    if (dose) {
-      rowType = dose.type;
-      dateDisplay = dose.date ? fmtDate(dose.date) : '';
-      doseNum = dose.doseNumber || '';
-    } else if (isOverdue) {
-      rowType = 'overdue';
-    }
-
-    rows.push({ r, dose, rowType, dateDisplay, doseNum, monthKey, suggested });
-  });
-
-  // Apply search filter
-  if (opScheduleFilter) {
-    rows = rows.filter(row => Object.values(row.r).some(v => v && v.toString().toLowerCase().includes(opScheduleFilter.toLowerCase())));
-  }
-
-  // Update stat counts
-  const counts = { overdue: 0, scheduled: 0, given: 0, all: rows.length };
-  rows.forEach(row => {
-    if (row.rowType === 'overdue') counts.overdue++;
-    else if (row.rowType === 'given') counts.given++;
-    else if (['scheduled',''].includes(row.rowType)) counts.scheduled++;
-  });
-  ['overdue','scheduled','given','all'].forEach(k => {
-    const el = document.getElementById('statCount_' + k);
-    if (el) el.textContent = counts[k];
-  });
-
-  // Apply type filter
-  if (monthTypeFilter !== 'all') {
-    if (monthTypeFilter === 'overdue') rows = rows.filter(r => r.rowType === 'overdue');
-    else if (monthTypeFilter === 'given') rows = rows.filter(r => r.rowType === 'given');
-    else if (monthTypeFilter === 'scheduled') rows = rows.filter(r => !['given','overdue'].includes(r.rowType));
-  }
-
-  // Sort: overdue first, then by date, then scheduled
-  const sortOrder = { overdue: 0, missed: 1, scheduled: 2, given: 3, stopped: 4, chemo: 5, expired: 6, onhold: 7 };
-  rows.sort((a, b) => (sortOrder[a.rowType]||5) - (sortOrder[b.rowType]||5));
-
-  // Pagination
-  const total = rows.length;
-  const pages = Math.ceil(total / OP_MONTH_PAGE_SIZE);
-  const start = (opMonthPage - 1) * OP_MONTH_PAGE_SIZE;
-  const pageRows = rows.slice(start, start + OP_MONTH_PAGE_SIZE);
-
-  const tbody = document.getElementById('opMonthTbody');
-  if (!tbody) return;
-
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
-      <div class="empty-icon"><i class="fas fa-calendar-check"></i></div>
-      <div class="empty-title">No injections for ${monthName}</div>
-      <div class="empty-text">No treatments scheduled or recorded this month</div>
-    </div></td></tr>`;
-    document.getElementById('opMonthPagination').innerHTML = '';
-    return;
-  }
-
-  const typeStyles = {
-    given:     { badge:'badge-success', label:'Given', icon:'fa-check-circle' },
-    overdue:   { badge:'badge-danger',  label:'Overdue', icon:'fa-exclamation-circle' },
-    scheduled: { badge:'badge-info',    label:'Scheduled', icon:'fa-calendar-day' },
-    expired:   { badge:'badge-danger',  label:'Expired', icon:'fa-times-circle' },
-    stopped:   { badge:'badge-secondary', label:'Stopped', icon:'fa-stop-circle' },
-    chemo:     { badge:'badge-purple',  label:'Chemo Started', icon:'fa-syringe' },
-    missed:    { badge:'badge-warning', label:'Missed', icon:'fa-exclamation-triangle' },
-    onhold:    { badge:'badge-secondary', label:'On Hold', icon:'fa-pause-circle' },
-  };
-
-  tbody.innerHTML = pageRows.map((row, i) => {
-    const { r, rowType, dateDisplay, doseNum, monthKey } = row;
-    const ts = typeStyles[rowType] || typeStyles.scheduled;
-    const rowBg = rowType === 'overdue' ? 'background:rgba(239,68,68,0.04)' : rowType === 'given' ? 'background:rgba(16,185,129,0.04)' : '';
-    return `<tr style="${rowBg}">
-      <td style="font-size:12px;color:var(--text-muted)">${start+i+1}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:30px;height:30px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${(r.patientName||'?').charAt(0)}</div>
-          <div>
-            <div style="font-weight:600;font-size:13px">${r.patientName||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted)">${r.hospitalNumber} ${r.idNumber ? '· '+r.idNumber : ''}</div>
-          </div>
-        </div>
-      </td>
-      <td style="font-size:12px">${r.diagnosis||'—'}</td>
-      <td style="font-weight:500;color:var(--primary);font-size:13px">${r.injectionName}</td>
-      <td style="font-size:12px">${r.dosage}</td>
-      <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
-      <td><span class="badge ${ts.badge}"><i class="fas ${ts.icon}" style="margin-right:3px"></i>${ts.label}</span></td>
-      <td style="font-size:13px;font-weight:${rowType==='given'?'600':'400'};color:${rowType==='overdue'?'var(--danger)':rowType==='given'?'var(--success)':'var(--text)'}">${dateDisplay||'—'}</td>
-      <td style="font-size:13px;font-weight:600;color:var(--primary)">${doseNum ? 'D'+doseNum : '—'}</td>
-      <td class="no-print">
-        <button class="btn btn-xs btn-primary" onclick="openDoseEntry('${r.id}','${monthKey}')">
-          <i class="fas fa-${rowType==='given'?'edit':'plus'}"></i> ${rowType==='given'?'Edit':'Record'}
-        </button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  // Pagination
-  const pg = document.getElementById('opMonthPagination');
-  if (pg) {
-    const btnHtml = (label, p, disabled, active) => `<button class="page-btn${active?' active':''}" ${disabled?'disabled':''} onclick="opMonthPage=${p};renderMonthView()">${label}</button>`;
-    let btns = btnHtml('‹', opMonthPage-1, opMonthPage<=1, false);
-    for (let i = Math.max(1,opMonthPage-2); i <= Math.min(pages,opMonthPage+2); i++) btns += btnHtml(i,i,false,i===opMonthPage);
-    btns += btnHtml('›', opMonthPage+1, opMonthPage>=pages, false);
-    pg.innerHTML = `<span class="pagination-info">Showing ${total?start+1:0}–${Math.min(start+OP_MONTH_PAGE_SIZE,total)} of ${total} treatments</span><div class="pagination-btns">${btns}</div>`;
-  }
-}
-
-function getSuggestedDate(record, year, monthIdx) {
-  if (!record.periodicity) return null;
-
-  // Helper: parse ISO date as local date
-  function parseLocal(iso) {
-    if (!iso) return null;
-    const parts = iso.slice(0,10).split('-').map(Number);
-    if (parts.length !== 3) return null;
-    return new Date(parts[0], parts[1]-1, parts[2]);
-  }
-
-  // Helper: format date as DD Mon
-  function fmt(d) {
-    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-  }
-
-  // Find last given dose
-  const allDoses = record.doses
-    ? Object.entries(record.doses)
-        .filter(([k,v]) => v.type === 'given' && v.date)
-        .sort(([a],[b]) => a.localeCompare(b))
-    : [];
-
-  // Determine the base date to calculate from
-  const baseDate = allDoses.length
-    ? allDoses[allDoses.length-1][1].date
-    : record.startDate;
-
-  if (!baseDate) return null;
-
-  // Calculate next due date
-  const nextISO = calcNextDue(baseDate, record.periodicity);
-  if (!nextISO) return null;
-
-  const nd = parseLocal(nextISO);
-  if (!nd) return null;
-
-  // Check if it falls in the requested month/year
-  if (nd.getFullYear() === year && nd.getMonth() === monthIdx) {
-    return fmt(nd);
-  }
-
-  // If no doses yet and start date is in this month, suggest start date
-  if (!allDoses.length && record.startDate) {
-    const sd = parseLocal(record.startDate);
-    if (sd && sd.getFullYear() === year && sd.getMonth() === monthIdx) {
-      return fmt(sd);
-    }
-  }
-
-  return null;
-}
-
-function deleteOPSchedule(id) {
-  if (!confirm('Delete this treatment plan?')) return;
-  DB.opSchedule = DB.opSchedule.filter(x => x.id !== id);
-  save_op('opSchedule'); renderOPSchedule(); toast('Treatment plan deleted');
-}
-
-// ── DOSE ENTRY ────────────────────────────────────────────────
-let currentDoseRecord = null, currentDoseKey = null;
-
-function openDoseEntry(scheduleId, monthKey) {
-  const r = DB.opSchedule.find(x => x.id === scheduleId);
-  if (!r) return;
-  currentDoseRecord = r;
-  currentDoseKey = monthKey;
-  const existing = r.doses && r.doses[monthKey];
-  const [yr, mo] = monthKey.split('-');
-  document.getElementById('opDoseModalTitle').textContent = `Record Dose — ${MONTHS[parseInt(mo)-1]} ${yr}`;
-  document.getElementById('opDosePatientInfo').innerHTML = `
-    <strong>${r.patientName}</strong> · ${r.hospitalNumber}<br>
-    <span style="color:var(--primary)">${r.injectionName}</span> · ${r.dosage} · <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>`;
-  // Pre-fill
-  if (existing) {
-    document.getElementById('opd_date').value = existing.date||'';
-    document.getElementById('opd_doseNumber').value = existing.doseNumber||'';
-    document.getElementById('opd_type').value = existing.type||'given';
-    document.getElementById('opd_notes').value = existing.notes||'';
-  } else {
-    // Auto-suggest date and dose number
-    const suggested = getSuggestedDate(r, parseInt(yr), parseInt(mo)-1);
-    if (suggested) {
-      // suggested is like "12 Apr" - convert to YYYY-MM-DD
-      try {
-        const parts = suggested.split(' ');
-        const day = parts[0].padStart(2,'0');
-        const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
-        const month = months[parts[1]] || '01';
-        document.getElementById('opd_date').value = `${yr}-${month}-${day}`;
-      } catch(e) { document.getElementById('opd_date').value = ''; }
-    } else {
-      document.getElementById('opd_date').value = '';
-    }
-    document.getElementById('opd_doseNumber').value = getNextDoseNumber(r);
-    document.getElementById('opd_type').value = 'given';
-    document.getElementById('opd_notes').value = '';
-  }
-  openModal('opDoseModal');
-}
-
-function getNextDoseNumber(record) {
-  const givenDoses = Object.values(record.doses || {}).filter(d => d.type === 'given' && d.doseNumber);
-  if (!givenDoses.length) return record.firstDose || 1;
-  return Math.max(...givenDoses.map(d => parseInt(d.doseNumber)||0)) + 1;
-}
-
-function saveDoseEntry() {
-  if (!currentDoseRecord || !currentDoseKey) return;
-  const date = document.getElementById('opd_date').value;
-  const doseNumber = document.getElementById('opd_doseNumber').value;
-  const type = document.getElementById('opd_type').value;
-  const notes = document.getElementById('opd_notes').value;
-  if (!currentDoseRecord.doses) currentDoseRecord.doses = {};
-  currentDoseRecord.doses[currentDoseKey] = { date, doseNumber: parseInt(doseNumber)||null, type, notes };
-  const idx = DB.opSchedule.findIndex(x => x.id === currentDoseRecord.id);
-  if (idx >= 0) DB.opSchedule[idx] = currentDoseRecord;
-  save_op('opSchedule'); closeModal('opDoseModal'); renderOPSchedule();
-  toast(type === 'given' ? '✅ Dose recorded' : 'Entry saved');
-}
-
-function toggleDoseFields() {}
-
-// ── ONGOING ───────────────────────────────────────────────────
-let opOngoingFilter = '';
-function filterOPOngoing(val) { opOngoingFilter = val; renderOPOngoing(); }
-
-function renderOPOngoing() {
-  const tbody = document.getElementById('opOngoingTbody');
-  if (!tbody) return;
-  // Group by hospital number - show all unique patients with treatment plans
-  const seen = new Set();
-  let data = DB.opSchedule.filter(r => {
-    if (seen.has(r.hospitalNumber)) return false;
-    seen.add(r.hospitalNumber);
-    return true;
-  });
-  if (opOngoingFilter) data = data.filter(r => Object.values(r).some(v => v && v.toString().toLowerCase().includes(opOngoingFilter.toLowerCase())));
-
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon"><i class="fas fa-user-check"></i></div><div class="empty-title">No ongoing patients</div></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = data.map((r, i) => {
-    const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
-    const lastEntry = givenDoses[0];
-    const lastDate = lastEntry ? lastEntry[1].date : r.startDate;
-    const nextDue = calcNextDue(lastDate, r.periodicity);
-    const totalDoses = givenDoses.length;
-    const today = new Date();
-    const nextDate = nextDue ? new Date(nextDue) : null;
-    const isOverdue = nextDate && nextDate < today;
-    const isDueSoon = nextDate && !isOverdue && (nextDate - today) < 7 * 24 * 3600 * 1000;
-    return `<tr>
-      <td>${i+1}</td>
-      <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td>${r.diagnosis||'—'}</td>
-      <td style="color:var(--primary);font-weight:500">${r.injectionName}</td>
-      <td>${r.dosage}</td>
-      <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
-      <td>${lastDate ? fmtDate(lastDate) : '—'}</td>
-      <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '—'}${isOverdue?' ⚠️':isDueSoon?' 🔔':''}</td>
-      <td><span class="badge badge-info">${totalDoses} doses</span></td>
-      <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTabForPatient('${r.hospitalNumber}')"><i class="fas fa-calendar"></i> Schedule</button></td>
-    </tr>`;
-  }).join('');
-}
-
-// ── OP DASHBOARD ──────────────────────────────────────────────
-function renderOPDashboard() {
-  const today = new Date();
-  const thisMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-
-  // KPIs
-  const totalPatients = DB.opPatients.length;
-  const ongoingPatients = DB.opPatients.filter(p => p.status === 'Ongoing').length;
-  const thisMonthScheduled = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth]).length;
-  const thisMonthGiven = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth] && r.doses[thisMonth].type === 'given').length;
-
-  const kpiGrid = document.getElementById('opKpiGrid');
-  if (kpiGrid) {
-    kpiGrid.innerHTML = [
-      { label:'Total OP Patients', value:totalPatients, icon:'fa-users', color:'#0F766E', bg:'#f0fdfa' },
-      { label:'Ongoing', value:ongoingPatients, icon:'fa-user-check', color:'#10B981', bg:'#d1fae5' },
-      { label:'This Month Scheduled', value:thisMonthScheduled, icon:'fa-calendar-check', color:'#3B82F6', bg:'#dbeafe' },
-      { label:'This Month Given', value:thisMonthGiven, icon:'fa-syringe', color:'#8B5CF6', bg:'#ede9fe' },
-    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
-      <div class="kpi-icon"><i class="fas ${k.icon}"></i></div>
-      <div class="kpi-value">${k.value}</div>
-      <div class="kpi-label">${k.label}</div>
-    </div>`).join('');
-  }
-
-  // This month's list
-  const monthEl = document.getElementById('opThisMonth');
-  if (monthEl) {
-    const list = DB.opSchedule.filter(r => r.doses && r.doses[thisMonth]);
-    if (!list.length) { monthEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">No entries this month</p>'; }
-    else monthEl.innerHTML = list.map(r => {
-      const d = r.doses[thisMonth];
-      const typeColors = { given:'badge-success', scheduled:'badge-info', expired:'badge-danger', stopped:'badge-secondary', chemo:'badge-purple', missed:'badge-warning' };
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · ${d.date ? fmtDate(d.date) : 'No date'}</div></div>
-        <span class="badge ${typeColors[d.type]||'badge-secondary'}">${d.type||'—'}</span>
-      </div>`;
-    }).join('');
-  }
-
-  // Upcoming / overdue
-  const upcomingEl = document.getElementById('opUpcoming');
-  if (upcomingEl) {
-    const upcoming = DB.opSchedule.map(r => {
-      const givenDoses = Object.entries(r.doses||{}).filter(([k,v]) => v.type==='given').sort(([a],[b]) => b.localeCompare(a));
-      const lastDate = givenDoses[0] ? givenDoses[0][1].date : r.startDate;
-      const nextDue = calcNextDue(lastDate, r.periodicity);
-      if (!nextDue) return null;
-      const nd = new Date(nextDue);
-      const diff = nd - today;
-      const isOverdue = diff < 0;
-      const isDueSoon = !isOverdue && diff < 7 * 24 * 3600 * 1000;
-      if (!isOverdue && !isDueSoon) return null;
-      return { ...r, nextDue, isOverdue, diff };
-    }).filter(Boolean).sort((a,b) => a.diff - b.diff);
-
-    if (!upcoming.length) { upcomingEl.innerHTML = '<p style="color:var(--success);font-size:13px;text-align:center;padding:20px">✅ No overdue or upcoming injections</p>'; }
-    else upcomingEl.innerHTML = upcoming.map(r => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · Due: ${fmtDate(r.nextDue)}</div></div>
-        <span class="badge ${r.isOverdue?'badge-danger':'badge-warning'}">${r.isOverdue?'Overdue':'Due Soon'}</span>
-      </div>`).join('');
-  }
-
-  // Periodicity chart
-  const periodicityCount = {};
-  DB.opSchedule.forEach(r => { periodicityCount[r.periodicity] = (periodicityCount[r.periodicity]||0)+1; });
-  const ctx = document.getElementById('opPeriodicityChart');
-  if (ctx && Object.keys(periodicityCount).length) {
-    if (window._opPeriodicityChart) window._opPeriodicityChart.destroy();
-    window._opPeriodicityChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: { labels: Object.keys(periodicityCount), datasets: [{ data: Object.values(periodicityCount), backgroundColor: ['#0F766E','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#EC4899','#6366F1'], borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
-    });
-  }
-}
-
-function exportOPData() {
-  const wb = XLSX.utils.book_new();
-  // Register sheet
-  if (DB.opPatients.length) {
-    const ws1 = XLSX.utils.json_to_sheet(DB.opPatients);
-    XLSX.utils.book_append_sheet(wb, ws1, 'Register');
-  }
-  // Schedule sheet
-  if (DB.opSchedule.length) {
-    const year = parseInt(document.getElementById('opYearSelect')?.value || new Date().getFullYear());
-    const rows = DB.opSchedule.map(r => {
-      const row = { 'Hospital No': r.hospitalNumber, 'Patient Name': r.patientName, 'Gender': r.gender, 'Age': r.age, 'ID/PP No': r.idNumber, 'Diagnosis': r.diagnosis, 'Injection': r.injectionName, 'Dosage': r.dosage, 'Periodicity': r.periodicity };
-      MONTHS.forEach((m, mi) => {
-        const key = `${year}-${String(mi+1).padStart(2,'0')}`;
-        const dose = r.doses && r.doses[key];
-        row[`${m} ${year}`] = dose ? `${dose.date||''} ${dose.doseNumber?'(Dose '+dose.doseNumber+')':''} ${dose.type!=='given'?'['+dose.type+']':''} ${dose.notes||''}`.trim() : '';
-      });
-      return row;
-    });
-    const ws2 = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws2, `Schedule ${year}`);
-  }
-  XLSX.writeFile(wb, `OncoCare_OP_Injection_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast('OP Injection data exported');
-}
-
-// ==================== CHEMO VIEW PROFILE ====================
-function viewChemoProfile(id) {
-  const r = DB.chemo.find(x => x.id === id);
-  if (!r) return;
-  // Get patient details from registry
-  const p = DB.patients.find(x => x.hospitalNumber === r.hospitalNumber);
-
-  const row = (label, val) => val ? `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val}</span></div>` : '';
-  const rowAlways = (label, val) => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val||'—'}</span></div>`;
-
-  let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--primary)">
-    <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${(r.patientName||'?').charAt(0)}</div>
-    <div><div style="font-size:16px;font-weight:700;color:var(--text)">${r.patientName||'—'}</div>
-    <div style="font-size:12px;color:var(--text-muted)">${r.hospitalNumber} ${p&&p.registryNumber?'· '+p.registryNumber:''}</div></div>
-  </div>`;
-
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">';
-
-  // Chemo specific info
-  html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 4px">Chemotherapy Details</div>`;
-  html += row('Diagnosis', r.diagnosis);
-  html += rowAlways('Drug & Dosage', r.drugDosage || '—');
-  html += rowAlways('Frequency', r.frequency || '—');
-  html += row('G6PD Status', r.g6pd);
-  html += row('Blood Group', r.bloodGroup||(p&&p.bloodGroup));
-  html += row('Status', r.status||r.chemoStatus);
-  html += row('Started Date', fmtDate(r.startedDate));
-  html += row('Completed Date', fmtDate(r.completedDate));
-  html += row('Expired Date', fmtDate(r.expiredDate));
-  html += row('Remarks', r.remarks);
-
-  // Patient registry info
-  if (p) {
-    html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 4px">Patient Registry Details</div>`;
-    html += row('Full Name', p.fullName);
-    html += row('Gender', p.gender);
-    html += row('Age', p.age ? p.age + ' years' : '');
-    html += row('Date of Birth', fmtDate(p.dob));
-    html += row('National ID', p.nationalId);
-    html += row('Contact', p.contactNumber);
-    html += row('Atoll', p.atoll);
-    html += row('Island', p.island);
-    html += row('Address', p.address);
-    html += row('Diagnosis', p.diagnosis);
-    html += row('Stage', p.stage);
-    html += row('Diagnosis Date', fmtDate(p.diagnosisDate));
-    html += row('Patient Status', p.status);
-    html += row('Registry No', p.registryNumber);
-    html += row('Registration Date', fmtDate(p.registrationDate));
-    html += row('Histopathology', p.histopathology);
-    html += row('Medical History', p.medicalHistory);
-    html += row('Surgical History', p.surgicalHistory);
-    html += row('Treatment History', p.treatmentHistory);
-    html += row('Risk Factors', p.riskFactors);
-    html += row('Remarks', p.remarks);
-  }
-  html += '</div>';
-
-  document.getElementById('profileContent').innerHTML = html;
-  openModal('profileModal');
-}
-
-// ==================== CHEMO STATUS HELPERS ====================
-
-function toggleChemoExpiredDate() {
-  const status = document.getElementById('chemo_status')?.value;
-  const grp = document.getElementById('chemoExpiredDateGroup');
-  if (grp) grp.style.display = status === 'Expired' ? '' : 'none';
-}
-
-function populateChemoStatusSelect() {
-  // Populate form status select
-  const sel = document.getElementById('chemo_status');
-  if (sel) {
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Select</option>' +
-      LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
-  }
-  // Populate filter dropdown
-  const filterSel = document.getElementById('chemoStatusFilter');
-  if (filterSel) {
-    const cur = filterSel.value;
-    filterSel.innerHTML = '<option value="">All Statuses</option>' +
-      LISTS.chemoStatuses.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
-  }
-}
-
-// ==================== DATE FORMAT ====================
-function forceDateFormat() {
-  // Set all date inputs to use en-GB locale via lang attribute
-  document.querySelectorAll('input[type="date"]').forEach(el => el.setAttribute('lang','en-GB'));
-}
-
-// ==================== BACKUP REMINDER ====================
-function checkBackupReminder() {
-  const lastBackup = localStorage.getItem('oms_last_backup');
-  if (!lastBackup) {
-    // First time — set today as last backup date
-    localStorage.setItem('oms_last_backup', Date.now().toString());
-    return;
-  }
-  const daysSince = (Date.now() - parseInt(lastBackup)) / (1000 * 60 * 60 * 24);
-  if (daysSince >= 7) {
-    setTimeout(() => {
-      const msg = `⚠️ Last backup was ${Math.floor(daysSince)} days ago.\n\nIt is recommended to download a backup weekly.\n\nDownload backup now?`;
-      if (confirm(msg)) {
-        backupData();
-        localStorage.setItem('oms_last_backup', Date.now().toString());
-      }
-    }, 3000);
-  }
-}
-
-// Login helpers
-function fillLogin(u, p) { document.getElementById('loginUsername').value = u; document.getElementById('loginPassword').value = p; }
-function togglePw() { const inp = document.getElementById('loginPassword'); const icon = document.getElementById('pwToggle'); inp.type = inp.type === 'password' ? 'text' : 'password'; icon.className = inp.type === 'password' ? 'fas fa-eye login-pw-toggle' : 'fas fa-eye-slash login-pw-toggle'; }
-
-// User menu toggle
-function toggleUserMenu() { document.getElementById('userMenuDropdown').classList.toggle('show'); }
-function closeUserMenu() { document.getElementById('userMenuDropdown').classList.remove('show'); }
-document.addEventListener('click', e => { if (!e.target.closest('#userMenuWrap')) closeUserMenu(); });
-
-// Navigate override handled inside main navigate function
-
-function filterAdminUsers(q) {
-  const rows = document.querySelectorAll('#adminUsersTbody tr');
-  rows.forEach(r => { r.style.display = !q || r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
-}
-
-function previewSettings() { applySettings(); toast('Preview applied — save to persist'); }
-
-function refreshSecurityPanel() {
-  const si = document.getElementById('sessionInfo');
-  const ss = document.getElementById('sysStats');
-  if (!si || !ss) return;
-  const u = getCurrentUser();
-  si.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Current User</span><span style="font-weight:600">${u?.fullName||'—'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Role</span><span class="badge badge-primary">${u?.role||'—'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Login Time</span><span style="font-weight:500">${AUTH.session?.loginTime ? new Date(AUTH.session.loginTime).toLocaleTimeString() : '—'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Session</span><span class="badge badge-success">Active</span></div>
-    </div>`;
-  const totalSize = Object.keys(localStorage).filter(k => k.startsWith('oms_')).reduce((a, k) => a + (localStorage[k]||'').length, 0);
-  ss.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Patients</span><span style="font-weight:600">${DB.patients.length}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Chemo Records</span><span style="font-weight:600">${DB.chemo.length}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">ADR Reports</span><span style="font-weight:600">${DB.adr.length}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Total Users</span><span style="font-weight:600">${AUTH.users.length}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Storage Used</span><span style="font-weight:600">${(totalSize/1024).toFixed(1)} KB</span></div>
-    </div>`;
-}
-
-
-async function flushPendingSync() {
-  if (!GS_ENABLED) return;
-  try {
-    const pending = JSON.parse(localStorage.getItem('oms_pending_sync') || '[]');
-    if (!pending.length) return;
-    for (const key of pending) {
-      if (!DB[key] || !DB[key].length) continue;
-      await sbBatchUpsert(key, DB[key]);
-    }
-    localStorage.setItem('oms_pending_sync', '[]');
-  } catch(e) { console.warn('flushPendingSync error:', e); }
-}
-window.flushPendingSync = flushPendingSync;
-window.sbBatchUpsert = sbBatchUpsert;
-window.normalizeRecord = normalizeRecord;
-
-let _idCounter = 0;
-function genId(prefix) {
-  _idCounter++;
-  const ts = Date.now().toString(36);
-  const cnt = _idCounter.toString(36).padStart(4,'0');
-  const rnd = Math.random().toString(36).slice(2,6);
-  return (prefix + '-' + ts + cnt + rnd).toUpperCase();
-}
-
-// Generate unique ID for import (guaranteed unique per row)
-function genImportId(prefix, rowIndex) {
-  const ts = Date.now().toString(36);
-  const idx = rowIndex.toString(36).padStart(4,'0');
-  const rnd = Math.random().toString(36).slice(2,8);
-  return (prefix + '-' + ts + idx + rnd).toUpperCase();
-}
-
-
-// ==================== PORT & PICC LINE MODULE ====================
+<script>// ==================== PORT & PICC LINE MODULE ====================
 
 let ppRegisterFilter = '', ppRegisterTypeFilter = '';
 
