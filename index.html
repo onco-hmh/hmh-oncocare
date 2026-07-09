@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260709-051635">
+<meta name="version" content="v20260709-065456">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6096,89 +6096,9 @@ async function gsSaveRecord(sheetKey, record) {
 
 
 
-</script>
 
 
 
-<!-- User Form Modal -->
-<div class="modal-overlay" id="userFormModal" style="display:none">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="userFormTitle">Add New User</span>
-      <button class="modal-close" onclick="closeModal('userFormModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="userFormId">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label><input class="form-control" id="uf_fullName" placeholder="Full name"></div>
-        <div class="form-group"><label class="form-label">Username <span class="req">*</span></label><input class="form-control" id="uf_username" placeholder="Login username"></div>
-        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="uf_email" placeholder="Email address"></div>
-        <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="uf_phone" placeholder="+960 xxx-xxxx"></div>
-        <div class="form-group"><label class="form-label">Department</label>
-          <select class="form-control" id="uf_department">
-            <option value="">Select</option>
-            <option>Administration</option><option>Oncology</option><option>Nursing</option>
-            <option>Pharmacy</option><option>Laboratory</option><option>Radiology</option><option>Other</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Role <span class="req">*</span></label>
-          <select class="form-control" id="uf_role">
-            <option value="staff">Staff</option>
-            <option value="admin">Admin</option>
-            <option value="superadmin">Super Admin</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Status</label>
-          <select class="form-control" id="uf_status"><option>Active</option><option>Inactive</option></select>
-        </div>
-        <div class="form-group" id="uf_passwordGroup"><label class="form-label">Password <span class="req">*</span></label>
-          <input type="password" class="form-control" id="uf_password" placeholder="Min. 6 characters">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('userFormModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveUserForm()"><i class="fas fa-save"></i> Save User</button>
-    </div>
-  </div>
-</div>
-
-<!-- My Profile Modal -->
-<div class="modal-overlay" id="myProfileModal" style="display:none">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">My Profile</span>
-      <button class="modal-close" onclick="closeModal('myProfileModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="mp_fullName"></div>
-        <div class="form-group"><label class="form-label">Username</label><input class="form-control" id="mp_username" readonly style="opacity:0.6"></div>
-        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="mp_email"></div>
-        <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="mp_phone"></div>
-        <div class="form-group full"><label class="form-label">Department</label><input class="form-control" id="mp_department"></div>
-      </div>
-      <div class="divider"></div>
-      <p style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text)">Change Password</p>
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-control" id="mp_currentPassword" placeholder="Enter current password"></div>
-        <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-control" id="mp_newPassword" placeholder="Leave blank to keep current"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('myProfileModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveMyProfile()"><i class="fas fa-save"></i> Save Changes</button>
-    </div>
-  </div>
-</div>
-
-</div><!-- end appWrapper -->
-
-
-
-
-
-<script>
 // ==================== PORT & PICC LINE MODULE ====================
 
 let ppRegisterFilter = '', ppRegisterTypeFilter = '';
@@ -6555,6 +6475,7 @@ function exportPortPicc() {
   XLSX.writeFile(wb, 'OncoCare_PortPICC_' + new Date().toISOString().slice(0,10) + '.xlsx');
   toast('Exported successfully');
 }
+
 
 </script>
 
