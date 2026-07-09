@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260708-184412">
+<meta name="version" content="v20260709-050847">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2462,6 +2462,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
 <div id="searchDropdown" style="display:none;position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:999;min-width:400px;max-width:560px;max-height:360px;overflow-y:auto;padding:8px"></div>
 
 <script>
+
 // ==================== DATA STORE ====================
 // ==================== LISTS MANAGEMENT ====================
 const DEFAULT_CHEMO_STATUSES = ['Ongoing','Completed','Paused','Discontinued','Expired'];
@@ -2490,7 +2491,7 @@ const LISTS = {
     // Force update if stored list has old format (without short codes)
     if (stored) {
       const arr = JSON.parse(stored);
-      const hasOldFormat = arr.some(a => a === 'Haa Alifu' || a === 'Haa Dhaal' || a === 'North Malé (Kaafu)' || a === 'Malé' || !a.includes('('));
+      const hasOldFormat = arr.some(a => a === 'Haa Alifu' || a === 'Haa Dhaal' || a === 'North Mal- (Kaafu)' || a === 'Mal-' || !a.includes('('));
       if (hasOldFormat) { localStorage.removeItem('oms_list_atolls'); return DEFAULT_ATOLLS; }
     }
     return stored ? JSON.parse(stored) : DEFAULT_ATOLLS;
@@ -2644,11 +2645,11 @@ function onAtollChange(val) {
 
 // ==================== FIX 7: SURVIVAL YEARS ====================
 function calcSurvival(p) {
-  if (!p.diagnosisDate) return '—';
+  if (!p.diagnosisDate) return '-';
   const start = new Date(p.diagnosisDate);
   const end = p.status === 'Expired' && p.expiredDate ? new Date(p.expiredDate) : new Date();
   const diff = end - start;
-  if (diff < 0) return '—';
+  if (diff < 0) return '-';
   const years = Math.floor(diff / (365.25 * 24 * 3600 * 1000));
   const months = Math.floor((diff % (365.25 * 24 * 3600 * 1000)) / (30.44 * 24 * 3600 * 1000));
   if (years === 0) return months + ' month' + (months !== 1 ? 's' : '');
@@ -2760,7 +2761,7 @@ function switchOPTab(tab) {
   if (tab === 'dashboard') renderOPDashboard();
 }
 
-// ── REGISTER ──────────────────────────────────────────────────
+// -- REGISTER --------------------------------------------------
 function openOPPatientModal(id = null) {
   state.editId = id;
   ['hospitalNumber','patientName','gender','dob','age','idNumber','contact','diagnosis','status','injections','remarks'].forEach(f => {
@@ -2817,16 +2818,16 @@ function saveOPPatient() {
   if (state.editId) {
     const idx = DB.opPatients.findIndex(x => x.id === state.editId);
     DB.opPatients[idx] = obj;
-    toast('Patient updated ✅');
+    toast('Patient updated -');
   } else {
     // Block duplicate hospital number
     const existing = DB.opPatients.find(x => x.hospitalNumber === hn);
     if (existing) {
-      toast(`❌ Patient ${hn} already exists in OP Register — use Edit to update`, 'error');
+      toast(`- Patient ${hn} already exists in OP Register - use Edit to update`, 'error');
       return;
     }
     DB.opPatients.push(obj);
-    toast('Patient added to OP Register ✅');
+    toast('Patient added to OP Register -');
   }
   save_op('opPatients'); closeModal('opPatientModal'); renderOPRegister();
 }
@@ -2851,15 +2852,15 @@ function renderOPRegister() {
   tbody.innerHTML = data.map((r, i) => `<tr>
     <td>${r.serial || i+1}</td>
     <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
-    <td style="font-weight:500">${r.patientName||'—'}</td>
-    <td>${r.gender||'—'}</td>
-    <td>${r.age||'—'}</td>
-    <td>${r.idNumber||'—'}</td>
-    <td>${r.contact||'—'}</td>
-    <td>${r.diagnosis||'—'}</td>
-    <td><span style="font-size:12px">${r.injections||'—'}</span></td>
-    <td>${statusBadge(r.status||'—')}</td>
-    <td style="font-size:12px;color:var(--text-muted)">${r.remarks||'—'}</td>
+    <td style="font-weight:500">${r.patientName||'-'}</td>
+    <td>${r.gender||'-'}</td>
+    <td>${r.age||'-'}</td>
+    <td>${r.idNumber||'-'}</td>
+    <td>${r.contact||'-'}</td>
+    <td>${r.diagnosis||'-'}</td>
+    <td><span style="font-size:12px">${r.injections||'-'}</span></td>
+    <td>${statusBadge(r.status||'-')}</td>
+    <td style="font-size:12px;color:var(--text-muted)">${r.remarks||'-'}</td>
     <td class="no-print"><div class="flex gap-2">
       <button class="btn btn-xs btn-outline" onclick="openOPPatientModal('${r.id}')"><i class="fas fa-edit"></i></button>
       <button class="btn btn-xs btn-danger" onclick="deleteOPPatient('${r.id}')"><i class="fas fa-trash"></i></button>
@@ -2873,7 +2874,7 @@ function deleteOPPatient(id) {
   save_op('opPatients'); renderOPRegister(); toast('Patient removed');
 }
 
-// ── SCHEDULE ──────────────────────────────────────────────────
+// -- SCHEDULE --------------------------------------------------
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function populateInjectionNameDropdown(hn) {
@@ -2970,7 +2971,7 @@ function saveOPSchedule() {
   if (state.editId) {
     const idx = DB.opSchedule.findIndex(x => x.id === state.editId);
     DB.opSchedule[idx] = obj;
-    toast('Treatment plan updated ✅');
+    toast('Treatment plan updated -');
   } else {
     // Check duplicate: same patient + same injection
     const dupCheck = DB.opSchedule.find(x => x.hospitalNumber === hn && x.injectionName.toLowerCase() === inj.toLowerCase() && x.id !== state.editId);
@@ -2978,7 +2979,7 @@ function saveOPSchedule() {
       if (!confirm(`${inj} is already scheduled for this patient.\n\nAdd another entry anyway? (e.g. different dosage)`)) return;
     }
     DB.opSchedule.push(obj);
-    toast('Treatment plan added ✅');
+    toast('Treatment plan added -');
   }
   save_op('opSchedule'); closeModal('opScheduleModal'); renderOPSchedule();
 }
@@ -3063,7 +3064,7 @@ function renderOPSchedule() {
           const ts = TYPE_STYLES[dose.type] || { bg:'empty', icon:'', label:'' };
           const [ddy,ddm,ddd] = (dose.date||'').slice(0,10).split('-').map(Number);
           const dateStr = dose.date ? new Date(ddy,ddm-1,ddd).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
-          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} — ${ts.label}${dose.doseNumber?' · Dose '+dose.doseNumber:''}${dose.notes?' · '+dose.notes:''}">
+          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} - ${ts.label}${dose.doseNumber?' - Dose '+dose.doseNumber:''}${dose.notes?' - '+dose.notes:''}">
             <span class="op-month-label">${m}</span>
             <div class="op-month-box ${ts.bg}" style="${currentMonthStyle}">
               <div class="op-month-icon">${ts.icon}</div>
@@ -3074,7 +3075,7 @@ function renderOPSchedule() {
         }
         const suggested = getSuggestedDate(r, year, mi);
         if (suggested) {
-          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="Suggested: ${suggested} — click to record">
+          return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="Suggested: ${suggested} - click to record">
             <span class="op-month-label">${m}</span>
             <div class="op-month-box suggested" style="${currentMonthStyle}">
               <i class="fas fa-calendar" style="font-size:10px"></i>
@@ -3082,7 +3083,7 @@ function renderOPSchedule() {
             </div>
           </div>`;
         }
-        return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} — click to record">
+        return `<div class="op-month-cell" onclick="openDoseEntry('${r.id}','${key}')" title="${m} ${year} - click to record">
           <span class="op-month-label">${m}</span>
           <div class="op-month-box empty" style="${currentMonthStyle}">
             <i class="fas fa-plus" style="font-size:12px;opacity:0.4"></i>
@@ -3100,7 +3101,7 @@ function renderOPSchedule() {
           <span style="font-size:12px;color:var(--text-muted)">${r.dosage}</span>
           <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>
           ${r.route ? `<span class="badge badge-secondary" style="font-size:10px">${r.route}</span>` : ''}
-          <span style="font-size:11px;color:var(--success);margin-left:auto"><i class="fas fa-check-circle"></i> ${givenCount} given · Next: Dose ${nextDoseNum}</span>
+          <span style="font-size:11px;color:var(--success);margin-left:auto"><i class="fas fa-check-circle"></i> ${givenCount} given - Next: Dose ${nextDoseNum}</span>
           <div class="flex gap-2 no-print">
             <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openScheduleModal('${r.id}')"><i class="fas fa-edit"></i></button>
             <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteOPSchedule('${r.id}')"><i class="fas fa-trash"></i></button>
@@ -3114,9 +3115,9 @@ function renderOPSchedule() {
       <div class="op-card-header" onclick="toggleCard('${hn.replace(/[^a-z0-9]/gi,'_')}')">
         <div class="op-card-avatar">${initial}</div>
         <div class="op-card-info">
-          <div class="op-card-name">${info.patientName||'Unknown'} <span style="font-size:12px;color:var(--primary);font-weight:400">· ${hn}</span></div>
+          <div class="op-card-name">${info.patientName||'Unknown'} <span style="font-size:12px;color:var(--primary);font-weight:400">- ${hn}</span></div>
           <div class="op-card-meta">
-            <span><i class="fas fa-dna" style="margin-right:3px"></i>${info.diagnosis||'—'}</span>
+            <span><i class="fas fa-dna" style="margin-right:3px"></i>${info.diagnosis||'-'}</span>
             ${info.gender ? `<span><i class="fas fa-user" style="margin-right:3px"></i>${info.gender}</span>` : ''}
             ${info.age ? `<span>Age ${info.age}</span>` : ''}
             ${info.idNumber ? `<span><i class="fas fa-id-card" style="margin-right:3px"></i>${info.idNumber}</span>` : ''}
@@ -3319,18 +3320,18 @@ function renderMonthView() {
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:30px;height:30px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${(r.patientName||'?').charAt(0)}</div>
           <div>
-            <div style="font-weight:600;font-size:13px">${r.patientName||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted)">${r.hospitalNumber} ${r.idNumber ? '· '+r.idNumber : ''}</div>
+            <div style="font-weight:600;font-size:13px">${r.patientName||'-'}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${r.hospitalNumber} ${r.idNumber ? '- '+r.idNumber : ''}</div>
           </div>
         </div>
       </td>
-      <td style="font-size:12px">${r.diagnosis||'—'}</td>
+      <td style="font-size:12px">${r.diagnosis||'-'}</td>
       <td style="font-weight:500;color:var(--primary);font-size:13px">${r.injectionName}</td>
       <td style="font-size:12px">${r.dosage}</td>
       <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
       <td><span class="badge ${ts.badge}"><i class="fas ${ts.icon}" style="margin-right:3px"></i>${ts.label}</span></td>
-      <td style="font-size:13px;font-weight:${rowType==='given'?'600':'400'};color:${rowType==='overdue'?'var(--danger)':rowType==='given'?'var(--success)':'var(--text)'}">${dateDisplay||'—'}</td>
-      <td style="font-size:13px;font-weight:600;color:var(--primary)">${doseNum ? 'D'+doseNum : '—'}</td>
+      <td style="font-size:13px;font-weight:${rowType==='given'?'600':'400'};color:${rowType==='overdue'?'var(--danger)':rowType==='given'?'var(--success)':'var(--text)'}">${dateDisplay||'-'}</td>
+      <td style="font-size:13px;font-weight:600;color:var(--primary)">${doseNum ? 'D'+doseNum : '-'}</td>
       <td class="no-print">
         <button class="btn btn-xs btn-primary" onclick="openDoseEntry('${r.id}','${monthKey}')">
           <i class="fas fa-${rowType==='given'?'edit':'plus'}"></i> ${rowType==='given'?'Edit':'Record'}
@@ -3343,10 +3344,10 @@ function renderMonthView() {
   const pg = document.getElementById('opMonthPagination');
   if (pg) {
     const btnHtml = (label, p, disabled, active) => `<button class="page-btn${active?' active':''}" ${disabled?'disabled':''} onclick="opMonthPage=${p};renderMonthView()">${label}</button>`;
-    let btns = btnHtml('‹', opMonthPage-1, opMonthPage<=1, false);
+    let btns = btnHtml('-', opMonthPage-1, opMonthPage<=1, false);
     for (let i = Math.max(1,opMonthPage-2); i <= Math.min(pages,opMonthPage+2); i++) btns += btnHtml(i,i,false,i===opMonthPage);
-    btns += btnHtml('›', opMonthPage+1, opMonthPage>=pages, false);
-    pg.innerHTML = `<span class="pagination-info">Showing ${total?start+1:0}–${Math.min(start+OP_MONTH_PAGE_SIZE,total)} of ${total} treatments</span><div class="pagination-btns">${btns}</div>`;
+    btns += btnHtml('-', opMonthPage+1, opMonthPage>=pages, false);
+    pg.innerHTML = `<span class="pagination-info">Showing ${total?start+1:0}-${Math.min(start+OP_MONTH_PAGE_SIZE,total)} of ${total} treatments</span><div class="pagination-btns">${btns}</div>`;
   }
 }
 
@@ -3409,7 +3410,7 @@ function deleteOPSchedule(id) {
   save_op('opSchedule'); renderOPSchedule(); toast('Treatment plan deleted');
 }
 
-// ── DOSE ENTRY ────────────────────────────────────────────────
+// -- DOSE ENTRY ------------------------------------------------
 let currentDoseRecord = null, currentDoseKey = null;
 
 function openDoseEntry(scheduleId, monthKey) {
@@ -3419,10 +3420,10 @@ function openDoseEntry(scheduleId, monthKey) {
   currentDoseKey = monthKey;
   const existing = r.doses && r.doses[monthKey];
   const [yr, mo] = monthKey.split('-');
-  document.getElementById('opDoseModalTitle').textContent = `Record Dose — ${MONTHS[parseInt(mo)-1]} ${yr}`;
+  document.getElementById('opDoseModalTitle').textContent = `Record Dose - ${MONTHS[parseInt(mo)-1]} ${yr}`;
   document.getElementById('opDosePatientInfo').innerHTML = `
-    <strong>${r.patientName}</strong> · ${r.hospitalNumber}<br>
-    <span style="color:var(--primary)">${r.injectionName}</span> · ${r.dosage} · <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>`;
+    <strong>${r.patientName}</strong> - ${r.hospitalNumber}<br>
+    <span style="color:var(--primary)">${r.injectionName}</span> - ${r.dosage} - <span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span>`;
   // Pre-fill
   if (existing) {
     document.getElementById('opd_date').value = existing.date||'';
@@ -3468,12 +3469,12 @@ function saveDoseEntry() {
   const idx = DB.opSchedule.findIndex(x => x.id === currentDoseRecord.id);
   if (idx >= 0) DB.opSchedule[idx] = currentDoseRecord;
   save_op('opSchedule'); closeModal('opDoseModal'); renderOPSchedule();
-  toast(type === 'given' ? '✅ Dose recorded' : 'Entry saved');
+  toast(type === 'given' ? '- Dose recorded' : 'Entry saved');
 }
 
 function toggleDoseFields() {}
 
-// ── ONGOING ───────────────────────────────────────────────────
+// -- ONGOING ---------------------------------------------------
 let opOngoingFilter = '';
 function filterOPOngoing(val) { opOngoingFilter = val; renderOPOngoing(); }
 
@@ -3507,20 +3508,20 @@ function renderOPOngoing() {
     return `<tr>
       <td>${i+1}</td>
       <td><span style="font-weight:600;color:var(--primary)">${r.hospitalNumber}</span></td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td>${r.diagnosis||'—'}</td>
+      <td style="font-weight:500">${r.patientName||'-'}</td>
+      <td>${r.diagnosis||'-'}</td>
       <td style="color:var(--primary);font-weight:500">${r.injectionName}</td>
       <td>${r.dosage}</td>
       <td><span class="badge badge-primary" style="font-size:10px">${r.periodicity}</span></td>
-      <td>${lastDate ? fmtDate(lastDate) : '—'}</td>
-      <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '—'}${isOverdue?' ⚠️':isDueSoon?' 🔔':''}</td>
+      <td>${lastDate ? fmtDate(lastDate) : '-'}</td>
+      <td style="font-weight:600;color:${isOverdue?'var(--danger)':isDueSoon?'var(--warning)':'var(--success)'}">${nextDue ? fmtDate(nextDue) : '-'}${isOverdue?' --':isDueSoon?' -':''}</td>
       <td><span class="badge badge-info">${totalDoses} doses</span></td>
       <td class="no-print"><button class="btn btn-xs btn-primary" onclick="switchOPTabForPatient('${r.hospitalNumber}')"><i class="fas fa-calendar"></i> Schedule</button></td>
     </tr>`;
   }).join('');
 }
 
-// ── OP DASHBOARD ──────────────────────────────────────────────
+// -- OP DASHBOARD ----------------------------------------------
 function renderOPDashboard() {
   const today = new Date();
   const thisMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
@@ -3555,8 +3556,8 @@ function renderOPDashboard() {
       const typeColors = { given:'badge-success', scheduled:'badge-info', expired:'badge-danger', stopped:'badge-secondary', chemo:'badge-purple', missed:'badge-warning' };
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · ${d.date ? fmtDate(d.date) : 'No date'}</div></div>
-        <span class="badge ${typeColors[d.type]||'badge-secondary'}">${d.type||'—'}</span>
+        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} - ${d.date ? fmtDate(d.date) : 'No date'}</div></div>
+        <span class="badge ${typeColors[d.type]||'badge-secondary'}">${d.type||'-'}</span>
       </div>`;
     }).join('');
   }
@@ -3577,11 +3578,11 @@ function renderOPDashboard() {
       return { ...r, nextDue, isOverdue, diff };
     }).filter(Boolean).sort((a,b) => a.diff - b.diff);
 
-    if (!upcoming.length) { upcomingEl.innerHTML = '<p style="color:var(--success);font-size:13px;text-align:center;padding:20px">✅ No overdue or upcoming injections</p>'; }
+    if (!upcoming.length) { upcomingEl.innerHTML = '<p style="color:var(--success);font-size:13px;text-align:center;padding:20px">- No overdue or upcoming injections</p>'; }
     else upcomingEl.innerHTML = upcoming.map(r => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <div><div style="font-weight:600;font-size:13px">${r.patientName||r.hospitalNumber}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} · Due: ${fmtDate(r.nextDue)}</div></div>
+        <div style="font-size:11px;color:var(--text-muted)">${r.injectionName} - Due: ${fmtDate(r.nextDue)}</div></div>
         <span class="badge ${r.isOverdue?'badge-danger':'badge-warning'}">${r.isOverdue?'Overdue':'Due Soon'}</span>
       </div>`).join('');
   }
@@ -3634,12 +3635,12 @@ function viewChemoProfile(id) {
   const p = DB.patients.find(x => x.hospitalNumber === r.hospitalNumber);
 
   const row = (label, val) => val ? `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val}</span></div>` : '';
-  const rowAlways = (label, val) => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val||'—'}</span></div>`;
+  const rowAlways = (label, val) => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">${label}</span><span style="font-size:13px;color:var(--text)">${val||'-'}</span></div>`;
 
   let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--primary)">
     <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${(r.patientName||'?').charAt(0)}</div>
-    <div><div style="font-size:16px;font-weight:700;color:var(--text)">${r.patientName||'—'}</div>
-    <div style="font-size:12px;color:var(--text-muted)">${r.hospitalNumber} ${p&&p.registryNumber?'· '+p.registryNumber:''}</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--text)">${r.patientName||'-'}</div>
+    <div style="font-size:12px;color:var(--text-muted)">${r.hospitalNumber} ${p&&p.registryNumber?'- '+p.registryNumber:''}</div></div>
   </div>`;
 
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">';
@@ -3647,8 +3648,8 @@ function viewChemoProfile(id) {
   // Chemo specific info
   html += `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 4px">Chemotherapy Details</div>`;
   html += row('Diagnosis', r.diagnosis);
-  html += rowAlways('Drug & Dosage', r.drugDosage || '—');
-  html += rowAlways('Frequency', r.frequency || '—');
+  html += rowAlways('Drug & Dosage', r.drugDosage || '-');
+  html += rowAlways('Frequency', r.frequency || '-');
   html += row('G6PD Status', r.g6pd);
   html += row('Blood Group', r.bloodGroup||(p&&p.bloodGroup));
   html += row('Status', r.status||r.chemoStatus);
@@ -3723,14 +3724,14 @@ function forceDateFormat() {
 function checkBackupReminder() {
   const lastBackup = localStorage.getItem('oms_last_backup');
   if (!lastBackup) {
-    // First time — set today as last backup date
+    // First time - set today as last backup date
     localStorage.setItem('oms_last_backup', Date.now().toString());
     return;
   }
   const daysSince = (Date.now() - parseInt(lastBackup)) / (1000 * 60 * 60 * 24);
   if (daysSince >= 7) {
     setTimeout(() => {
-      const msg = `⚠️ Last backup was ${Math.floor(daysSince)} days ago.\n\nIt is recommended to download a backup weekly.\n\nDownload backup now?`;
+      const msg = `-- Last backup was ${Math.floor(daysSince)} days ago.\n\nIt is recommended to download a backup weekly.\n\nDownload backup now?`;
       if (confirm(msg)) {
         backupData();
         localStorage.setItem('oms_last_backup', Date.now().toString());
@@ -3755,7 +3756,7 @@ function filterAdminUsers(q) {
   rows.forEach(r => { r.style.display = !q || r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
 }
 
-function previewSettings() { applySettings(); toast('Preview applied — save to persist'); }
+function previewSettings() { applySettings(); toast('Preview applied - save to persist'); }
 
 function refreshSecurityPanel() {
   const si = document.getElementById('sessionInfo');
@@ -3764,9 +3765,9 @@ function refreshSecurityPanel() {
   const u = getCurrentUser();
   si.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Current User</span><span style="font-weight:600">${u?.fullName||'—'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Role</span><span class="badge badge-primary">${u?.role||'—'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Login Time</span><span style="font-weight:500">${AUTH.session?.loginTime ? new Date(AUTH.session.loginTime).toLocaleTimeString() : '—'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Current User</span><span style="font-weight:600">${u?.fullName||'-'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Role</span><span class="badge badge-primary">${u?.role||'-'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Login Time</span><span style="font-weight:500">${AUTH.session?.loginTime ? new Date(AUTH.session.loginTime).toLocaleTimeString() : '-'}</span></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Session</span><span class="badge badge-success">Active</span></div>
     </div>`;
   const totalSize = Object.keys(localStorage).filter(k => k.startsWith('oms_')).reduce((a, k) => a + (localStorage[k]||'').length, 0);
@@ -3915,7 +3916,7 @@ async function sbBatchUpsert(sheetKey, records) {
     } catch(e) { failed++; }
     if ((i+1) % 100 === 0) console.log(`${sheetKey}: ${i+1}/${records.length} (${success} ok)`);
   }
-  console.log(`✓ ${sheetKey}: ${success} saved, ${failed} failed`);
+  console.log(`- ${sheetKey}: ${success} saved, ${failed} failed`);
 }
 
 // Delete a single record from Supabase
@@ -3962,12 +3963,12 @@ async function gsLoadAll(forceRefresh = false) {
     setTimeout(() => gsSyncBackground(), 2000);
     return true;
   }
-  // No fresh cache — need to load from Sheets
-  showSyncOverlay('Syncing with Supabase…');
+  // No fresh cache - need to load from Sheets
+  showSyncOverlay('Syncing with Supabase-');
   return await gsFetchFromSheets();
 }
 
-// Background sync — no overlay, no blocking
+// Background sync - no overlay, no blocking
 async function gsSyncBackground() {
   if (!GS_ENABLED) return;
   // Don't sync if user just saved something in the last 10 seconds
@@ -3988,12 +3989,12 @@ async function gsSyncBackground() {
           // Supabase has MORE records - merge new ones in without overwriting existing
           const localIds = new Set((DB[key] || []).map(r => r.id));
           let newRows = rows.filter(r => !localIds.has(r.id));
-          // Normalize chemoStatus → status for chemo records
+          // Normalize chemoStatus - status for chemo records
           if (key === 'chemo') newRows = newRows.map(r => { if (r.chemoStatus && !r.status) r.status = r.chemoStatus; return r; });
           if (newRows.length > 0) {
             DB[key] = [...(DB[key] || []), ...newRows];
             localStorage.setItem('oms_' + key, JSON.stringify(DB[key]));
-            console.log(`✓ Sync: added ${newRows.length} new ${key} records from Supabase`);
+            console.log(`- Sync: added ${newRows.length} new ${key} records from Supabase`);
           }
         } else if (localCount > rows.length) {
           // Local has MORE - push missing ones to Supabase
@@ -4054,23 +4055,23 @@ async function gsFetchFromSheets() {
       const remoteCount = rows.length;
 
       if (remoteCount > localCount) {
-        // Supabase has more — use Supabase data
+        // Supabase has more - use Supabase data
         DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
         save(key);
-        console.log(`✓ ${key}: loaded ${remoteCount} from Supabase`);
+        console.log(`- ${key}: loaded ${remoteCount} from Supabase`);
       } else if (localCount > remoteCount && localCount > 0) {
-        // Local has more — push local data to Supabase
-        console.log(`⚠️ ${key}: local (${localCount}) > Supabase (${remoteCount}), pushing local to Supabase`);
+        // Local has more - push local data to Supabase
+        console.log(`-- ${key}: local (${localCount}) > Supabase (${remoteCount}), pushing local to Supabase`);
         for (const record of DB[key]) {
           await gsSaveRecord(key, record);
         }
-        console.log(`✓ ${key}: pushed ${localCount} records to Supabase`);
+        console.log(`- ${key}: pushed ${localCount} records to Supabase`);
       } else if (remoteCount === localCount && remoteCount > 0) {
-        // Same count — use Supabase (most up to date)
+        // Same count - use Supabase (most up to date)
         DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
         save(key);
       }
-      // If both are 0 — do nothing
+      // If both are 0 - do nothing
     }
     // Load users
     // Fetch users (order by id since created_at may not exist)
@@ -4090,7 +4091,7 @@ async function gsFetchFromSheets() {
     return true;
   } catch(err) {
     hideSyncOverlay();
-    showSyncStatus('⚠️ Offline mode — using local data', 'warning');
+    showSyncStatus('-- Offline mode - using local data', 'warning');
     GS_ENABLED = false;
     return false;
   }
@@ -4098,7 +4099,7 @@ async function gsFetchFromSheets() {
 
 // Push ALL local data up to Google Sheets
 async function gsPushAll() {
-  showSyncOverlay('Syncing all data to Supabase…');
+  showSyncOverlay('Syncing all data to Supabase-');
   const keys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule'];
   for (const key of keys) {
     for (const record of DB[key]) {
@@ -4109,7 +4110,7 @@ async function gsPushAll() {
     await sbFetch('users', { method: 'POST', body: user });
   }
   hideSyncOverlay();
-  showSyncStatus('✅ All data synced to Supabase', 'success');
+  showSyncStatus('- All data synced to Supabase', 'success');
 }
 
 // Sync indicator UI
@@ -4135,9 +4136,9 @@ function showSyncStatus(msg, type) {
   const dot = document.getElementById('gsStatusDot');
   if (dot) {
     dot.style.background = colors[type] || colors.success;
-    dot.title = msg + ' · ' + new Date().toLocaleTimeString();
+    dot.title = msg + ' - ' + new Date().toLocaleTimeString();
   }
-  // Only show visible message for warnings and errors — not success
+  // Only show visible message for warnings and errors - not success
   if (type === 'success') return;
   let el = document.getElementById('syncStatusBar');
   if (!el) {
@@ -4153,21 +4154,21 @@ function showSyncStatus(msg, type) {
 }
 
 async function checkGsStatus() {
-  showSyncOverlay('Checking Supabase connection…');
+  showSyncOverlay('Checking Supabase connection-');
   try {
     const res = await fetch(`${SB_URL}/rest/v1/patients?select=id&limit=1`, {
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
     });
     hideSyncOverlay();
     if (res.ok) {
-      showSyncStatus('✅ Supabase connected', 'success');
+      showSyncStatus('- Supabase connected', 'success');
       GS_ENABLED = true;
     } else {
-      showSyncStatus('⚠️ Supabase connection issue', 'warning');
+      showSyncStatus('-- Supabase connection issue', 'warning');
     }
   } catch(e) {
     hideSyncOverlay();
-    showSyncStatus('❌ Cannot reach Supabase', 'error');
+    showSyncStatus('- Cannot reach Supabase', 'error');
     GS_ENABLED = false;
   }
 }
@@ -4278,7 +4279,7 @@ function statusBadge(s) {
   return `<span class="badge ${map[s]||'badge-secondary'}">${s}</span>`;
 }
 function fmtDate(d) {
-  if (!d) return '—';
+  if (!d) return '-';
   try {
     if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) {
       const [y,m,day] = d.slice(0,10).split('-').map(Number);
@@ -4390,9 +4391,9 @@ function savePatient() {
       },
       body: JSON.stringify(normalized)
     }).then(r => {
-      if (r.ok) showSyncStatus('✅ Saved to Supabase', 'success');
-      else showSyncStatus('⚠️ Saved locally only — check connection', 'warning');
-    }).catch(() => showSyncStatus('⚠️ Saved locally only', 'warning'));
+      if (r.ok) showSyncStatus('- Saved to Supabase', 'success');
+      else showSyncStatus('-- Saved locally only - check connection', 'warning');
+    }).catch(() => showSyncStatus('-- Saved locally only', 'warning'));
   }
   closeModal('patientModal'); renderTable('patients'); populateFilters();
 }
@@ -4409,15 +4410,15 @@ function viewProfile(id) {
     <div class="profile-header">
       <div class="profile-avatar">${(p.fullName||'?').charAt(0)}</div>
       <div>
-        <div class="profile-name">${p.fullName||'—'}</div>
-        <div class="profile-meta">${p.diagnosis||'—'} · Stage: ${p.stage||'—'} · ${statusBadge(p.status||'—')}</div>
-        <div style="margin-top:8px;font-size:12px;opacity:0.85">HN: ${p.hospitalNumber} · Registry: ${p.registryNumber||'—'} · Registered: ${fmtDate(p.registrationDate)}</div>
+        <div class="profile-name">${p.fullName||'-'}</div>
+        <div class="profile-meta">${p.diagnosis||'-'} - Stage: ${p.stage||'-'} - ${statusBadge(p.status||'-')}</div>
+        <div style="margin-top:8px;font-size:12px;opacity:0.85">HN: ${p.hospitalNumber} - Registry: ${p.registryNumber||'-'} - Registered: ${fmtDate(p.registrationDate)}</div>
       </div>
     </div>
     <div class="profile-body">
       <p class="profile-section-title">Personal Information</p>
       <div class="profile-grid">
-        ${profileField('Gender',p.gender)}${profileField('Date of Birth',fmtDate(p.dob))}${profileField('Age',p.age?p.age+' years':'—')}${profileField('Age Group',p.ageGroup)}${profileField('Nationality',p.nationality)}${profileField('National ID / PP',p.nationalId||'—')}${profileField('Contact Number',p.contactNumber||'—')}${profileField('Blood Group',p.bloodGroup||'—')}${profileField('Atoll',p.atoll)}${profileField('Island',p.island)}${profileField('Address',p.address)}
+        ${profileField('Gender',p.gender)}${profileField('Date of Birth',fmtDate(p.dob))}${profileField('Age',p.age?p.age+' years':'-')}${profileField('Age Group',p.ageGroup)}${profileField('Nationality',p.nationality)}${profileField('National ID / PP',p.nationalId||'-')}${profileField('Contact Number',p.contactNumber||'-')}${profileField('Blood Group',p.bloodGroup||'-')}${profileField('Atoll',p.atoll)}${profileField('Island',p.island)}${profileField('Address',p.address)}
       </div>
       <p class="profile-section-title">Medical Information</p>
       <div class="profile-grid">
@@ -4429,20 +4430,20 @@ function viewProfile(id) {
       </div>
       <p class="profile-section-title">Treatment Status</p>
       <div class="profile-grid">
-        ${profileField('Status',statusBadge(p.status))}${p.status==='Expired'?profileField('Expired Date',fmtDate(p.expiredDate)):''}${profileField('Survival Duration','<strong style="color:var(--primary)">' + calcSurvival(p) + '</strong>')}${profileField('Remarks',p.remarks||'—')}
+        ${profileField('Status',statusBadge(p.status))}${p.status==='Expired'?profileField('Expired Date',fmtDate(p.expiredDate)):''}${profileField('Survival Duration','<strong style="color:var(--primary)">' + calcSurvival(p) + '</strong>')}${profileField('Remarks',p.remarks||'-')}
       </div>
       ${chemoRecs.length ? `<p class="profile-section-title">Chemotherapy Records (${chemoRecs.length})</p>
       <div class="table-wrapper"><table><thead><tr><th>Status</th><th>Started</th><th>Completed</th><th>G6PD</th></tr></thead><tbody>
-      ${chemoRecs.map(c=>`<tr><td>${statusBadge(c.chemoStatus)}</td><td>${fmtDate(c.startedDate)}</td><td>${fmtDate(c.completedDate)||'—'}</td><td>${c.g6pd||'—'}</td></tr>`).join('')}
+      ${chemoRecs.map(c=>`<tr><td>${statusBadge(c.chemoStatus)}</td><td>${fmtDate(c.startedDate)}</td><td>${fmtDate(c.completedDate)||'-'}</td><td>${c.g6pd||'-'}</td></tr>`).join('')}
       </tbody></table></div>` : ''}
       ${adrRecs.length ? `<p class="profile-section-title" style="margin-top:16px">ADR Records (${adrRecs.length})</p>
       <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Drug</th><th>Severity</th><th>Outcome</th></tr></thead><tbody>
-      ${adrRecs.map(a=>`<tr><td>${fmtDate(a.reactionDate)}</td><td>${a.drugName||'—'}</td><td>${statusBadge(a.severity)}</td><td>${a.outcome||'—'}</td></tr>`).join('')}
+      ${adrRecs.map(a=>`<tr><td>${fmtDate(a.reactionDate)}</td><td>${a.drugName||'-'}</td><td>${statusBadge(a.severity)}</td><td>${a.outcome||'-'}</td></tr>`).join('')}
       </tbody></table></div>` : ''}
     </div>`;
   openModal('profileModal');
 }
-function profileField(label, val) { return `<div class="profile-field"><label>${label}</label><p>${val||'—'}</p></div>`; }
+function profileField(label, val) { return `<div class="profile-field"><label>${label}</label><p>${val||'-'}</p></div>`; }
 function printProfile() { window.print(); }
 
 // ==================== CHEMOTHERAPY ====================
@@ -4502,8 +4503,8 @@ function saveChemo() {
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(normalized)
     }).then(r => {
-      if (r.ok) showSyncStatus('✅ Saved to Supabase', 'success');
-      else showSyncStatus('⚠️ Save failed — retrying...', 'warning');
+      if (r.ok) showSyncStatus('- Saved to Supabase', 'success');
+      else showSyncStatus('-- Save failed - retrying...', 'warning');
     });
   }
   // Fix 6: If status is Expired, update patient registry too
@@ -4514,7 +4515,7 @@ function saveChemo() {
       if (obj.expiredDate) pat.expiredDate = obj.expiredDate;
       save('patients');
       if (GS_ENABLED) gsSaveRecord('patients', pat);
-      toast('Patient status updated to Expired in registry ✅');
+      toast('Patient status updated to Expired in registry -');
     }
   }
 }
@@ -4645,12 +4646,12 @@ const tableConfigs = {
     body: 'patientsTbody', pagination: 'patientsPagination',
     row: p => `
       <td><span style="font-weight:600;color:var(--primary)">${p.hospitalNumber}</span></td>
-      <td>${p.registryNumber||'—'}</td>
-      <td style="font-weight:500">${p.fullName||'—'}</td>
-      <td>${p.gender||'—'}</td>
-      <td>${p.age||'—'}</td>
-      <td>${p.diagnosis||'—'}</td>
-      <td>${statusBadge(p.status||'—')}</td>
+      <td>${p.registryNumber||'-'}</td>
+      <td style="font-weight:500">${p.fullName||'-'}</td>
+      <td>${p.gender||'-'}</td>
+      <td>${p.age||'-'}</td>
+      <td>${p.diagnosis||'-'}</td>
+      <td>${statusBadge(p.status||'-')}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="viewProfile(this.dataset.id)" data-id="${p.id||p.hospitalNumber}"><i class="fas fa-eye"></i></button>
         <button class="btn btn-xs btn-outline" onclick="openPatientModal(this.dataset.id)" data-id="${p.id||p.hospitalNumber}"><i class="fas fa-edit"></i></button>
@@ -4662,13 +4663,13 @@ const tableConfigs = {
     row: r => `
       <td><span style="font-weight:600;color:var(--primary)">${r.id}</span></td>
       <td>${r.hospitalNumber}</td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td>${r.diagnosis||'—'}</td>
-      <td>${r.g6pd||'—'}</td>
-      <td>${r.bloodGroup||'—'}</td>
-      <td>${statusBadge(r.status||r.chemoStatus||'—')}</td>
+      <td style="font-weight:500">${r.patientName||'-'}</td>
+      <td>${r.diagnosis||'-'}</td>
+      <td>${r.g6pd||'-'}</td>
+      <td>${r.bloodGroup||'-'}</td>
+      <td>${statusBadge(r.status||r.chemoStatus||'-')}</td>
       <td>${fmtDate(r.startedDate)}</td>
-      <td>${fmtDate(r.completedDate)||'—'}</td>
+      <td>${fmtDate(r.completedDate)||'-'}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="viewChemoProfile('${r.id}')"><i class="fas fa-eye"></i></button>
         <button class="btn btn-xs btn-outline" onclick="openChemoModal('${r.id}')"><i class="fas fa-edit"></i></button>
@@ -4680,12 +4681,12 @@ const tableConfigs = {
     row: r => `
       <td><span style="font-weight:600;color:var(--primary)">${r.id}</span></td>
       <td>${r.hospitalNumber}</td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
+      <td style="font-weight:500">${r.patientName||'-'}</td>
       <td>${fmtDate(r.reactionDate)}</td>
-      <td>${r.drugName||'—'}</td>
-      <td>${statusBadge(r.severity||'—')}</td>
-      <td>${r.reactionType||'—'}</td>
-      <td>${r.outcome||'—'}</td>
+      <td>${r.drugName||'-'}</td>
+      <td>${statusBadge(r.severity||'-')}</td>
+      <td>${r.reactionType||'-'}</td>
+      <td>${r.outcome||'-'}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="openADRModal('${r.id}')"><i class="fas fa-edit"></i></button>
         <button class="btn btn-xs btn-danger" onclick="confirmDelete('adr','${r.id}')"><i class="fas fa-trash"></i></button>
@@ -4696,12 +4697,12 @@ const tableConfigs = {
     row: r => `
       <td>${fmtDate(r.date)}</td>
       <td>${r.hospitalNumber}</td>
-      <td style="font-weight:500">${r.patientName||'—'}</td>
-      <td>${r.drug||'—'}</td>
-      <td>${r.drugType||'—'}</td>
-      <td>${statusBadge(r.occurred||'—')}</td>
-      <td>${r.severity||'—'}</td>
-      <td>${r.nurse||'—'}</td>
+      <td style="font-weight:500">${r.patientName||'-'}</td>
+      <td>${r.drug||'-'}</td>
+      <td>${r.drugType||'-'}</td>
+      <td>${statusBadge(r.occurred||'-')}</td>
+      <td>${r.severity||'-'}</td>
+      <td>${r.nurse||'-'}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="openExtravModal('${r.id}')"><i class="fas fa-edit"></i></button>
         <button class="btn btn-xs btn-danger" onclick="confirmDelete('extravasation','${r.id}')"><i class="fas fa-trash"></i></button>
@@ -4710,14 +4711,14 @@ const tableConfigs = {
   spill: {
     body: 'spillTbody', pagination: 'spillPagination',
     row: r => `
-      <td>${r.datetime ? new Date(r.datetime).toLocaleDateString('en-GB') : '—'}</td>
-      <td>${r.location||'—'}</td>
-      <td style="font-weight:500">${r.drugName||'—'}</td>
-      <td>${r.quantity||'—'}</td>
-      <td>${r.cause||'—'}</td>
-      <td>${r.staff||'—'}</td>
-      <td>${statusBadge(r.exposure||'—')}</td>
-      <td>${r.reviewedBy||'—'}</td>
+      <td>${r.datetime ? new Date(r.datetime).toLocaleDateString('en-GB') : '-'}</td>
+      <td>${r.location||'-'}</td>
+      <td style="font-weight:500">${r.drugName||'-'}</td>
+      <td>${r.quantity||'-'}</td>
+      <td>${r.cause||'-'}</td>
+      <td>${r.staff||'-'}</td>
+      <td>${statusBadge(r.exposure||'-')}</td>
+      <td>${r.reviewedBy||'-'}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="openSpillModal('${r.id}')"><i class="fas fa-edit"></i></button>
         <button class="btn btn-xs btn-danger" onclick="confirmDelete('spill','${r.id}')"><i class="fas fa-trash"></i></button>
@@ -4727,9 +4728,9 @@ const tableConfigs = {
     body: 'incidentTbody', pagination: 'incidentPagination',
     row: r => `
       <td>${fmtDate(r.date)}</td>
-      <td><span class="badge badge-warning">${r.type||'—'}</span></td>
-      <td>${r.staff||'—'}</td>
-      <td>${r.action||'—'}</td>
+      <td><span class="badge badge-warning">${r.type||'-'}</span></td>
+      <td>${r.staff||'-'}</td>
+      <td>${r.action||'-'}</td>
       <td class="no-print"><div class="flex gap-2">
         <button class="btn btn-xs btn-outline" onclick="openIncidentModal('${r.id}')"><i class="fas fa-edit"></i></button>
         <button class="btn btn-xs btn-danger" onclick="confirmDelete('incident','${r.id}')"><i class="fas fa-trash"></i></button>
@@ -4769,14 +4770,14 @@ function renderTable(type) {
   const pg = document.getElementById(cfg.pagination);
   if (pg) {
     const btnHtml = (label, p, disabled, active) => `<button class="page-btn${active?' active':''}" ${disabled?'disabled':''} onclick="changePage('${type}',${p})" title="Page ${p}">${label}</button>`;
-    let btns = btnHtml('«', 1, page<=1, false);
-    btns += btnHtml('‹', page-1, page<=1, false);
+    let btns = btnHtml('-', 1, page<=1, false);
+    btns += btnHtml('-', page-1, page<=1, false);
     for (let i = Math.max(1, page-2); i <= Math.min(pages, page+2); i++) btns += btnHtml(i, i, false, i===page);
-    btns += btnHtml('›', page+1, page>=pages, false);
-    btns += btnHtml('»', pages, page>=pages, false);
+    btns += btnHtml('-', page+1, page>=pages, false);
+    btns += btnHtml('-', pages, page>=pages, false);
     // Page jump input
     const jumpHtml = pages > 5 ? `<span style="display:flex;align-items:center;gap:4px;margin-left:8px;font-size:12px;color:var(--text-muted)">Go to: <input type="number" min="1" max="${pages}" value="${page}" style="width:50px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px;text-align:center" onchange="if(this.value>=1&&this.value<=${pages})changePage('${type}',parseInt(this.value))"> of ${pages}</span>` : '';
-    pg.innerHTML = `<span class="pagination-info">Showing ${total ? start+1 : 0}–${end} of ${total} records</span><div style="display:flex;align-items:center"><div class="pagination-btns">${btns}</div>${jumpHtml}</div>`;
+    pg.innerHTML = `<span class="pagination-info">Showing ${total ? start+1 : 0}-${end} of ${total} records</span><div style="display:flex;align-items:center"><div class="pagination-btns">${btns}</div>${jumpHtml}</div>`;
   }
 }
 function changePage(type, pg) { state.currentPage[type] = pg; renderTable(type); }
@@ -5051,7 +5052,7 @@ function renderCancerDash() {
   buildC('chartMonthly','line',mKeys.map(m=>{const[y,mo]=m.split('-');return new Date(parseInt(y),parseInt(mo)-1,1).toLocaleString('default',{month:'short',year:'2-digit'});}),mKeys.map(k=>monthly[k]),'Registrations');
   buildC('chartStatus','doughnut',Object.keys(count(pts,'status')),Object.values(count(pts,'status')));
 
-  // ── Diagnosis: horizontal bar, sorted, top 20 ──
+  // -- Diagnosis: horizontal bar, sorted, top 20 --
   const diagCount = count(pts,'diagnosis');
   const diagSorted = Object.entries(diagCount).sort(([,a],[,b])=>b-a).slice(0,20);
   if (chartInstances['chartDiagnosis']) chartInstances['chartDiagnosis'].destroy();
@@ -5076,7 +5077,7 @@ function renderCancerDash() {
     });
   }
 
-  // ── Island: horizontal bar, top 20 only ──
+  // -- Island: horizontal bar, top 20 only --
   const islandCount = count(pts,'island');
   const islandSorted = Object.entries(islandCount).sort(([,a],[,b])=>b-a).slice(0,20);
   if (chartInstances['chartIsland']) chartInstances['chartIsland'].destroy();
@@ -5101,7 +5102,7 @@ function renderCancerDash() {
     });
   }
 
-  // ── Yearly Registrations ──
+  // -- Yearly Registrations --
   const yearly = {};
   pts.forEach(p => {
     if (!p.registrationDate) return;
@@ -5133,7 +5134,7 @@ function renderChemoDash() {
     { label:'Discontinued', value: chemo.filter(c=>(c.status||c.chemoStatus)==='Discontinued').length, icon:'fa-stop-circle', color:'#EF4444', bg:'#fee2e2' },
     { label:'Total ADR Reports', value: adr.length, icon:'fa-exclamation-triangle', color:'#8B5CF6', bg:'#ede9fe' },
     { label:'Severe ADRs', value: adr.filter(a=>a.severity==='Severe'||a.severity==='Life-threatening'||a.severity==='Fatal').length, icon:'fa-skull-crossbones', color:'#EC4899', bg:'#fce7f3' },
-    { label:'ADR Recovery Rate', value: adr.length ? Math.round(adr.filter(a=>a.outcome==='Recovered').length/adr.length*100)+'%' : '—', icon:'fa-heart', color:'#14b8a6', bg:'#f0fdfa' },
+    { label:'ADR Recovery Rate', value: adr.length ? Math.round(adr.filter(a=>a.outcome==='Recovered').length/adr.length*100)+'%' : '-', icon:'fa-heart', color:'#14b8a6', bg:'#f0fdfa' },
   ];
   document.getElementById('chemoKpiGrid').innerHTML = chemoKpis.map(k=>`
     <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
@@ -5203,7 +5204,7 @@ function globalSearchFn(q) {
   dd.innerHTML = `<div style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase">Patients</div>` +
     results.map(p => `<div onclick="closeSearch();viewProfile('${p.id}')" style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;cursor:pointer" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
       <div style="width:36px;height:36px;background:var(--primary-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary)">${(p.fullName||'?').charAt(0)}</div>
-      <div><div style="font-weight:600;font-size:13px">${p.fullName}</div><div style="font-size:11px;color:var(--text-muted)">${p.hospitalNumber} · ${p.diagnosis||'—'}</div></div>
+      <div><div style="font-weight:600;font-size:13px">${p.fullName}</div><div style="font-size:11px;color:var(--text-muted)">${p.hospitalNumber} - ${p.diagnosis||'-'}</div></div>
       <div style="margin-left:auto">${statusBadge(p.status)}</div>
     </div>`).join('');
   dd.style.display = 'block';
@@ -5235,7 +5236,7 @@ function openImportModal(type) {
   if (fileInput) { fileInput.dataset.importType = type; fileInput.value = ''; }
   openModal('importModal');
 }
-// Column mapping: Excel column name → internal field name
+// Column mapping: Excel column name - internal field name
 // Chemo-specific column mapping
 const CHEMO_IMPORT_COLUMNS = {
   'Hospital Number':   'hospitalNumber',
@@ -5337,11 +5338,11 @@ function processImport(input, type) {
 
         // Validation
         if (!record.hospitalNumber) {
-          errors.push(`Row ${rowNum}: Missing Hospital Number — skipped`);
+          errors.push(`Row ${rowNum}: Missing Hospital Number - skipped`);
           skipped++; return;
         }
         if (type === 'patients' && !record.fullName) {
-          errors.push(`Row ${rowNum} (${record.hospitalNumber}): Missing Full Name — skipped`);
+          errors.push(`Row ${rowNum} (${record.hospitalNumber}): Missing Full Name - skipped`);
           skipped++; return;
         }
 
@@ -5386,7 +5387,7 @@ function processImport(input, type) {
       closeModal('importModal');
       input.value = '';
 
-      let msg = `✅ Imported ${added} record(s) to ${dbKey}.`;
+      let msg = `- Imported ${added} record(s) to ${dbKey}.`;
       if (duplicates > 0) msg += ` ${duplicates} duplicate(s) skipped.`;
       if (skipped > 0) msg += ` ${skipped} row(s) had errors.`;
       toast(msg, added > 0 ? 'success' : 'warning');
@@ -5400,7 +5401,7 @@ function processImport(input, type) {
         const newRecords = DB[dbKey].slice(-added);
         toast(`Syncing ${added} records to Supabase...`);
         await sbBatchUpsert(dbKey, newRecords);
-        toast(`✅ ${added} records saved to Supabase`);
+        toast(`- ${added} records saved to Supabase`);
       }
 
     } catch (err) {
@@ -5445,8 +5446,8 @@ function downloadImportTemplate(type) {
     'Contact Number': '+960 300-0000',
     'Blood Group': 'B+',
     'Atoll': 'Kaafu (K)',
-    'Island': 'K. Malé',
-    'Address': 'Malé, Maldives',
+    'Island': 'K. Mal-',
+    'Address': 'Mal-, Maldives',
     'Diagnosis': 'Breast Cancer',
     'Diagnosis Details': 'IDC Grade 2',
     'Date of Diagnosis': '2024-11-01',
@@ -5471,7 +5472,7 @@ function downloadImportTemplate(type) {
 // ==================== BACKUP & RESTORE ====================
 function showBackupModal() { openModal('backupModal'); }
 async function backupData() {
-  showSyncOverlay('Preparing backup from Supabase…');
+  showSyncOverlay('Preparing backup from Supabase-');
   try {
     hideSyncOverlay();
     const backupData = {
@@ -5484,7 +5485,7 @@ async function backupData() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = `OncoCare_Backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
     localStorage.setItem('oms_last_backup', Date.now().toString());
-    toast(`✅ Backup downloaded — ${DB.patients.length} patients saved`);
+    toast(`- Backup downloaded - ${DB.patients.length} patients saved`);
   } catch(e) {
     hideSyncOverlay();
     toast('Backup failed', 'error');
@@ -5499,7 +5500,7 @@ function restoreData(input) {
       const data = JSON.parse(e.target.result);
       Object.keys(data).forEach(k => { if (DB[k] !== undefined) { DB[k] = data[k]; save(k); } });
       closeModal('backupModal'); refreshDashboard(); populateFilters();
-      toast('Data restored — syncing to Supabase…');
+      toast('Data restored - syncing to Supabase-');
       await gsPushAll();
     } catch { toast('Invalid backup file', 'error'); }
   };
@@ -5518,7 +5519,7 @@ async function clearAllData() {
   localStorage.removeItem('oms_last_sync');
 
   closeModal('backupModal');
-  showSyncOverlay('Clearing all data from Google Sheets…');
+  showSyncOverlay('Clearing all data from Google Sheets-');
 
   // Delete all records from Google Sheets
   try {
@@ -5531,7 +5532,7 @@ async function clearAllData() {
       });
     }
     hideSyncOverlay();
-    toast('All data cleared from app and Supabase ✅', 'warning');
+    toast('All data cleared from app and Supabase -', 'warning');
   } catch(e) {
     hideSyncOverlay();
     toast('Local data cleared. Could not reach Supabase.', 'warning');
@@ -5546,7 +5547,7 @@ async function clearAllData() {
 
 // ==================== SEED DATA ====================
 function seedDemoData() {
-  // Demo data disabled — using real data from Supabase
+  // Demo data disabled - using real data from Supabase
 }
 
 
@@ -5652,7 +5653,7 @@ function renderAdminUsers() {
       </div></td>
       <td><code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:12px">${u.username}</code></td>
       <td><span class="badge ${u.role==='superadmin'?'badge-primary':'badge-info'}">${u.role==='superadmin'?'Super Admin':u.role==='admin'?'Admin':'Staff'}</span></td>
-      <td>${u.department||'—'}</td>
+      <td>${u.department||'-'}</td>
       <td><span class="badge ${u.status==='Active'?'badge-success':'badge-danger'}">${u.status}</span></td>
       <td>${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : 'Never'}</td>
       <td><div class="flex gap-2">
@@ -5758,7 +5759,7 @@ function applySettings() {
   if (st) st.textContent = s.appName || 'OncoCare';
   const ss = document.querySelector('.sidebar-subtitle');
   if (ss) ss.textContent = s.appSubtitle || 'Oncology Management System';
-  document.title = (s.appName || 'OncoCare') + ' — ' + (s.hospitalName || '');
+  document.title = (s.appName || 'OncoCare') + ' - ' + (s.hospitalName || '');
   // Sidebar logo
   const logo = document.querySelector('.sidebar-logo');
   if (logo) {
@@ -5899,7 +5900,7 @@ async function doLogin() {
   if (!username || !password) { errEl.textContent = 'Please enter username and password.'; return; }
 
   // Show loading state
-  if (loginBtn) { loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in…'; loginBtn.disabled = true; }
+  if (loginBtn) { loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in-'; loginBtn.disabled = true; }
 
   // Always fetch latest users from Supabase before login
   try {
@@ -5965,7 +5966,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
 });
 
-// Auto background sync every 30 seconds — only when tab is active
+// Auto background sync every 30 seconds - only when tab is active
 let syncInterval = null;
 let lastActivity = Date.now();
 
@@ -5999,7 +6000,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     stopSyncInterval();
   } else {
-    // Tab became visible — sync immediately then restart interval
+    // Tab became visible - sync immediately then restart interval
     recordActivity();
     if (AUTH.session) gsSyncBackground();
     startSyncInterval();
@@ -6017,7 +6018,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Force all date inputs to use en-GB locale (dd/mm/yyyy) via MutationObserver
   forceDateFormat();
   // Version-based one-time clear of all demo data
-  // Supabase is the source of truth — no local clearing needed
+  // Supabase is the source of truth - no local clearing needed
   // Data is always loaded fresh from Supabase on login
   if (AUTH.session) {
     const user = AUTH.users.find(u => u.id === AUTH.session.userId && u.status === 'Active');
@@ -6093,7 +6094,11 @@ async function gsSaveRecord(sheetKey, record) {
 
 
 
+
+
 </script>
+
+
 
 <!-- User Form Modal -->
 <div class="modal-overlay" id="userFormModal" style="display:none">
@@ -6169,7 +6174,12 @@ async function gsSaveRecord(sheetKey, record) {
 
 </div><!-- end appWrapper -->
 
-<script>// ==================== PORT & PICC LINE MODULE ====================
+
+
+
+
+<script>
+// ==================== PORT & PICC LINE MODULE ====================
 
 let ppRegisterFilter = '', ppRegisterTypeFilter = '';
 
@@ -6197,7 +6207,7 @@ function initMonthFilter(id) {
   }
 }
 
-// ── Lookup patient from registry ──
+// -- Lookup patient from registry --
 function lookupPPPatient(val) {
   const p = DB.patients.find(x => x.hospitalNumber === val || x.nationalId === val);
   document.getElementById('ppr_patientName').value = p ? (p.fullName||'') : '';
@@ -6210,7 +6220,7 @@ function lookupPPPatientFlush(prefix, val) {
   document.getElementById(prefix + '_diagnosis').value = p ? (p.diagnosis||'') : '';
 }
 
-// ── LINE REGISTER (Card View) ──
+// -- LINE REGISTER (Card View) --
 function renderPPRegister(search, typeFilter) {
   if (search !== undefined && search !== null) ppRegisterFilter = search;
   if (typeFilter !== undefined && typeFilter !== null) ppRegisterTypeFilter = typeFilter;
@@ -6263,12 +6273,12 @@ function renderPPRegister(search, typeFilter) {
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
             <span style="font-size:15px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
             <span style="font-size:12px;color:var(--primary);font-weight:600">${r.idNo}</span>
-            <span class="badge" style="background:${lineBg};color:${lineColor};font-size:11px">${r.lineType||'—'}</span>
+            <span class="badge" style="background:${lineBg};color:${lineColor};font-size:11px">${r.lineType||'-'}</span>
             ${isActive ? '<span class="badge badge-success" style="font-size:11px">Active</span>' : '<span class="badge" style="background:#f3f4f6;color:#6B7280;font-size:11px">Removed</span>'}
             ${hasInfection ? '<span class="badge badge-danger" style="font-size:11px"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : ''}
             ${phScore >= 2 ? `<span class="badge badge-warning" style="font-size:11px">Phlebitis ${phScore}</span>` : ''}
           </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${r.diagnosis||'—'}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${r.diagnosis||'-'}</div>
           <!-- Details grid -->
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 16px">
             ${r.insertionSite ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Site:</span> <span style="color:var(--text);font-weight:500">${r.insertionSite}</span></div>` : ''}
@@ -6318,16 +6328,16 @@ function savePPRegister() {
   fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
     const idx = DB.portpiccRegister.findIndex(x => x.id === state.editId);
-    DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
+    DB.portpiccRegister[idx] = obj; toast('Entry updated -');
   } else {
-    DB.portpiccRegister.push(obj); toast('Entry saved ✅');
+    DB.portpiccRegister.push(obj); toast('Entry saved -');
   }
   save('portpiccRegister');
   if (GS_ENABLED) gsSaveRecord('portpiccRegister', obj);
   closeModal('ppRegisterModal'); renderPPRegister();
 }
 
-// ── PORT FLUSH & DRESSING ──
+// -- PORT FLUSH & DRESSING --
 let portFlushFilter = '';
 function renderPortFlush(search) {
   if (search !== undefined && search !== null) portFlushFilter = search;
@@ -6347,7 +6357,7 @@ function renderPortFlush(search) {
     kpiEl.innerHTML = [
       { label:'Total Flushes', val: total, icon:'fa-tint', color:'#0F766E', bg:'#f0fdfa' },
       { label:'Signs of Infection', val: infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2' },
-      { label:'Phlebitis ≥2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
+      { label:'Phlebitis -2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
     ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
   }
 
@@ -6374,7 +6384,7 @@ function renderPortFlush(search) {
             ${hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>'}
             ${phScore >= 2 ? `<span class="badge badge-danger">Phlebitis ${phScore}</span>` : `<span class="badge badge-success">Phlebitis 0</span>`}
           </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'—'}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'-'}</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">
             ${r.dressingClean ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Dressing:</span> <span style="font-weight:500;color:${r.dressingClean==='Yes'?'var(--success)':'var(--danger)'}">${r.dressingClean}</span></div>` : ''}
             ${r.backflowStatus ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Backflow:</span> <span style="font-weight:500;color:${backflowGood?'var(--success)':'var(--danger)'}">${r.backflowStatus}</span></div>` : ''}
@@ -6416,14 +6426,14 @@ function savePortFlush() {
   fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
     const idx = DB.portFlush.findIndex(x => x.id === state.editId);
-    DB.portFlush[idx] = obj; toast('Record updated ✅');
-  } else { DB.portFlush.push(obj); toast('Flush record saved ✅'); }
+    DB.portFlush[idx] = obj; toast('Record updated -');
+  } else { DB.portFlush.push(obj); toast('Flush record saved -'); }
   save('portFlush');
   if (GS_ENABLED) gsSaveRecord('portFlush', obj);
   closeModal('portFlushModal'); renderPortFlush();
 }
 
-// ── PICC FLUSH & DRESSING ──
+// -- PICC FLUSH & DRESSING --
 let piccFlushFilter = '';
 function renderPiccFlush(search) {
   if (search !== undefined && search !== null) piccFlushFilter = search;
@@ -6443,7 +6453,7 @@ function renderPiccFlush(search) {
     kpiEl.innerHTML = [
       { label:'Total Flushes', val: total, icon:'fa-tint', color:'#8B5CF6', bg:'#ede9fe' },
       { label:'Signs of Infection', val: infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2' },
-      { label:'Phlebitis ≥2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
+      { label:'Phlebitis -2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
     ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
   }
 
@@ -6470,7 +6480,7 @@ function renderPiccFlush(search) {
             ${hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>'}
             ${phScore >= 2 ? `<span class="badge badge-danger">Phlebitis ${phScore}</span>` : `<span class="badge badge-success">Phlebitis 0</span>`}
           </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'—'}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'-'}</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">
             ${r.dressingClean ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Dressing:</span> <span style="font-weight:500;color:${r.dressingClean==='Yes'?'var(--success)':'var(--danger)'}">${r.dressingClean}</span></div>` : ''}
             ${r.backflowStatus ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Backflow:</span> <span style="font-weight:500;color:${backflowGood?'var(--success)':'var(--danger)'}">${r.backflowStatus}</span></div>` : ''}
@@ -6512,8 +6522,8 @@ function savePiccFlush() {
   fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
     const idx = DB.piccFlush.findIndex(x => x.id === state.editId);
-    DB.piccFlush[idx] = obj; toast('Record updated ✅');
-  } else { DB.piccFlush.push(obj); toast('PICC flush record saved ✅'); }
+    DB.piccFlush[idx] = obj; toast('Record updated -');
+  } else { DB.piccFlush.push(obj); toast('PICC flush record saved -'); }
   save('piccFlush');
   if (GS_ENABLED) gsSaveRecord('piccFlush', obj);
   closeModal('piccFlushModal'); renderPiccFlush();
@@ -6545,8 +6555,9 @@ function exportPortPicc() {
   toast('Exported successfully');
 }
 
-</script>
 
+
+</script>
 
 </body>
 </html>
