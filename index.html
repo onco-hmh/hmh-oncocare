@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260709-050847">
+<meta name="version" content="v20260709-051635">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6183,10 +6183,17 @@ async function gsSaveRecord(sheetKey, record) {
 
 let ppRegisterFilter = '', ppRegisterTypeFilter = '';
 
+// Helper: render a detail row only if value exists
+function ppRow(label, value, color) {
+  if (!value) return '';
+  var style = color ? 'color:' + color + ';font-weight:500' : 'color:var(--text);font-weight:500';
+  return '<div style="font-size:12px"><span style="color:var(--text-muted)">' + label + ':</span> <span style="' + style + '">' + value + '</span></div>';
+}
+
 function switchPPTab(tab) {
-  ['register','portflush','piccflush'].forEach(t => {
-    const panel = document.getElementById('ppPanel_' + t);
-    const btn = document.getElementById('ppTab_' + t + '_btn');
+  ['register','portflush','piccflush'].forEach(function(t) {
+    var panel = document.getElementById('ppPanel_' + t);
+    var btn = document.getElementById('ppTab_' + t + '_btn');
     if (panel) panel.style.display = t === tab ? '' : 'none';
     if (btn) {
       btn.style.background = t === tab ? 'var(--primary)' : 'transparent';
@@ -6200,330 +6207,325 @@ function switchPPTab(tab) {
 }
 
 function initMonthFilter(id) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   if (el && !el.value) {
-    const now = new Date();
+    var now = new Date();
     el.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   }
 }
 
-// -- Lookup patient from registry --
 function lookupPPPatient(val) {
-  const p = DB.patients.find(x => x.hospitalNumber === val || x.nationalId === val);
+  var p = DB.patients.find(function(x) { return x.hospitalNumber === val || x.nationalId === val; });
   document.getElementById('ppr_patientName').value = p ? (p.fullName||'') : '';
   document.getElementById('ppr_diagnosis').value = p ? (p.diagnosis||'') : '';
 }
 
 function lookupPPPatientFlush(prefix, val) {
-  const p = DB.patients.find(x => x.hospitalNumber === val || x.nationalId === val);
+  var p = DB.patients.find(function(x) { return x.hospitalNumber === val || x.nationalId === val; });
   document.getElementById(prefix + '_patientName').value = p ? (p.fullName||'') : '';
   document.getElementById(prefix + '_diagnosis').value = p ? (p.diagnosis||'') : '';
 }
 
-// -- LINE REGISTER (Card View) --
+// ── LINE REGISTER ──
 function renderPPRegister(search, typeFilter) {
   if (search !== undefined && search !== null) ppRegisterFilter = search;
   if (typeFilter !== undefined && typeFilter !== null) ppRegisterTypeFilter = typeFilter;
-  let data = [...DB.portpiccRegister];
-  if (ppRegisterFilter) data = data.filter(r => [r.idNo,r.patientName,r.diagnosis,r.insertedBy].some(v => v && v.toLowerCase().includes(ppRegisterFilter.toLowerCase())));
-  if (ppRegisterTypeFilter) data = data.filter(r => r.lineType === ppRegisterTypeFilter);
-  data.sort((a,b) => (b.dateOfInsertion||'').localeCompare(a.dateOfInsertion||''));
+  var data = DB.portpiccRegister.slice();
+  if (ppRegisterFilter) data = data.filter(function(r) { return [r.idNo,r.patientName,r.diagnosis,r.insertedBy].some(function(v) { return v && v.toLowerCase().includes(ppRegisterFilter.toLowerCase()); }); });
+  if (ppRegisterTypeFilter) data = data.filter(function(r) { return r.lineType === ppRegisterTypeFilter; });
+  data.sort(function(a,b) { return (b.dateOfInsertion||'').localeCompare(a.dateOfInsertion||''); });
 
   // KPIs
-  const kpiEl = document.getElementById('ppRegisterKPIs');
+  var kpiEl = document.getElementById('ppRegisterKPIs');
   if (kpiEl) {
-    const total = DB.portpiccRegister.length;
-    const ports = DB.portpiccRegister.filter(r=>r.lineType==='PORT').length;
-    const piccs = DB.portpiccRegister.filter(r=>r.lineType==='PICC').length;
-    const active = DB.portpiccRegister.filter(r=>!r.dateOfRemoval).length;
-    const removed = DB.portpiccRegister.filter(r=>r.dateOfRemoval).length;
-    const infections = DB.portpiccRegister.filter(r=>r.signsOfInfection==='Yes').length;
-    kpiEl.innerHTML = [
+    var total = DB.portpiccRegister.length;
+    var ports = DB.portpiccRegister.filter(function(r){return r.lineType==='PORT';}).length;
+    var piccs = DB.portpiccRegister.filter(function(r){return r.lineType==='PICC';}).length;
+    var active = DB.portpiccRegister.filter(function(r){return !r.dateOfRemoval;}).length;
+    var removed = DB.portpiccRegister.filter(function(r){return !!r.dateOfRemoval;}).length;
+    var infections = DB.portpiccRegister.filter(function(r){return r.signsOfInfection==='Yes';}).length;
+    var kpiData = [
       {label:'Total Lines',val:total,icon:'fa-procedures',color:'#0F766E',bg:'#f0fdfa'},
       {label:'PORT',val:ports,icon:'fa-dot-circle',color:'#0F766E',bg:'#f0fdfa'},
       {label:'PICC',val:piccs,icon:'fa-grip-lines',color:'#8B5CF6',bg:'#ede9fe'},
       {label:'Active Lines',val:active,icon:'fa-check-circle',color:'#10B981',bg:'#d1fae5'},
       {label:'Removed',val:removed,icon:'fa-times-circle',color:'#6B7280',bg:'#f3f4f6'},
-      {label:'Infections',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'},
-    ].map(k=>`<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+      {label:'Infections',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'}
+    ];
+    kpiEl.innerHTML = kpiData.map(function(k) {
+      return '<div class="kpi-card" style="--kpi-color:' + k.color + ';--kpi-bg:' + k.bg + '"><div class="kpi-icon"><i class="fas ' + k.icon + '"></i></div><div class="kpi-value">' + k.val + '</div><div class="kpi-label">' + k.label + '</div></div>';
+    }).join('');
   }
 
-  const container = document.getElementById('ppRegisterCards');
+  var container = document.getElementById('ppRegisterCards');
   if (!container) return;
   if (!data.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-procedures"></i></div><div class="empty-title">No line entries yet</div><div class="empty-text">Click "+ Add Entry" to record a line insertion</div></div>`;
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-procedures"></i></div><div class="empty-title">No line entries yet</div><div class="empty-text">Click "+ Add Entry" to record a line insertion</div></div>';
     return;
   }
 
-  container.innerHTML = data.map(r => {
-    const isPort = r.lineType === 'PORT';
-    const lineColor = isPort ? 'var(--primary)' : '#8B5CF6';
-    const lineBg = isPort ? 'var(--primary-bg)' : '#ede9fe';
-    const isActive = !r.dateOfRemoval;
-    const hasInfection = r.signsOfInfection === 'Yes';
-    const phScore = parseInt(r.phlebitisScore||0);
-    return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${lineColor};padding:16px 20px">
-      <div style="display:flex;align-items:flex-start;gap:14px">
-        <!-- Icon -->
-        <div style="width:44px;height:44px;border-radius:10px;background:${lineBg};color:${lineColor};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
-          <i class="fas ${isPort ? 'fa-dot-circle' : 'fa-grip-lines'}"></i>
-        </div>
-        <!-- Main info -->
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-            <span style="font-size:15px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
-            <span style="font-size:12px;color:var(--primary);font-weight:600">${r.idNo}</span>
-            <span class="badge" style="background:${lineBg};color:${lineColor};font-size:11px">${r.lineType||'-'}</span>
-            ${isActive ? '<span class="badge badge-success" style="font-size:11px">Active</span>' : '<span class="badge" style="background:#f3f4f6;color:#6B7280;font-size:11px">Removed</span>'}
-            ${hasInfection ? '<span class="badge badge-danger" style="font-size:11px"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : ''}
-            ${phScore >= 2 ? `<span class="badge badge-warning" style="font-size:11px">Phlebitis ${phScore}</span>` : ''}
-          </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${r.diagnosis||'-'}</div>
-          <!-- Details grid -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 16px">
-            ${r.insertionSite ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Site:</span> <span style="color:var(--text);font-weight:500">${r.insertionSite}</span></div>` : ''}
-            ${r.dateOfInsertion ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Inserted:</span> <span style="color:var(--text);font-weight:500">${fmtDate(r.dateOfInsertion)}</span></div>` : ''}
-            ${r.insertedBy ? `<div style="font-size:12px"><span style="color:var(--text-muted)">By:</span> <span style="color:var(--text);font-weight:500">${r.insertedBy}</span></div>` : ''}
-            ${r.catheterSize ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Catheter:</span> <span style="color:var(--text);font-weight:500">${r.catheterSize}</span></div>` : ''}
-            ${r.lumens ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Lumens:</span> <span style="color:var(--text);font-weight:500">${r.lumens}</span></div>` : ''}
-            ${r.tipPositionConfirmed ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Tip Confirmed:</span> <span style="color:var(--text);font-weight:500">${r.tipPositionConfirmed}</span></div>` : ''}
-            ${r.confirmationMethod ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Method:</span> <span style="color:var(--text);font-weight:500">${r.confirmationMethod}</span></div>` : ''}
-            ${r.purpose ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Purpose:</span> <span style="color:var(--text);font-weight:500">${r.purpose}</span></div>` : ''}
-            ${r.flushGiven ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Flush:</span> <span style="color:var(--primary);font-weight:500">${r.flushGiven}</span></div>` : ''}
-            ${r.nurseInitial ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Nurse:</span> <span style="color:var(--text);font-weight:600">${r.nurseInitial}</span></div>` : ''}
-            ${r.dateOfRemoval ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Removed:</span> <span style="color:var(--danger);font-weight:500">${fmtDate(r.dateOfRemoval)}</span></div>` : ''}
-            ${r.reasonForRemoval ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Reason:</span> <span style="color:var(--text)">${r.reasonForRemoval}</span></div>` : ''}
-          </div>
-          ${r.complication ? `<div style="margin-top:8px;padding:6px 10px;background:var(--bg-warning,#fef3c7);border-radius:6px;font-size:12px;color:#92400e"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i><strong>Complication:</strong> ${r.complication}</div>` : ''}
-          ${r.remarks ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">${r.remarks}</div>` : ''}
-        </div>
-        <!-- Actions -->
-        <div class="flex gap-2 no-print" style="flex-shrink:0">
-          <button class="btn btn-xs btn-outline" onclick="openPPRegisterModal('${r.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-          <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portpiccRegister','${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>
-    </div>`;
+  container.innerHTML = data.map(function(r) {
+    var isPort = r.lineType === 'PORT';
+    var lineColor = isPort ? 'var(--primary)' : '#8B5CF6';
+    var lineBg = isPort ? 'var(--primary-bg)' : '#ede9fe';
+    var isActive = !r.dateOfRemoval;
+    var hasInfection = r.signsOfInfection === 'Yes';
+    var phScore = parseInt(r.phlebitisScore||0);
+    
+    var badges = '';
+    badges += '<span class="badge" style="background:' + lineBg + ';color:' + lineColor + ';font-size:11px">' + (r.lineType||'-') + '</span> ';
+    badges += isActive ? '<span class="badge badge-success" style="font-size:11px">Active</span> ' : '<span class="badge" style="background:#f3f4f6;color:#6B7280;font-size:11px">Removed</span> ';
+    if (hasInfection) badges += '<span class="badge badge-danger" style="font-size:11px"><i class="fas fa-exclamation-triangle"></i> Infection</span> ';
+    if (phScore >= 2) badges += '<span class="badge badge-warning" style="font-size:11px">Phlebitis ' + phScore + '</span>';
+
+    var details = '';
+    details += ppRow('Site', r.insertionSite);
+    details += ppRow('Inserted', fmtDate(r.dateOfInsertion));
+    details += ppRow('By', r.insertedBy);
+    details += ppRow('Catheter', r.catheterSize);
+    details += ppRow('Lumens', r.lumens);
+    details += ppRow('Tip Confirmed', r.tipPositionConfirmed);
+    details += ppRow('Method', r.confirmationMethod);
+    details += ppRow('Purpose', r.purpose);
+    details += ppRow('Flush Given', r.flushGiven, 'var(--primary)');
+    details += ppRow('Nurse', r.nurseInitial);
+    if (r.dateOfRemoval) details += ppRow('Removed', fmtDate(r.dateOfRemoval), 'var(--danger)');
+    if (r.reasonForRemoval) details += ppRow('Reason', r.reasonForRemoval);
+
+    var extra = '';
+    if (r.complication) extra += '<div style="margin-top:8px;padding:6px 10px;background:#fef3c7;border-radius:6px;font-size:12px;color:#92400e"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i><strong>Complication:</strong> ' + r.complication + '</div>';
+    if (r.remarks) extra += '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>';
+
+    return '<div class="card" style="margin-bottom:12px;border-left:4px solid ' + lineColor + ';padding:16px 20px">' +
+      '<div style="display:flex;align-items:flex-start;gap:14px">' +
+        '<div style="width:44px;height:44px;border-radius:10px;background:' + lineBg + ';color:' + lineColor + ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' +
+          '<i class="fas ' + (isPort ? 'fa-dot-circle' : 'fa-grip-lines') + '"></i>' +
+        '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">' +
+            '<span style="font-size:15px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</span>' +
+            '<span style="font-size:12px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
+            badges +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">' + (r.diagnosis||'-') + '</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 16px">' + details + '</div>' +
+          extra +
+        '</div>' +
+        '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
+          '<button class="btn btn-xs btn-outline" onclick="openPPRegisterModal('' + r.id + '')" title="Edit"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" onclick="deletePPRecord('portpiccRegister','' + r.id + '')" title="Delete"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
-function openPPRegisterModal(id = null) {
+function openPPRegisterModal(id) {
+  id = id || null;
   state.editId = id;
-  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
-  fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) el.value = ''; });
+  var fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
+  fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) el.value = ''; });
   document.getElementById('ppRegisterModalTitle').textContent = id ? 'Edit Line Entry' : 'Add Line Entry';
   if (id) {
-    const r = DB.portpiccRegister.find(x => x.id === id);
-    if (r) fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) el.value = r[f]||''; });
+    var r = DB.portpiccRegister.find(function(x) { return x.id === id; });
+    if (r) fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) el.value = r[f]||''; });
   }
   openModal('ppRegisterModal');
 }
 
 function savePPRegister() {
-  const idNo = document.getElementById('ppr_idNo').value.trim();
-  const lineType = document.getElementById('ppr_lineType').value;
+  var idNo = document.getElementById('ppr_idNo').value.trim();
+  var lineType = document.getElementById('ppr_lineType').value;
   if (!idNo || !lineType) { toast('ID No and Line Type are required', 'error'); return; }
-  const fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
-  const obj = { id: state.editId || genId('PPR') };
-  fields.forEach(f => { const el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
+  var fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
+  var obj = { id: state.editId || genId('PPR') };
+  fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
-    const idx = DB.portpiccRegister.findIndex(x => x.id === state.editId);
-    DB.portpiccRegister[idx] = obj; toast('Entry updated -');
-  } else {
-    DB.portpiccRegister.push(obj); toast('Entry saved -');
-  }
+    var idx = DB.portpiccRegister.findIndex(function(x) { return x.id === state.editId; });
+    DB.portpiccRegister[idx] = obj; toast('Entry updated');
+  } else { DB.portpiccRegister.push(obj); toast('Entry saved'); }
   save('portpiccRegister');
   if (GS_ENABLED) gsSaveRecord('portpiccRegister', obj);
   closeModal('ppRegisterModal'); renderPPRegister();
 }
 
-// -- PORT FLUSH & DRESSING --
-let portFlushFilter = '';
+// ── PORT FLUSH & DRESSING ──
+var portFlushFilter = '';
 function renderPortFlush(search) {
   if (search !== undefined && search !== null) portFlushFilter = search;
-  const monthEl = document.getElementById('portFlushMonth');
-  const selectedMonth = monthEl ? monthEl.value : '';
-  let data = [...DB.portFlush];
-  if (portFlushFilter) data = data.filter(r => [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(v => v && v.toLowerCase().includes(portFlushFilter.toLowerCase())));
-  if (selectedMonth) data = data.filter(r => r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth));
-  data.sort((a,b) => (b.dateOfFlush||'').localeCompare(a.dateOfFlush||''));
+  var monthEl = document.getElementById('portFlushMonth');
+  var selectedMonth = monthEl ? monthEl.value : '';
+  var data = DB.portFlush.slice();
+  if (portFlushFilter) data = data.filter(function(r) { return [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(function(v) { return v && v.toLowerCase().includes(portFlushFilter.toLowerCase()); }); });
+  if (selectedMonth) data = data.filter(function(r) { return r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth); });
+  data.sort(function(a,b) { return (b.dateOfFlush||'').localeCompare(a.dateOfFlush||''); });
 
-  // KPIs
-  const kpiEl = document.getElementById('portFlushKPIs');
+  var kpiEl = document.getElementById('portFlushKPIs');
   if (kpiEl) {
-    const total = data.length;
-    const infections = data.filter(r => r.signsOfInfection === 'Yes').length;
-    const highPhlebitis = data.filter(r => parseInt(r.phlebitisScore) >= 2).length;
+    var total = data.length;
+    var infections = data.filter(function(r){return r.signsOfInfection==='Yes';}).length;
+    var highPh = data.filter(function(r){return parseInt(r.phlebitisScore)>=2;}).length;
     kpiEl.innerHTML = [
-      { label:'Total Flushes', val: total, icon:'fa-tint', color:'#0F766E', bg:'#f0fdfa' },
-      { label:'Signs of Infection', val: infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2' },
-      { label:'Phlebitis -2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
-    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+      {label:'Total Flushes',val:total,icon:'fa-tint',color:'#0F766E',bg:'#f0fdfa'},
+      {label:'Signs of Infection',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'},
+      {label:'Phlebitis >= 2',val:highPh,icon:'fa-thermometer-half',color:'#F59E0B',bg:'#fef3c7'}
+    ].map(function(k) { return '<div class="kpi-card" style="--kpi-color:' + k.color + ';--kpi-bg:' + k.bg + '"><div class="kpi-icon"><i class="fas ' + k.icon + '"></i></div><div class="kpi-value">' + k.val + '</div><div class="kpi-label">' + k.label + '</div></div>'; }).join('');
   }
 
-  if (!data.length) {
-  // Card view for Port Flush
-  const container = document.getElementById('portFlushCards');
+  var container = document.getElementById('portFlushCards');
   if (!container) return;
-  if (!data.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div>`;
-    return;
-  }
-  container.innerHTML = data.map(r => {
-    const hasInfection = r.signsOfInfection === 'Yes';
-    const phScore = parseInt(r.phlebitisScore||0);
-    const backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
-    return `<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ${hasInfection||phScore>=2?'var(--danger)':'var(--success)'}">
-      <div style="display:flex;align-items:center;gap:14px">
-        <div style="width:40px;height:40px;border-radius:10px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-tint"></i></div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-            <span style="font-size:14px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
-            <span style="font-size:12px;color:var(--primary);font-weight:600">${r.idNo}</span>
-            <span style="font-size:12px;color:var(--text-muted)">${fmtDate(r.dateOfFlush)}</span>
-            ${hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>'}
-            ${phScore >= 2 ? `<span class="badge badge-danger">Phlebitis ${phScore}</span>` : `<span class="badge badge-success">Phlebitis 0</span>`}
-          </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'-'}</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">
-            ${r.dressingClean ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Dressing:</span> <span style="font-weight:500;color:${r.dressingClean==='Yes'?'var(--success)':'var(--danger)'}">${r.dressingClean}</span></div>` : ''}
-            ${r.backflowStatus ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Backflow:</span> <span style="font-weight:500;color:${backflowGood?'var(--success)':'var(--danger)'}">${r.backflowStatus}</span></div>` : ''}
-            ${r.flushGiven ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Flush:</span> <span style="font-weight:600;color:var(--primary)">${r.flushGiven}</span></div>` : ''}
-            ${r.asepticTechnique ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Aseptic:</span> <span style="font-weight:500">${r.asepticTechnique}</span></div>` : ''}
-            ${r.actionTaken ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Action:</span> <span style="font-weight:500">${r.actionTaken}</span></div>` : ''}
-            ${r.nurseInitial ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Nurse:</span> <span style="font-weight:700;color:var(--primary)">${r.nurseInitial}</span></div>` : ''}
-          </div>
-          ${r.remarks ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">${r.remarks}</div>` : ''}
-        </div>
-        <div class="flex gap-2 no-print" style="flex-shrink:0">
-          <button class="btn btn-xs btn-outline" onclick="openPortFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
-          <button class="btn btn-xs btn-danger" onclick="deletePPRecord('portFlush','${r.id}')"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>
-    </div>`;
+  if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return; }
+
+  container.innerHTML = data.map(function(r) {
+    var hasInfection = r.signsOfInfection === 'Yes';
+    var phScore = parseInt(r.phlebitisScore||0);
+    var backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
+    var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : 'var(--success)';
+    var infBadge = hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>';
+    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis 0</span>';
+    var dressingColor = r.dressingClean === 'Yes' ? 'var(--success)' : 'var(--danger)';
+    var backflowColor = backflowGood ? 'var(--success)' : 'var(--danger)';
+    var details = ppRow('Dressing', r.dressingClean, dressingColor) + ppRow('Backflow', r.backflowStatus, backflowColor) + ppRow('Flush', r.flushGiven, 'var(--primary)') + ppRow('Aseptic', r.asepticTechnique) + ppRow('Action', r.actionTaken) + ppRow('Nurse', r.nurseInitial, 'var(--primary)');
+    var remarks = r.remarks ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '';
+    return '<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ' + borderColor + '">' +
+      '<div style="display:flex;align-items:center;gap:14px">' +
+        '<div style="width:40px;height:40px;border-radius:10px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-tint"></i></div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
+            '<span style="font-size:14px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</span>' +
+            '<span style="font-size:12px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
+            '<span style="font-size:12px;color:var(--text-muted)">' + fmtDate(r.dateOfFlush) + '</span>' +
+            infBadge + ' ' + phBadge +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">' + details + '</div>' +
+          remarks +
+        '</div>' +
+        '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
+          '<button class="btn btn-xs btn-outline" onclick="openPortFlushModal('' + r.id + '')"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" onclick="deletePPRecord('portFlush','' + r.id + '')"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
-function openPortFlushModal(id = null) {
+function openPortFlushModal(id) {
+  id = id || null;
   state.editId = id;
-  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
-  fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) el.value = ''; });
+  var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) el.value = ''; });
   document.getElementById('portFlushModalTitle').textContent = id ? 'Edit Flush Record' : 'Add Port Flush & Dressing Record';
   document.getElementById('pf_dateOfFlush').value = new Date().toISOString().slice(0,10);
   if (id) {
-    const r = DB.portFlush.find(x => x.id === id);
-    if (r) fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) el.value = r[f]||''; });
+    var r = DB.portFlush.find(function(x) { return x.id === id; });
+    if (r) fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) el.value = r[f]||''; });
   }
   openModal('portFlushModal');
 }
 
 function savePortFlush() {
-  const idNo = document.getElementById('pf_idNo').value.trim();
-  const date = document.getElementById('pf_dateOfFlush').value;
+  var idNo = document.getElementById('pf_idNo').value.trim();
+  var date = document.getElementById('pf_dateOfFlush').value;
   if (!idNo || !date) { toast('ID No and Date are required', 'error'); return; }
-  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
-  const obj = { id: state.editId || genId('PFL') };
-  fields.forEach(f => { const el = document.getElementById('pf_' + f); if (el) obj[f] = el.value; });
+  var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  var obj = { id: state.editId || genId('PFL') };
+  fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
-    const idx = DB.portFlush.findIndex(x => x.id === state.editId);
-    DB.portFlush[idx] = obj; toast('Record updated -');
-  } else { DB.portFlush.push(obj); toast('Flush record saved -'); }
+    var idx = DB.portFlush.findIndex(function(x) { return x.id === state.editId; });
+    DB.portFlush[idx] = obj; toast('Record updated');
+  } else { DB.portFlush.push(obj); toast('Flush record saved'); }
   save('portFlush');
   if (GS_ENABLED) gsSaveRecord('portFlush', obj);
   closeModal('portFlushModal'); renderPortFlush();
 }
 
-// -- PICC FLUSH & DRESSING --
-let piccFlushFilter = '';
+// ── PICC FLUSH & DRESSING ──
+var piccFlushFilter = '';
 function renderPiccFlush(search) {
   if (search !== undefined && search !== null) piccFlushFilter = search;
-  const monthEl = document.getElementById('piccFlushMonth');
-  const selectedMonth = monthEl ? monthEl.value : '';
-  let data = [...DB.piccFlush];
-  if (piccFlushFilter) data = data.filter(r => [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(v => v && v.toLowerCase().includes(piccFlushFilter.toLowerCase())));
-  if (selectedMonth) data = data.filter(r => r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth));
-  data.sort((a,b) => (b.dateOfFlush||'').localeCompare(a.dateOfFlush||''));
+  var monthEl = document.getElementById('piccFlushMonth');
+  var selectedMonth = monthEl ? monthEl.value : '';
+  var data = DB.piccFlush.slice();
+  if (piccFlushFilter) data = data.filter(function(r) { return [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(function(v) { return v && v.toLowerCase().includes(piccFlushFilter.toLowerCase()); }); });
+  if (selectedMonth) data = data.filter(function(r) { return r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth); });
+  data.sort(function(a,b) { return (b.dateOfFlush||'').localeCompare(a.dateOfFlush||''); });
 
-  // KPIs
-  const kpiEl = document.getElementById('piccFlushKPIs');
+  var kpiEl = document.getElementById('piccFlushKPIs');
   if (kpiEl) {
-    const total = data.length;
-    const infections = data.filter(r => r.signsOfInfection === 'Yes').length;
-    const highPhlebitis = data.filter(r => parseInt(r.phlebitisScore) >= 2).length;
+    var total = data.length;
+    var infections = data.filter(function(r){return r.signsOfInfection==='Yes';}).length;
+    var highPh = data.filter(function(r){return parseInt(r.phlebitisScore)>=2;}).length;
     kpiEl.innerHTML = [
-      { label:'Total Flushes', val: total, icon:'fa-tint', color:'#8B5CF6', bg:'#ede9fe' },
-      { label:'Signs of Infection', val: infections, icon:'fa-exclamation-circle', color:'#EF4444', bg:'#fee2e2' },
-      { label:'Phlebitis -2', val: highPhlebitis, icon:'fa-thermometer-half', color:'#F59E0B', bg:'#fef3c7' },
-    ].map(k => `<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}"><div class="kpi-icon"><i class="fas ${k.icon}"></i></div><div class="kpi-value">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+      {label:'Total Flushes',val:total,icon:'fa-tint',color:'#8B5CF6',bg:'#ede9fe'},
+      {label:'Signs of Infection',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'},
+      {label:'Phlebitis >= 2',val:highPh,icon:'fa-thermometer-half',color:'#F59E0B',bg:'#fef3c7'}
+    ].map(function(k) { return '<div class="kpi-card" style="--kpi-color:' + k.color + ';--kpi-bg:' + k.bg + '"><div class="kpi-icon"><i class="fas ' + k.icon + '"></i></div><div class="kpi-value">' + k.val + '</div><div class="kpi-label">' + k.label + '</div></div>'; }).join('');
   }
 
-  if (!data.length) {
-  // Card view for PICC Flush
-  const piccContainer = document.getElementById('piccFlushCards');
-  if (!piccContainer) return;
-  if (!data.length) {
-    piccContainer.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click "+ Add Flush Record" to get started</div></div>`;
-    return;
-  }
-  piccContainer.innerHTML = data.map(r => {
-    const hasInfection = r.signsOfInfection === 'Yes';
-    const phScore = parseInt(r.phlebitisScore||0);
-    const backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
-    return `<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ${hasInfection||phScore>=2?'var(--danger)':'#8B5CF6'}">
-      <div style="display:flex;align-items:center;gap:14px">
-        <div style="width:40px;height:40px;border-radius:10px;background:#ede9fe;color:#8B5CF6;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-grip-lines"></i></div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-            <span style="font-size:14px;font-weight:700;color:var(--text)">${r.patientName||'Unknown'}</span>
-            <span style="font-size:12px;color:#8B5CF6;font-weight:600">${r.idNo}</span>
-            <span style="font-size:12px;color:var(--text-muted)">${fmtDate(r.dateOfFlush)}</span>
-            ${hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>'}
-            ${phScore >= 2 ? `<span class="badge badge-danger">Phlebitis ${phScore}</span>` : `<span class="badge badge-success">Phlebitis 0</span>`}
-          </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.diagnosis||'-'}</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">
-            ${r.dressingClean ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Dressing:</span> <span style="font-weight:500;color:${r.dressingClean==='Yes'?'var(--success)':'var(--danger)'}">${r.dressingClean}</span></div>` : ''}
-            ${r.backflowStatus ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Backflow:</span> <span style="font-weight:500;color:${backflowGood?'var(--success)':'var(--danger)'}">${r.backflowStatus}</span></div>` : ''}
-            ${r.flushGiven ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Flush:</span> <span style="font-weight:600;color:#8B5CF6">${r.flushGiven}</span></div>` : ''}
-            ${r.asepticTechnique ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Aseptic:</span> <span style="font-weight:500">${r.asepticTechnique}</span></div>` : ''}
-            ${r.actionTaken ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Action:</span> <span style="font-weight:500">${r.actionTaken}</span></div>` : ''}
-            ${r.nurseInitial ? `<div style="font-size:12px"><span style="color:var(--text-muted)">Nurse:</span> <span style="font-weight:700;color:#8B5CF6">${r.nurseInitial}</span></div>` : ''}
-          </div>
-          ${r.remarks ? `<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">${r.remarks}</div>` : ''}
-        </div>
-        <div class="flex gap-2 no-print" style="flex-shrink:0">
-          <button class="btn btn-xs btn-outline" onclick="openPiccFlushModal('${r.id}')"><i class="fas fa-edit"></i></button>
-          <button class="btn btn-xs btn-danger" onclick="deletePPRecord('piccFlush','${r.id}')"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>
-    </div>`;
+  var container = document.getElementById('piccFlushCards');
+  if (!container) return;
+  if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return; }
+
+  container.innerHTML = data.map(function(r) {
+    var hasInfection = r.signsOfInfection === 'Yes';
+    var phScore = parseInt(r.phlebitisScore||0);
+    var backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
+    var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : '#8B5CF6';
+    var infBadge = hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>';
+    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis 0</span>';
+    var dressingColor = r.dressingClean === 'Yes' ? 'var(--success)' : 'var(--danger)';
+    var backflowColor = backflowGood ? 'var(--success)' : 'var(--danger)';
+    var details = ppRow('Dressing', r.dressingClean, dressingColor) + ppRow('Backflow', r.backflowStatus, backflowColor) + ppRow('Flush', r.flushGiven, '#8B5CF6') + ppRow('Aseptic', r.asepticTechnique) + ppRow('Action', r.actionTaken) + ppRow('Nurse', r.nurseInitial, '#8B5CF6');
+    var remarks = r.remarks ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '';
+    return '<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ' + borderColor + '">' +
+      '<div style="display:flex;align-items:center;gap:14px">' +
+        '<div style="width:40px;height:40px;border-radius:10px;background:#ede9fe;color:#8B5CF6;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-grip-lines"></i></div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
+            '<span style="font-size:14px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</span>' +
+            '<span style="font-size:12px;color:#8B5CF6;font-weight:600">' + r.idNo + '</span>' +
+            '<span style="font-size:12px;color:var(--text-muted)">' + fmtDate(r.dateOfFlush) + '</span>' +
+            infBadge + ' ' + phBadge +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">' + details + '</div>' +
+          remarks +
+        '</div>' +
+        '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
+          '<button class="btn btn-xs btn-outline" onclick="openPiccFlushModal('' + r.id + '')"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" onclick="deletePPRecord('piccFlush','' + r.id + '')"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
-function openPiccFlushModal(id = null) {
+function openPiccFlushModal(id) {
+  id = id || null;
   state.editId = id;
-  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
-  fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) el.value = ''; });
+  var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) el.value = ''; });
   document.getElementById('piccFlushModalTitle').textContent = id ? 'Edit PICC Flush Record' : 'Add PICC Flush & Dressing Record';
   document.getElementById('pc_dateOfFlush').value = new Date().toISOString().slice(0,10);
   if (id) {
-    const r = DB.piccFlush.find(x => x.id === id);
-    if (r) fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) el.value = r[f]||''; });
+    var r = DB.piccFlush.find(function(x) { return x.id === id; });
+    if (r) fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) el.value = r[f]||''; });
   }
   openModal('piccFlushModal');
 }
 
 function savePiccFlush() {
-  const idNo = document.getElementById('pc_idNo').value.trim();
-  const date = document.getElementById('pc_dateOfFlush').value;
+  var idNo = document.getElementById('pc_idNo').value.trim();
+  var date = document.getElementById('pc_dateOfFlush').value;
   if (!idNo || !date) { toast('ID No and Date are required', 'error'); return; }
-  const fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
-  const obj = { id: state.editId || genId('PCF') };
-  fields.forEach(f => { const el = document.getElementById('pc_' + f); if (el) obj[f] = el.value; });
+  var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
+  var obj = { id: state.editId || genId('PCF') };
+  fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
-    const idx = DB.piccFlush.findIndex(x => x.id === state.editId);
-    DB.piccFlush[idx] = obj; toast('Record updated -');
-  } else { DB.piccFlush.push(obj); toast('PICC flush record saved -'); }
+    var idx = DB.piccFlush.findIndex(function(x) { return x.id === state.editId; });
+    DB.piccFlush[idx] = obj; toast('Record updated');
+  } else { DB.piccFlush.push(obj); toast('PICC flush record saved'); }
   save('piccFlush');
   if (GS_ENABLED) gsSaveRecord('piccFlush', obj);
   closeModal('piccFlushModal'); renderPiccFlush();
@@ -6531,12 +6533,12 @@ function savePiccFlush() {
 
 function deletePPRecord(dbKey, id) {
   if (!confirm('Delete this record?')) return;
-  DB[dbKey] = DB[dbKey].filter(r => r.id !== id);
+  DB[dbKey] = DB[dbKey].filter(function(r) { return r.id !== id; });
   save(dbKey);
   if (GS_ENABLED) {
-    const table = SB_TABLES[dbKey];
-    if (table) fetch(`${SB_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
-      method: 'DELETE', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+    var table = SB_TABLES[dbKey];
+    if (table) fetch(SB_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
     });
   }
   if (dbKey === 'portpiccRegister') renderPPRegister();
@@ -6546,16 +6548,13 @@ function deletePPRecord(dbKey, id) {
 }
 
 function exportPortPicc() {
-  const tab = document.querySelector('.pp-tab-btn[style*="var(--primary)"]');
-  const wb = XLSX.utils.book_new();
+  var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(DB.portpiccRegister), 'Line Register');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(DB.portFlush), 'Port Flush');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(DB.piccFlush), 'PICC Flush');
   XLSX.writeFile(wb, 'OncoCare_PortPICC_' + new Date().toISOString().slice(0,10) + '.xlsx');
   toast('Exported successfully');
 }
-
-
 
 </script>
 
