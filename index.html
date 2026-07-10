@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-133704">
+<meta name="version" content="v20260710-134440">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1612,6 +1612,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <div class="form-grid">
         <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
           <input class="form-control" id="ppr_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatient(this.value)">
+          <div id="ppr_duplicateWarn" style="display:none;margin-top:6px;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:12px;color:#92400e;font-weight:500"></div>
         </div>
         <div class="form-group"><label class="form-label">Patient Name</label>
           <input class="form-control" id="ppr_patientName" placeholder="Auto-filled or enter name">
@@ -6135,6 +6136,18 @@ function lookupPPPatient(val) {
   var p = DB.patients.find(function(x) { return x.hospitalNumber === val || x.nationalId === val; });
   document.getElementById('ppr_patientName').value = p ? (p.fullName||'') : '';
   document.getElementById('ppr_diagnosis').value = p ? (p.diagnosis||'') : '';
+  // Check if already registered with an active line
+  var existing = DB.portpiccRegister.filter(function(x) { return x.idNo === val && !x.dateOfRemoval; });
+  var warn = document.getElementById('ppr_duplicateWarn');
+  if (warn) {
+    if (existing.length > 0 && !state.editId) {
+      var types = existing.map(function(x) { return x.lineType; }).join(', ');
+      warn.style.display = '';
+      warn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> This patient already has an active ' + types + ' line on the register.';
+    } else {
+      warn.style.display = 'none';
+    }
+  }
 }
 
 function lookupPPPatientFlush(prefix, val) {
@@ -6243,6 +6256,8 @@ function openPPRegisterModal(id) {
   state.editId = id;
   var fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
   fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) el.value = ''; });
+  var warn = document.getElementById('ppr_duplicateWarn');
+  if (warn) warn.style.display = 'none';
   document.getElementById('ppRegisterModalTitle').textContent = id ? 'Edit Line Entry' : 'Add Line Entry';
   if (id) {
     var r = DB.portpiccRegister.find(function(x) { return x.id === id; });
@@ -6260,8 +6275,18 @@ function savePPRegister() {
   fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
   if (state.editId) {
     var idx = DB.portpiccRegister.findIndex(function(x) { return x.id === state.editId; });
-    DB.portpiccRegister[idx] = obj; toast('Entry updated');
-  } else { DB.portpiccRegister.push(obj); toast('Entry saved'); }
+    DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
+  } else {
+    // Check for duplicate: same ID No and same Line Type
+    var duplicate = DB.portpiccRegister.find(function(x) {
+      return x.idNo === idNo && x.lineType === lineType && !x.dateOfRemoval;
+    });
+    if (duplicate) {
+      toast('⚠️ ' + idNo + ' already has an active ' + lineType + ' line on the register!', 'error');
+      return;
+    }
+    DB.portpiccRegister.push(obj); toast('Entry saved ✅');
+  }
   save('portpiccRegister');
   if (GS_ENABLED) gsSaveRecord('portpiccRegister', obj);
   closeModal('ppRegisterModal'); renderPPRegister();
