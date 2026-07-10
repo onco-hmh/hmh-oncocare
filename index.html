@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-143330">
+<meta name="version" content="v20260710-144650">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6415,7 +6415,7 @@ function renderPortFlush(search) {
     var backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
     var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : 'var(--success)';
     var infBadge = hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>';
-    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis 0</span>';
+    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis ' + phScore + '</span>';
     var dressingColor = r.dressingClean === 'Yes' ? 'var(--success)' : 'var(--danger)';
     var backflowColor = backflowGood ? 'var(--success)' : 'var(--danger)';
     var details = ppRow('Dressing', r.dressingClean, dressingColor) + ppRow('Backflow', r.backflowStatus, backflowColor) + ppRow('Flush', r.flushGiven, 'var(--primary)') + ppRow('Aseptic', r.asepticTechnique) + ppRow('Action', r.actionTaken) + ppRow('Nurse', r.nurseInitial, 'var(--primary)');
@@ -6506,7 +6506,7 @@ function renderPiccFlush(search) {
     var backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
     var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : '#8B5CF6';
     var infBadge = hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>';
-    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis 0</span>';
+    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis ' + phScore + '</span>';
     var dressingColor = r.dressingClean === 'Yes' ? 'var(--success)' : 'var(--danger)';
     var backflowColor = backflowGood ? 'var(--success)' : 'var(--danger)';
     var details = ppRow('Dressing', r.dressingClean, dressingColor) + ppRow('Backflow', r.backflowStatus, backflowColor) + ppRow('Flush', r.flushGiven, '#8B5CF6') + ppRow('Aseptic', r.asepticTechnique) + ppRow('Action', r.actionTaken) + ppRow('Nurse', r.nurseInitial, '#8B5CF6');
