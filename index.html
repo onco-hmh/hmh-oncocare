@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-133310">
+<meta name="version" content="v20260710-133704">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6189,11 +6189,12 @@ function renderPPRegister(search, typeFilter) {
     var hasInfection = r.signsOfInfection === 'Yes';
     var phScore = parseInt(r.phlebitisScore||0);
     
+    var phScore = parseInt(r.phlebitisScore||0);
     var badges = '';
     badges += '<span class="badge" style="background:' + lineBg + ';color:' + lineColor + ';font-size:11px">' + (r.lineType||'-') + '</span> ';
     badges += isActive ? '<span class="badge badge-success" style="font-size:11px">Active</span> ' : '<span class="badge" style="background:#f3f4f6;color:#6B7280;font-size:11px">Removed</span> ';
     if (hasInfection) badges += '<span class="badge badge-danger" style="font-size:11px"><i class="fas fa-exclamation-triangle"></i> Infection</span> ';
-    if (phScore >= 2) badges += '<span class="badge badge-warning" style="font-size:11px">Phlebitis ' + phScore + '</span>';
+    badges += phScore >= 2 ? '<span class="badge badge-danger" style="font-size:11px">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success" style="font-size:11px">Phlebitis ' + phScore + '</span>';
 
     var details = '';
     details += ppRow('Site', r.insertionSite);
@@ -6205,9 +6206,6 @@ function renderPPRegister(search, typeFilter) {
     details += ppRow('Method', r.confirmationMethod);
     details += ppRow('Purpose', r.purpose);
     details += ppRow('Flush Given', r.flushGiven, 'var(--primary)');
-    var phScore = parseInt(r.phlebitisScore||0);
-    var phColor = phScore >= 2 ? 'var(--danger)' : 'var(--success)';
-    if (r.phlebitisScore !== undefined && r.phlebitisScore !== '') details += ppRow('Phlebitis Score', r.phlebitisScore, phColor);
     details += ppRow('Nurse', r.nurseInitial);
     if (r.dateOfRemoval) details += ppRow('Removed', fmtDate(r.dateOfRemoval), 'var(--danger)');
     if (r.reasonForRemoval) details += ppRow('Reason', r.reasonForRemoval);
