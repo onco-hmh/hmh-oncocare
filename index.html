@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260709-065456">
+<meta name="version" content="v20260710-131554">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6232,8 +6232,8 @@ function renderPPRegister(search, typeFilter) {
           extra +
         '</div>' +
         '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" onclick="openPPRegisterModal('' + r.id + '')" title="Edit"><i class="fas fa-edit"></i></button>' +
-          '<button class="btn btn-xs btn-danger" onclick="deletePPRecord('portpiccRegister','' + r.id + '')" title="Delete"><i class="fas fa-trash"></i></button>' +
+          '<button class="btn btn-xs btn-outline" onclick="openPPRegisterModal(this.dataset.id)" data-id="' + r.id + '" title="Edit"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" data-pp-del="portpiccRegister" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -6322,8 +6322,8 @@ function renderPortFlush(search) {
           remarks +
         '</div>' +
         '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" onclick="openPortFlushModal('' + r.id + '')"><i class="fas fa-edit"></i></button>' +
-          '<button class="btn btn-xs btn-danger" onclick="deletePPRecord('portFlush','' + r.id + '')"><i class="fas fa-trash"></i></button>' +
+          '<button class="btn btn-xs btn-outline" onclick="openPortFlushModal(this.dataset.id)" data-id="' + r.id + '"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" data-pp-del="portFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -6413,8 +6413,8 @@ function renderPiccFlush(search) {
           remarks +
         '</div>' +
         '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" onclick="openPiccFlushModal('' + r.id + '')"><i class="fas fa-edit"></i></button>' +
-          '<button class="btn btn-xs btn-danger" onclick="deletePPRecord('piccFlush','' + r.id + '')"><i class="fas fa-trash"></i></button>' +
+          '<button class="btn btn-xs btn-outline" onclick="openPiccFlushModal(this.dataset.id)" data-id="' + r.id + '"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" data-pp-del="piccFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
     '</div>';
