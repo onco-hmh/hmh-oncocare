@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-140823">
+<meta name="version" content="v20260710-141243">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6295,13 +6295,41 @@ function savePPRegister() {
     var idx = DB.portpiccRegister.findIndex(function(x) { return x.id === state.editId; });
     DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
   } else {
-    // Check for duplicate: same ID No and same Line Type
+    // Check for duplicate: same ID No and same Line Type (local + Supabase)
     var duplicate = DB.portpiccRegister.find(function(x) {
       return x.idNo === idNo && x.lineType === lineType && !x.dateOfRemoval;
     });
     if (duplicate) {
       toast('⚠️ ' + idNo + ' already has an active ' + lineType + ' line on the register!', 'error');
       return;
+    }
+    // Also check Supabase in case local is out of sync
+    if (GS_ENABLED) {
+      var btn = document.querySelector('#ppRegisterModal .btn-primary');
+      if (btn) btn.disabled = true;
+      sbFetch('portpicc_register', {
+        params: '"idNo"=eq.' + encodeURIComponent(idNo) + '&"lineType"=eq.' + encodeURIComponent(lineType) + '&"dateOfRemoval"=eq.'
+      }).then(function(res) {
+        if (btn) btn.disabled = false;
+        var remoteActive = (res && res.data) ? res.data.filter(function(x) { return !x.dateOfRemoval; }) : [];
+        if (remoteActive.length > 0) {
+          toast('⚠️ ' + idNo + ' already has an active ' + lineType + ' line on the register!', 'error');
+          return;
+        }
+        DB.portpiccRegister.push(obj);
+        save('portpiccRegister');
+        gsSaveRecord('portpiccRegister', obj);
+        closeModal('ppRegisterModal'); renderPPRegister();
+        toast('Entry saved ✅');
+      }).catch(function() {
+        // If Supabase check fails, trust local
+        DB.portpiccRegister.push(obj);
+        save('portpiccRegister');
+        gsSaveRecord('portpiccRegister', obj);
+        closeModal('ppRegisterModal'); renderPPRegister();
+        toast('Entry saved ✅');
+      });
+      return; // Wait for async check
     }
     DB.portpiccRegister.push(obj); toast('Entry saved ✅');
   }
