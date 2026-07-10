@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-151014">
+<meta name="version" content="v20260710-151432">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6512,7 +6512,7 @@ function renderPiccFlush(search) {
 
   var container = document.getElementById('piccFlushCards');
   if (!container) return;
-  if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return;
+  if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return; }
 
   var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">';
   data.forEach(function(r) {
@@ -6626,7 +6626,6 @@ function exportPortPicc() {
 
 
 
-}
 </script>
 
 </body>
