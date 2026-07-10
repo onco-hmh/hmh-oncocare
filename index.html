@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-132828">
+<meta name="version" content="v20260710-133310">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1700,7 +1700,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Phlebitis Score</label>
           <select class="form-control" id="ppr_phlebitisScore">
             <option value="">Select</option>
-            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option>
           </select>
         </div>
         <div class="form-group"><label class="form-label">Flush Given</label>
@@ -1798,7 +1798,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Phlebitis Score</label>
           <select class="form-control" id="pf_phlebitisScore">
             <option value="">Select</option>
-            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option>
           </select>
         </div>
         <div class="form-group"><label class="form-label">Flush Given</label>
@@ -1878,7 +1878,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
         <div class="form-group"><label class="form-label">Phlebitis Score</label>
           <select class="form-control" id="pc_phlebitisScore">
             <option value="">Select</option>
-            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option>
           </select>
         </div>
         <div class="form-group"><label class="form-label">Flush Given</label>
@@ -6205,6 +6205,9 @@ function renderPPRegister(search, typeFilter) {
     details += ppRow('Method', r.confirmationMethod);
     details += ppRow('Purpose', r.purpose);
     details += ppRow('Flush Given', r.flushGiven, 'var(--primary)');
+    var phScore = parseInt(r.phlebitisScore||0);
+    var phColor = phScore >= 2 ? 'var(--danger)' : 'var(--success)';
+    if (r.phlebitisScore !== undefined && r.phlebitisScore !== '') details += ppRow('Phlebitis Score', r.phlebitisScore, phColor);
     details += ppRow('Nurse', r.nurseInitial);
     if (r.dateOfRemoval) details += ppRow('Removed', fmtDate(r.dateOfRemoval), 'var(--danger)');
     if (r.reasonForRemoval) details += ppRow('Reason', r.reasonForRemoval);
