@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-144650">
+<meta name="version" content="v20260710-145541">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6409,38 +6409,44 @@ function renderPortFlush(search) {
   if (!container) return;
   if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return; }
 
-  container.innerHTML = data.map(function(r) {
+  container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">' +
+    data.map(function(r) {
     var hasInfection = r.signsOfInfection === 'Yes';
     var phScore = parseInt(r.phlebitisScore||0);
     var backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
-    var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : 'var(--success)';
-    var infBadge = hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>';
-    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis ' + phScore + '</span>';
-    var dressingColor = r.dressingClean === 'Yes' ? 'var(--success)' : 'var(--danger)';
+    var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : 'var(--primary)';
+    var infBadge = hasInfection ? '<span class="badge badge-danger" style="font-size:10px"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success" style="font-size:10px">No Infection</span>';
+    var phBadge = phScore >= 2 ? '<span class="badge badge-danger" style="font-size:10px">Ph ' + phScore + '</span>' : '<span class="badge badge-success" style="font-size:10px">Ph ' + phScore + '</span>';
+    var dressingOk = r.dressingClean === 'Yes';
     var backflowColor = backflowGood ? 'var(--success)' : 'var(--danger)';
-    var details = ppRow('Dressing', r.dressingClean, dressingColor) + ppRow('Backflow', r.backflowStatus, backflowColor) + ppRow('Flush', r.flushGiven, 'var(--primary)') + ppRow('Aseptic', r.asepticTechnique) + ppRow('Action', r.actionTaken) + ppRow('Nurse', r.nurseInitial, 'var(--primary)');
-    var remarks = r.remarks ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '';
-    return '<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ' + borderColor + '">' +
-      '<div style="display:flex;align-items:center;gap:14px">' +
-        '<div style="width:40px;height:40px;border-radius:10px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-tint"></i></div>' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
-            '<span style="font-size:14px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</span>' +
-            '<span style="font-size:12px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
-            '<span style="font-size:12px;color:var(--text-muted)">' + fmtDate(r.dateOfFlush) + '</span>' +
-            infBadge + ' ' + phBadge +
+    return '<div style="background:var(--card-bg);border-radius:12px;border:1px solid var(--border);border-top:3px solid ' + borderColor + ';padding:12px 14px;position:relative">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">' +
+            '<span style="font-size:11px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted)">·</span>' +
+            '<span style="font-size:11px;color:var(--text-muted)">' + fmtDate(r.dateOfFlush) + '</span>' +
           '</div>' +
-          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
-          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">' + details + '</div>' +
-          remarks +
         '</div>' +
-        '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" data-pp-edit="portFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)"><i class="fas fa-edit"></i></button>' +
-          '<button class="btn btn-xs btn-danger" data-pp-del="portFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
+        '<div style="display:flex;gap:4px">' +
+          '<button class="btn btn-xs btn-outline" data-pp-edit="portFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)" style="padding:3px 7px"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" data-pp-del="portFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)" style="padding:3px 7px"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">' + infBadge + ' ' + phBadge + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:11px">' +
+        '<div style="color:var(--text-muted)">Dressing <span style="color:' + (dressingOk?'var(--success)':'var(--danger)') + ';font-weight:600">' + (r.dressingClean||'-') + '</span></div>' +
+        '<div style="color:var(--text-muted)">Aseptic <span style="font-weight:600;color:var(--text)">' + (r.asepticTechnique||'-') + '</span></div>' +
+        '<div style="color:var(--text-muted)">Flush <span style="color:var(--primary);font-weight:600">' + (r.flushGiven||'-') + '</span></div>' +
+        '<div style="color:var(--text-muted)">Nurse <span style="font-weight:700;color:var(--primary)">' + (r.nurseInitial||'-') + '</span></div>' +
+      '</div>' +
+      (r.backflowStatus ? '<div style="margin-top:6px;font-size:10px;padding:3px 8px;background:var(--bg);border-radius:4px;color:' + backflowColor + ';font-weight:500">' + r.backflowStatus + '</div>' : '') +
+      (r.actionTaken ? '<div style="margin-top:4px;font-size:10px;color:var(--text-muted)">Action: ' + r.actionTaken + '</div>' : '') +
+      (r.remarks ? '<div style="margin-top:4px;font-size:10px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '') +
     '</div>';
-  }).join('');
+  }).join('') + '</div>';
 }
 
 function openPortFlushModal(id) {
@@ -6498,38 +6504,44 @@ function renderPiccFlush(search) {
 
   var container = document.getElementById('piccFlushCards');
   if (!container) return;
-  if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return; }
+  if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-tint"></i></div><div class="empty-title">No PICC flush records</div><div class="empty-text">Click &quot;+ Add Flush Record&quot; to get started</div></div>'; return;
 
-  container.innerHTML = data.map(function(r) {
+  container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">' +
+    data.map(function(r) {
     var hasInfection = r.signsOfInfection === 'Yes';
     var phScore = parseInt(r.phlebitisScore||0);
     var backflowGood = (r.backflowStatus||'').toLowerCase().includes('good');
     var borderColor = (hasInfection || phScore >= 2) ? 'var(--danger)' : '#8B5CF6';
-    var infBadge = hasInfection ? '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success">No Infection</span>';
-    var phBadge = phScore >= 2 ? '<span class="badge badge-danger">Phlebitis ' + phScore + '</span>' : '<span class="badge badge-success">Phlebitis ' + phScore + '</span>';
-    var dressingColor = r.dressingClean === 'Yes' ? 'var(--success)' : 'var(--danger)';
+    var infBadge = hasInfection ? '<span class="badge badge-danger" style="font-size:10px"><i class="fas fa-exclamation-triangle"></i> Infection</span>' : '<span class="badge badge-success" style="font-size:10px">No Infection</span>';
+    var phBadge = phScore >= 2 ? '<span class="badge badge-danger" style="font-size:10px">Ph ' + phScore + '</span>' : '<span class="badge badge-success" style="font-size:10px">Ph ' + phScore + '</span>';
+    var dressingOk = r.dressingClean === 'Yes';
     var backflowColor = backflowGood ? 'var(--success)' : 'var(--danger)';
-    var details = ppRow('Dressing', r.dressingClean, dressingColor) + ppRow('Backflow', r.backflowStatus, backflowColor) + ppRow('Flush', r.flushGiven, '#8B5CF6') + ppRow('Aseptic', r.asepticTechnique) + ppRow('Action', r.actionTaken) + ppRow('Nurse', r.nurseInitial, '#8B5CF6');
-    var remarks = r.remarks ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '';
-    return '<div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:4px solid ' + borderColor + '">' +
-      '<div style="display:flex;align-items:center;gap:14px">' +
-        '<div style="width:40px;height:40px;border-radius:10px;background:#ede9fe;color:#8B5CF6;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"><i class="fas fa-grip-lines"></i></div>' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
-            '<span style="font-size:14px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</span>' +
-            '<span style="font-size:12px;color:#8B5CF6;font-weight:600">' + r.idNo + '</span>' +
-            '<span style="font-size:12px;color:var(--text-muted)">' + fmtDate(r.dateOfFlush) + '</span>' +
-            infBadge + ' ' + phBadge +
+    return '<div style="background:var(--card-bg);border-radius:12px;border:1px solid var(--border);border-top:3px solid ' + borderColor + ';padding:12px 14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">' +
+            '<span style="font-size:11px;color:#8B5CF6;font-weight:600">' + r.idNo + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted)">·</span>' +
+            '<span style="font-size:11px;color:var(--text-muted)">' + fmtDate(r.dateOfFlush) + '</span>' +
           '</div>' +
-          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
-          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">' + details + '</div>' +
-          remarks +
         '</div>' +
-        '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" data-pp-edit="piccFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)"><i class="fas fa-edit"></i></button>' +
-          '<button class="btn btn-xs btn-danger" data-pp-del="piccFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
+        '<div style="display:flex;gap:4px">' +
+          '<button class="btn btn-xs btn-outline" data-pp-edit="piccFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)" style="padding:3px 7px"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-danger" data-pp-del="piccFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)" style="padding:3px 7px"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">' + infBadge + ' ' + phBadge + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:11px">' +
+        '<div style="color:var(--text-muted)">Dressing <span style="color:' + (dressingOk?'var(--success)':'var(--danger)') + ';font-weight:600">' + (r.dressingClean||'-') + '</span></div>' +
+        '<div style="color:var(--text-muted)">Aseptic <span style="font-weight:600;color:var(--text)">' + (r.asepticTechnique||'-') + '</span></div>' +
+        '<div style="color:var(--text-muted)">Flush <span style="color:#8B5CF6;font-weight:600">' + (r.flushGiven||'-') + '</span></div>' +
+        '<div style="color:var(--text-muted)">Nurse <span style="font-weight:700;color:#8B5CF6">' + (r.nurseInitial||'-') + '</span></div>' +
+      '</div>' +
+      (r.backflowStatus ? '<div style="margin-top:6px;font-size:10px;padding:3px 8px;background:var(--bg);border-radius:4px;color:' + backflowColor + ';font-weight:500">' + r.backflowStatus + '</div>' : '') +
+      (r.actionTaken ? '<div style="margin-top:4px;font-size:10px;color:var(--text-muted)">Action: ' + r.actionTaken + '</div>' : '') +
+      (r.remarks ? '<div style="margin-top:4px;font-size:10px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '') +
     '</div>';
   }).join('');
 }
@@ -6604,6 +6616,8 @@ function exportPortPicc() {
 }
 
 
+
+}
 </script>
 
 </body>
