@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-142625">
+<meta name="version" content="v20260710-143330">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6140,31 +6140,73 @@ function lookupPPPatient(val) {
 }
 
 function checkPPDuplicate() {
-  if (state.editId) return; // Skip check when editing
+  if (state.editId) return;
   var idNo = document.getElementById('ppr_idNo').value.trim();
   var lineType = document.getElementById('ppr_lineType').value;
   var warn = document.getElementById('ppr_duplicateWarn');
+  var saveBtn = document.querySelector('#ppRegisterModal .modal-footer .btn-primary');
   if (!warn) return;
-  if (!idNo) { warn.style.display = 'none'; return; }
-  // Check all active lines for this patient
-  var existing = DB.portpiccRegister.filter(function(x) { return x.idNo === idNo && !x.dateOfRemoval; });
-  if (existing.length === 0) { warn.style.display = 'none'; return; }
-  // Check if specific line type is duplicate
-  var sameType = lineType ? existing.filter(function(x) { return x.lineType === lineType; }) : [];
-  if (sameType.length > 0) {
+
+  if (!idNo) {
+    warn.style.display = 'none';
+    if (saveBtn) saveBtn.disabled = false;
+    return;
+  }
+
+  // Check active lines
+  var activeMatch = DB.portpiccRegister.find(function(x) {
+    return x.idNo === idNo && x.lineType === lineType && lineType && !x.dateOfRemoval;
+  });
+  var anyActive = DB.portpiccRegister.filter(function(x) {
+    return x.idNo === idNo && !x.dateOfRemoval;
+  });
+  var removedMatch = DB.portpiccRegister.find(function(x) {
+    return x.idNo === idNo && x.lineType === lineType && lineType && x.dateOfRemoval;
+  });
+
+  if (activeMatch) {
+    // BLOCK - same type active line exists
+    warn.style.display = '';
     warn.style.background = '#fee2e2';
     warn.style.borderColor = '#ef4444';
     warn.style.color = '#991b1b';
+    warn.innerHTML = '<i class="fas fa-ban"></i> <strong>Cannot save!</strong> This patient already has an active <strong>' + lineType + '</strong> line on the register.';
+    if (saveBtn) saveBtn.disabled = true;
+  } else if (anyActive.length > 0 && lineType) {
+    // INFO - different type active
+    var types = anyActive.map(function(x) { return x.lineType; }).join(', ');
     warn.style.display = '';
-    warn.innerHTML = '<i class="fas fa-ban"></i> <strong>Duplicate!</strong> This patient already has an active <strong>' + lineType + '</strong> line on the register. Cannot save.';
-  } else {
-    // Different type - show info warning
-    var types = existing.map(function(x) { return x.lineType; }).join(', ');
     warn.style.background = '#fef3c7';
     warn.style.borderColor = '#f59e0b';
     warn.style.color = '#92400e';
+    warn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> This patient already has an active <strong>' + types + '</strong> line. You can still add a different line type.';
+    if (saveBtn) saveBtn.disabled = false;
+  } else if (removedMatch) {
+    // WARN - previously removed
     warn.style.display = '';
-    warn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> This patient already has an active <strong>' + types + '</strong> line on the register.';
+    warn.style.background = '#fef3c7';
+    warn.style.borderColor = '#f59e0b';
+    warn.style.color = '#92400e';
+    warn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> This patient had a previous <strong>' + lineType + '</strong> line removed on <strong>' + removedMatch.dateOfRemoval + '</strong>. You can still add a new entry.';
+    if (saveBtn) saveBtn.disabled = false;
+  } else if (idNo) {
+    // Check any previous record of any type
+    var anyRecord = DB.portpiccRegister.filter(function(x) { return x.idNo === idNo; });
+    if (anyRecord.length > 0 && !lineType) {
+      warn.style.display = '';
+      warn.style.background = '#fef3c7';
+      warn.style.borderColor = '#f59e0b';
+      warn.style.color = '#92400e';
+      var summary = anyRecord.map(function(x) { return x.lineType + (x.dateOfRemoval ? ' (removed)' : ' (active)'); }).join(', ');
+      warn.innerHTML = '<i class="fas fa-info-circle"></i> Previous records: ' + summary + '. Please select line type to check for duplicates.';
+      if (saveBtn) saveBtn.disabled = false;
+    } else {
+      warn.style.display = 'none';
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  } else {
+    warn.style.display = 'none';
+    if (saveBtn) saveBtn.disabled = false;
   }
 }
 
@@ -6276,6 +6318,8 @@ function openPPRegisterModal(id) {
   fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) el.value = ''; });
   var warn = document.getElementById('ppr_duplicateWarn');
   if (warn) warn.style.display = 'none';
+  var saveBtn = document.querySelector('#ppRegisterModal .modal-footer .btn-primary');
+  if (saveBtn) saveBtn.disabled = false;
   document.getElementById('ppRegisterModalTitle').textContent = id ? 'Edit Line Entry' : 'Add Line Entry';
   if (id) {
     var r = DB.portpiccRegister.find(function(x) { return x.id === id; });
@@ -6295,19 +6339,13 @@ function savePPRegister() {
     var idx = DB.portpiccRegister.findIndex(function(x) { return x.id === state.editId; });
     DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
   } else {
-    // Check for duplicate: same ID No and same Line Type
+    // Final duplicate check before save
     var activeMatch = DB.portpiccRegister.find(function(x) {
       return x.idNo === idNo && x.lineType === lineType && !x.dateOfRemoval;
     });
     if (activeMatch) {
-      toast('⚠️ ' + idNo + ' already has an active ' + lineType + ' line on the register!', 'error');
+      toast('Cannot save - active ' + lineType + ' line already exists for ' + idNo, 'error');
       return;
-    }
-    var removedMatch = DB.portpiccRegister.find(function(x) {
-      return x.idNo === idNo && x.lineType === lineType && x.dateOfRemoval;
-    });
-    if (removedMatch) {
-      if (!confirm(idNo + ' had a previous ' + lineType + ' line (removed on ' + removedMatch.dateOfRemoval + '). Add a new ' + lineType + ' line entry?')) return;
     }
     // Also check Supabase in case local is out of sync
     if (GS_ENABLED) {
