@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-145541">
+<meta name="version" content="v20260710-150100">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6543,7 +6543,7 @@ function renderPiccFlush(search) {
       (r.actionTaken ? '<div style="margin-top:4px;font-size:10px;color:var(--text-muted)">Action: ' + r.actionTaken + '</div>' : '') +
       (r.remarks ? '<div style="margin-top:4px;font-size:10px;color:var(--text-muted);font-style:italic">' + r.remarks + '</div>' : '') +
     '</div>';
-  }).join('');
+  }).join('') + '</div>';
 }
 
 function openPiccFlushModal(id) {
