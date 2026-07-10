@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-135027">
+<meta name="version" content="v20260710-140527">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1621,7 +1621,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <input class="form-control" id="ppr_diagnosis" readonly placeholder="Auto-filled">
         </div>
         <div class="form-group"><label class="form-label">Line Type <span class="req">*</span></label>
-          <select class="form-control" id="ppr_lineType">
+          <select class="form-control" id="ppr_lineType" onchange="checkPPDuplicate()">
             <option value="">Select</option>
             <option>PORT</option>
             <option>PICC</option>
@@ -6136,17 +6136,35 @@ function lookupPPPatient(val) {
   var p = DB.patients.find(function(x) { return x.hospitalNumber === val || x.nationalId === val; });
   document.getElementById('ppr_patientName').value = p ? (p.fullName||'') : '';
   document.getElementById('ppr_diagnosis').value = p ? (p.diagnosis||'') : '';
-  // Check if already registered with an active line
-  var existing = DB.portpiccRegister.filter(function(x) { return x.idNo === val && !x.dateOfRemoval; });
+  checkPPDuplicate();
+}
+
+function checkPPDuplicate() {
+  if (state.editId) return; // Skip check when editing
+  var idNo = document.getElementById('ppr_idNo').value.trim();
+  var lineType = document.getElementById('ppr_lineType').value;
   var warn = document.getElementById('ppr_duplicateWarn');
-  if (warn) {
-    if (existing.length > 0 && !state.editId) {
-      var types = existing.map(function(x) { return x.lineType; }).join(', ');
-      warn.style.display = '';
-      warn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> This patient already has an active ' + types + ' line on the register.';
-    } else {
-      warn.style.display = 'none';
-    }
+  if (!warn) return;
+  if (!idNo) { warn.style.display = 'none'; return; }
+  // Check all active lines for this patient
+  var existing = DB.portpiccRegister.filter(function(x) { return x.idNo === idNo && !x.dateOfRemoval; });
+  if (existing.length === 0) { warn.style.display = 'none'; return; }
+  // Check if specific line type is duplicate
+  var sameType = lineType ? existing.filter(function(x) { return x.lineType === lineType; }) : [];
+  if (sameType.length > 0) {
+    warn.style.background = '#fee2e2';
+    warn.style.borderColor = '#ef4444';
+    warn.style.color = '#991b1b';
+    warn.style.display = '';
+    warn.innerHTML = '<i class="fas fa-ban"></i> <strong>Duplicate!</strong> This patient already has an active <strong>' + lineType + '</strong> line on the register. Cannot save.';
+  } else {
+    // Different type - show info warning
+    var types = existing.map(function(x) { return x.lineType; }).join(', ');
+    warn.style.background = '#fef3c7';
+    warn.style.borderColor = '#f59e0b';
+    warn.style.color = '#92400e';
+    warn.style.display = '';
+    warn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> This patient already has an active <strong>' + types + '</strong> line on the register.';
   }
 }
 
