@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-134440">
+<meta name="version" content="v20260710-135027">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6243,7 +6243,7 @@ function renderPPRegister(search, typeFilter) {
           extra +
         '</div>' +
         '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" onclick="openPPRegisterModal(this.dataset.id)" data-id="' + r.id + '" title="Edit"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-outline" data-pp-edit="portpiccRegister" data-pp-id="' + r.id + '" onclick="ppEditClick(this)" title="Edit"><i class="fas fa-edit"></i></button>' +
           '<button class="btn btn-xs btn-danger" data-pp-del="portpiccRegister" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
@@ -6345,7 +6345,7 @@ function renderPortFlush(search) {
           remarks +
         '</div>' +
         '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" onclick="openPortFlushModal(this.dataset.id)" data-id="' + r.id + '"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-outline" data-pp-edit="portFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)"><i class="fas fa-edit"></i></button>' +
           '<button class="btn btn-xs btn-danger" data-pp-del="portFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
@@ -6436,7 +6436,7 @@ function renderPiccFlush(search) {
           remarks +
         '</div>' +
         '<div class="flex gap-2 no-print" style="flex-shrink:0">' +
-          '<button class="btn btn-xs btn-outline" onclick="openPiccFlushModal(this.dataset.id)" data-id="' + r.id + '"><i class="fas fa-edit"></i></button>' +
+          '<button class="btn btn-xs btn-outline" data-pp-edit="piccFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)"><i class="fas fa-edit"></i></button>' +
           '<button class="btn btn-xs btn-danger" data-pp-del="piccFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
@@ -6474,6 +6474,20 @@ function savePiccFlush() {
   closeModal('piccFlushModal'); renderPiccFlush();
 }
 
+
+function ppDelClick(btn) {
+  var type = btn.getAttribute('data-pp-del');
+  var id = btn.getAttribute('data-pp-id');
+  if (type && id) deletePPRecord(type, id);
+}
+function ppEditClick(btn) {
+  var type = btn.getAttribute('data-pp-edit');
+  var id = btn.getAttribute('data-pp-id');
+  if (!type || !id) return;
+  if (type === 'portpiccRegister') openPPRegisterModal(id);
+  else if (type === 'portFlush') openPortFlushModal(id);
+  else if (type === 'piccFlush') openPiccFlushModal(id);
+}
 function deletePPRecord(dbKey, id) {
   if (!confirm('Delete this record?')) return;
   DB[dbKey] = DB[dbKey].filter(function(r) { return r.id !== id; });
