@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-141243">
+<meta name="version" content="v20260710-141526">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6295,13 +6295,21 @@ function savePPRegister() {
     var idx = DB.portpiccRegister.findIndex(function(x) { return x.id === state.editId; });
     DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
   } else {
-    // Check for duplicate: same ID No and same Line Type (local + Supabase)
-    var duplicate = DB.portpiccRegister.find(function(x) {
+    // Check for duplicate: same ID No and same Line Type
+    var activeMatch = DB.portpiccRegister.find(function(x) {
       return x.idNo === idNo && x.lineType === lineType && !x.dateOfRemoval;
     });
-    if (duplicate) {
+    if (activeMatch) {
       toast('⚠️ ' + idNo + ' already has an active ' + lineType + ' line on the register!', 'error');
       return;
+    }
+    var removedMatch = DB.portpiccRegister.find(function(x) {
+      return x.idNo === idNo && x.lineType === lineType && x.dateOfRemoval;
+    });
+    if (removedMatch) {
+      if (!confirm(idNo + ' had a previous ' + lineType + ' line (removed on ' + removedMatch.dateOfRemoval + ').
+
+Add a new ' + lineType + ' line entry?')) return;
     }
     // Also check Supabase in case local is out of sync
     if (GS_ENABLED) {
