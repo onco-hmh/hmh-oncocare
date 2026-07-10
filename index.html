@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-141526">
+<meta name="version" content="v20260710-142625">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6307,9 +6307,7 @@ function savePPRegister() {
       return x.idNo === idNo && x.lineType === lineType && x.dateOfRemoval;
     });
     if (removedMatch) {
-      if (!confirm(idNo + ' had a previous ' + lineType + ' line (removed on ' + removedMatch.dateOfRemoval + ').
-
-Add a new ' + lineType + ' line entry?')) return;
+      if (!confirm(idNo + ' had a previous ' + lineType + ' line (removed on ' + removedMatch.dateOfRemoval + '). Add a new ' + lineType + ' line entry?')) return;
     }
     // Also check Supabase in case local is out of sync
     if (GS_ENABLED) {
