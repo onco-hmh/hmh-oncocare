@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-150100">
+<meta name="version" content="v20260710-150525">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6123,8 +6123,16 @@ function switchPPTab(tab) {
     }
   });
   if (tab === 'register') renderPPRegister();
-  if (tab === 'portflush') { initMonthFilter('portFlushMonth'); renderPortFlush(); }
-  if (tab === 'piccflush') { initMonthFilter('piccFlushMonth'); renderPiccFlush(); }
+  if (tab === 'portflush') {
+    var portMon = document.getElementById('portFlushMonth');
+    if (portMon && portMon.value && !/^\d{4}-\d{2}$/.test(portMon.value)) portMon.value = '';
+    renderPortFlush();
+  }
+  if (tab === 'piccflush') {
+    var piccMon = document.getElementById('piccFlushMonth');
+    if (piccMon && piccMon.value && !/^\d{4}-\d{2}$/.test(piccMon.value)) piccMon.value = '';
+    renderPiccFlush();
+  }
 }
 
 function initMonthFilter(id) {
@@ -6387,7 +6395,7 @@ var portFlushFilter = '';
 function renderPortFlush(search) {
   if (search !== undefined && search !== null) portFlushFilter = search;
   var monthEl = document.getElementById('portFlushMonth');
-  var selectedMonth = monthEl ? monthEl.value : '';
+  var selectedMonth = (monthEl && monthEl.value && /^\d{4}-\d{2}$/.test(monthEl.value)) ? monthEl.value : '';
   var data = DB.portFlush.slice();
   if (portFlushFilter) data = data.filter(function(r) { return [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(function(v) { return v && v.toLowerCase().includes(portFlushFilter.toLowerCase()); }); });
   if (selectedMonth) data = data.filter(function(r) { return r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth); });
@@ -6484,7 +6492,7 @@ var piccFlushFilter = '';
 function renderPiccFlush(search) {
   if (search !== undefined && search !== null) piccFlushFilter = search;
   var monthEl = document.getElementById('piccFlushMonth');
-  var selectedMonth = monthEl ? monthEl.value : '';
+  var selectedMonth = (monthEl && monthEl.value && /^\d{4}-\d{2}$/.test(monthEl.value)) ? monthEl.value : '';
   var data = DB.piccFlush.slice();
   if (piccFlushFilter) data = data.filter(function(r) { return [r.idNo,r.patientName,r.diagnosis,r.nurseInitial].some(function(v) { return v && v.toLowerCase().includes(piccFlushFilter.toLowerCase()); }); });
   if (selectedMonth) data = data.filter(function(r) { return r.dateOfFlush && r.dateOfFlush.startsWith(selectedMonth); });
