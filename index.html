@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-025618">
+<meta name="version" content="v20260712-051336">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1685,11 +1685,13 @@ body.dark .login-input:focus { background: var(--card-bg); }
           </select>
         </div>
         <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
-          <select class="form-control" id="ppr_dressingClean">
+          <select class="form-control" id="ppr_dressingClean" onchange="ppShowCustom('ppr_dressingClean','ppr_dressingCleanCustom',this.value)">
             <option value="">Select</option>
             <option>Yes</option>
             <option>No</option>
+            <option>Other</option>
           </select>
+          <input class="form-control" id="ppr_dressingCleanCustom" placeholder="Describe dressing condition..." style="margin-top:6px;display:none">
         </div>
         <div class="form-group"><label class="form-label">Signs of Infection</label>
           <select class="form-control" id="ppr_signsOfInfection">
@@ -1779,9 +1781,10 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <input type="date" class="form-control" id="pf_dateOfFlush">
         </div>
         <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
-          <select class="form-control" id="pf_dressingClean">
-            <option value="">Select</option><option>Yes</option><option>No</option>
+          <select class="form-control" id="pf_dressingClean" onchange="ppShowCustom('pf_dressingClean','pf_dressingCleanCustom',this.value)">
+            <option value="">Select</option><option>Yes</option><option>No</option><option>Other</option>
           </select>
+          <input class="form-control" id="pf_dressingCleanCustom" placeholder="Describe dressing condition..." style="margin-top:6px;display:none">
         </div>
         <div class="form-group"><label class="form-label">Signs of Infection</label>
           <select class="form-control" id="pf_signsOfInfection">
@@ -1860,9 +1863,10 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <input type="date" class="form-control" id="pc_dateOfFlush">
         </div>
         <div class="form-group"><label class="form-label">Dressing Clean &amp; Intact</label>
-          <select class="form-control" id="pc_dressingClean">
-            <option value="">Select</option><option>Yes</option><option>No</option>
+          <select class="form-control" id="pc_dressingClean" onchange="ppShowCustom('pc_dressingClean','pc_dressingCleanCustom',this.value)">
+            <option value="">Select</option><option>Yes</option><option>No</option><option>Other</option>
           </select>
+          <input class="form-control" id="pc_dressingCleanCustom" placeholder="Describe dressing condition..." style="margin-top:6px;display:none">
         </div>
         <div class="form-group"><label class="form-label">Signs of Infection</label>
           <select class="form-control" id="pc_signsOfInfection">
@@ -4262,7 +4266,16 @@ function switchTab(el, tabId) {
 }
 
 // ==================== MODALS ====================
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function openModal(id) {
+  var el = document.getElementById(id);
+  el.style.display = 'flex';
+  setTimeout(function() {
+    var body = el.querySelector('.modal-body');
+    if (body) body.scrollTop = 0;
+    var modal = el.querySelector('.modal');
+    if (modal) modal.scrollTop = 0;
+  }, 0);
+}
 function closeModal(id) { document.getElementById(id).style.display = 'none'; state.editId = null; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); state.editId = null; } });
 
@@ -6375,6 +6388,7 @@ function savePPRegister() {
   var fields = ['idNo','patientName','diagnosis','lineType','dateOfInsertion','insertionSite','insertedBy','catheterSize','lumens','tipPositionConfirmed','confirmationMethod','purpose','dressingClean','signsOfInfection','phlebitisScore','flushGiven','asepticTechnique','complication','actionTaken','physicianNotified','dateOfRemoval','reasonForRemoval','nurseInitial','remarks'];
   var obj = { id: state.editId || genId('PPR') };
   fields.forEach(function(f) { var el = document.getElementById('ppr_' + f); if (el) obj[f] = el.value; });
+  obj.dressingClean = ppGetDressing('ppr_dressingClean', 'ppr_dressingCleanCustom');
   if (state.editId) {
     var idx = DB.portpiccRegister.findIndex(function(x) { return x.id === state.editId; });
     DB.portpiccRegister[idx] = obj; toast('Entry updated ✅');
@@ -6500,7 +6514,15 @@ function openPortFlushModal(id) {
   var pfSave = document.querySelector('#portFlushModal .modal-footer .btn-primary'); if (pfSave) pfSave.disabled = false;
   if (id) {
     var r = DB.portFlush.find(function(x) { return x.id === id; });
-    if (r) fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) el.value = r[f]||''; });
+    if (r) {
+      fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) el.value = r[f]||''; });
+      // Handle custom dressing value
+      if (r.dressingClean && r.dressingClean !== 'Yes' && r.dressingClean !== 'No') {
+        document.getElementById('pf_dressingClean').value = 'Other';
+        document.getElementById('pf_dressingCleanCustom').value = r.dressingClean;
+        document.getElementById('pf_dressingCleanCustom').style.display = '';
+      }
+    }
   }
   openModal('portFlushModal');
 }
@@ -6517,6 +6539,7 @@ function savePortFlush() {
   var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
   var obj = { id: state.editId || genId('PFL') };
   fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) obj[f] = el.value; });
+  obj.dressingClean = ppGetDressing('pf_dressingClean', 'pf_dressingCleanCustom');
   if (state.editId) {
     var idx = DB.portFlush.findIndex(function(x) { return x.id === state.editId; });
     DB.portFlush[idx] = obj; toast('Record updated');
@@ -6605,7 +6628,14 @@ function openPiccFlushModal(id) {
   var pcSave = document.querySelector('#piccFlushModal .modal-footer .btn-primary'); if (pcSave) pcSave.disabled = false;
   if (id) {
     var r = DB.piccFlush.find(function(x) { return x.id === id; });
-    if (r) fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) el.value = r[f]||''; });
+    if (r) {
+      fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) el.value = r[f]||''; });
+      if (r.dressingClean && r.dressingClean !== 'Yes' && r.dressingClean !== 'No') {
+        document.getElementById('pc_dressingClean').value = 'Other';
+        document.getElementById('pc_dressingCleanCustom').value = r.dressingClean;
+        document.getElementById('pc_dressingCleanCustom').style.display = '';
+      }
+    }
   }
   openModal('piccFlushModal');
 }
@@ -6622,6 +6652,7 @@ function savePiccFlush() {
   var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
   var obj = { id: state.editId || genId('PCF') };
   fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) obj[f] = el.value; });
+  obj.dressingClean = ppGetDressing('pc_dressingClean', 'pc_dressingCleanCustom');
   if (state.editId) {
     var idx = DB.piccFlush.findIndex(function(x) { return x.id === state.editId; });
     DB.piccFlush[idx] = obj; toast('Record updated');
@@ -6631,6 +6662,20 @@ function savePiccFlush() {
   closeModal('piccFlushModal'); renderPiccFlush();
 }
 
+
+function ppShowCustom(selId, inputId, val) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.style.display = val === 'Other' ? '' : 'none';
+  if (val !== 'Other') inp.value = '';
+}
+
+function ppGetDressing(selId, inputId) {
+  var sel = document.getElementById(selId);
+  var inp = document.getElementById(inputId);
+  if (!sel) return '';
+  return sel.value === 'Other' ? (inp ? inp.value.trim() : '') : sel.value;
+}
 
 function ppDelClick(btn) {
   var type = btn.getAttribute('data-pp-del');
