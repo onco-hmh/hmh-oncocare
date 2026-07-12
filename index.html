@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-053522">
+<meta name="version" content="v20260712-054047">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -820,7 +820,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <div class="chart-title" style="margin-bottom:0">Patients by Diagnosis</div>
           <span style="font-size:11px;color:var(--text-muted)">Showing top diagnoses</span>
         </div>
-        <div style="height:280px"><canvas id="chartDiagnosis"></canvas></div>
+        <div style="height:420px"><canvas id="chartDiagnosis"></canvas></div>
       </div>
       <!-- Row 3: Full-width Island chart -->
       <div class="chart-card" style="grid-column:1/-1">
@@ -828,7 +828,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <div class="chart-title" style="margin-bottom:0">Patients by Island</div>
           <span style="font-size:11px;color:var(--text-muted)">Top 20 islands</span>
         </div>
-        <div style="height:280px"><canvas id="chartIsland"></canvas></div>
+        <div style="height:420px"><canvas id="chartIsland"></canvas></div>
       </div>
       <!-- Row 4: Monthly + Yearly -->
       <div class="chart-card"><div class="chart-title">Monthly Registrations</div><div class="chart-container"><canvas id="chartMonthly"></canvas></div></div>
@@ -5085,9 +5085,10 @@ function renderCancerDash() {
         responsive:true, maintainAspectRatio:false,
         indexAxis: 'y',
         plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.raw+' patients'}} },
+        layout:{ padding:{ left:10 } },
         scales:{
           x:{beginAtZero:true, ticks:{precision:0}, grid:{color:isDark?'#1e293b':'#f1f5f9'}},
-          y:{ticks:{font:{size:12}}, grid:{display:false}}
+          y:{ticks:{font:{size:11}, maxTicksLimit:20, crossAlign:'far'}, grid:{display:false}}
         }
       }
     });
@@ -5110,9 +5111,10 @@ function renderCancerDash() {
         responsive:true, maintainAspectRatio:false,
         indexAxis: 'y',
         plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.raw+' patients'}} },
+        layout:{ padding:{ left:10 } },
         scales:{
           x:{beginAtZero:true, ticks:{precision:0}, grid:{color:isDark?'#1e293b':'#f1f5f9'}},
-          y:{ticks:{font:{size:12}}, grid:{display:false}}
+          y:{ticks:{font:{size:11}, maxTicksLimit:20, crossAlign:'far'}, grid:{display:false}}
         }
       }
     });
