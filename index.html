@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-054507">
+<meta name="version" content="v20260712-054956">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1581,7 +1581,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <input type="month" class="filter-select" id="portFlushMonth" onchange="renderPortFlush()" style="max-width:160px">
       <button class="btn btn-primary btn-sm" onclick="openPortFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="portFlushKPIs"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px" id="portFlushKPIs"></div>
     <div id="portFlushCards"></div>
     <div id="portFlushPagination"></div>
   </div>
@@ -1593,7 +1593,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <input type="month" class="filter-select" id="piccFlushMonth" onchange="renderPiccFlush()" style="max-width:160px">
       <button class="btn btn-primary btn-sm" onclick="openPiccFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="piccFlushKPIs"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px" id="piccFlushKPIs"></div>
     <div id="piccFlushCards"></div>
     <div id="piccFlushPagination"></div>
   </div>
@@ -6353,7 +6353,7 @@ function renderPPRegister(search, typeFilter) {
             '<span style="font-size:12px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
             badges +
           '</div>' +
-          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">' + (r.diagnosis||'-') + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">' + ppGetDiagnosis(r.idNo, r.diagnosis) + '</div>' +
           '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 16px">' + details + '</div>' +
           extra +
         '</div>' +
@@ -6478,7 +6478,7 @@ function renderPortFlush(search) {
     return '<div style="background:var(--card-bg);border-radius:12px;border:1px solid var(--border);border-top:3px solid ' + borderColor + ';padding:12px 14px;position:relative">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
         '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--text)">' + ppGetPatientName(r.idNo, r.patientName) + '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">' +
             '<span style="font-size:11px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
             '<span style="font-size:11px;color:var(--text-muted)">·</span>' +
@@ -6490,7 +6490,7 @@ function renderPortFlush(search) {
           '<button class="btn btn-xs btn-danger" data-pp-del="portFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)" style="padding:3px 7px"><i class="fas fa-trash"></i></button>' +
         '</div>' +
       '</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + ppGetDiagnosis(r.idNo, r.diagnosis) + '</div>' +
       '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">' + infBadge + ' ' + phBadge + '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:11px">' +
         '<div style="color:var(--text-muted)">Dressing <span style="color:' + (dressingOk?'var(--success)':'var(--danger)') + ';font-weight:600">' + (r.dressingClean||'-') + '</span></div>' +
@@ -6571,7 +6571,7 @@ function renderPiccFlush(search) {
       {label:'Total Flushes',val:total,icon:'fa-tint',color:'#8B5CF6',bg:'#ede9fe'},
       {label:'Signs of Infection',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'},
       {label:'Phlebitis >= 2',val:highPh,icon:'fa-thermometer-half',color:'#F59E0B',bg:'#fef3c7'}
-    ].map(function(k) { return '<div class="kpi-card" style="--kpi-color:' + k.color + ';--kpi-bg:' + k.bg + '"><div class="kpi-icon"><i class="fas ' + k.icon + '"></i></div><div class="kpi-value">' + k.val + '</div><div class="kpi-label">' + k.label + '</div></div>'; }).join('');
+    ].map(function(k) { return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:' + k.bg + ';border-radius:10px;min-width:140px"><div style="width:36px;height:36px;border-radius:8px;background:' + k.color + '20;color:' + k.color + ';display:flex;align-items:center;justify-content:center"><i class="fas ' + k.icon + '"></i></div><div><div style="font-size:20px;font-weight:700;color:' + k.color + '">' + k.val + '</div><div style="font-size:11px;color:' + k.color + ';opacity:0.8">' + k.label + '</div></div></div>'; }).join('');
   }
 
   var container = document.getElementById('piccFlushCards');
@@ -6590,7 +6590,7 @@ function renderPiccFlush(search) {
     html += '<div style="background:var(--card-bg);border-radius:12px;border:1px solid var(--border);border-top:3px solid ' + borderColor + ';padding:12px 14px">';
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
     html += '<div>';
-    html += '<div style="font-size:13px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text)">' + ppGetPatientName(r.idNo, r.patientName) + '</div>';
     html += '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">';
     html += '<span style="font-size:11px;color:#8B5CF6;font-weight:600">' + (r.idNo||'') + '</span>';
     html += '<span style="font-size:11px;color:var(--text-muted)">· ' + fmtDate(r.dateOfFlush) + '</span>';
@@ -6599,7 +6599,7 @@ function renderPiccFlush(search) {
     html += '<button class="btn btn-xs btn-outline" data-pp-edit="piccFlush" data-pp-id="' + r.id + '" onclick="ppEditClick(this)" style="padding:3px 7px"><i class="fas fa-edit"></i></button>';
     html += '<button class="btn btn-xs btn-danger" data-pp-del="piccFlush" data-pp-id="' + r.id + '" onclick="ppDelClick(this)" style="padding:3px 7px"><i class="fas fa-trash"></i></button>';
     html += '</div></div>';
-    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + (r.diagnosis||'-') + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + ppGetDiagnosis(r.idNo, r.diagnosis) + '</div>';
     html += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">';
     html += (hasInfection ? '<span class="badge badge-danger" style="font-size:10px">Infection</span>' : '<span class="badge badge-success" style="font-size:10px">No Infection</span>');
     html += '<span class="badge" style="font-size:10px;background:' + phColor + '20;color:' + phColor + '">Ph ' + phScore + '</span>';
@@ -6679,6 +6679,14 @@ function ppGetDressing(selId, inputId) {
   return sel.value === 'Other' ? (inp ? inp.value.trim() : '') : sel.value;
 }
 
+function ppGetPatientName(idNo, fallback) {
+  var p = DB.patients.find(function(x){ return x.hospitalNumber===idNo||x.nationalId===idNo||x.registryNumber===idNo; });
+  return p ? p.fullName : (fallback||'Unknown');
+}
+function ppGetDiagnosis(idNo, fallback) {
+  var p = DB.patients.find(function(x){ return x.hospitalNumber===idNo||x.nationalId===idNo||x.registryNumber===idNo; });
+  return p ? p.diagnosis : (fallback||'-');
+}
 function ppDelClick(btn) {
   var type = btn.getAttribute('data-pp-del');
   var id = btn.getAttribute('data-pp-id');
