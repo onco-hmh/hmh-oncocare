@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260710-151432">
+<meta name="version" content="v20260712-025618">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1767,6 +1767,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <div class="form-grid">
         <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
           <input class="form-control" id="pf_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pf', this.value)">
+          <div id="pf_lineWarn" style="display:none;margin-top:6px;padding:8px 12px;border-radius:6px;font-size:12px;border:1px solid"></div>
         </div>
         <div class="form-group"><label class="form-label">Patient Name</label>
           <input class="form-control" id="pf_patientName" placeholder="Auto-filled">
@@ -1847,6 +1848,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <div class="form-grid">
         <div class="form-group"><label class="form-label">ID No <span class="req">*</span></label>
           <input class="form-control" id="pc_idNo" placeholder="Hospital/ID number" oninput="lookupPPPatientFlush('pc', this.value)">
+          <div id="pc_lineWarn" style="display:none;margin-top:6px;padding:8px 12px;border-radius:6px;font-size:12px;border:1px solid"></div>
         </div>
         <div class="form-group"><label class="form-label">Patient Name</label>
           <input class="form-control" id="pc_patientName" placeholder="Auto-filled">
@@ -6222,6 +6224,36 @@ function lookupPPPatientFlush(prefix, val) {
   var p = DB.patients.find(function(x) { return x.hospitalNumber === val || x.nationalId === val; });
   document.getElementById(prefix + '_patientName').value = p ? (p.fullName||'') : '';
   document.getElementById(prefix + '_diagnosis').value = p ? (p.diagnosis||'') : '';
+
+  // Check if patient is on the Line Register
+  var warn = document.getElementById(prefix + '_lineWarn');
+  if (!warn) return;
+  if (!val) { warn.style.display = 'none'; return; }
+
+  // Determine which line type to check
+  var lineType = prefix === 'pf' ? 'PORT' : 'PICC';
+  var onRegister = DB.portpiccRegister.find(function(x) {
+    return x.idNo === val && x.lineType === lineType && !x.dateOfRemoval;
+  });
+
+  if (!onRegister) {
+    warn.style.display = '';
+    warn.style.background = '#fee2e2';
+    warn.style.borderColor = '#ef4444';
+    warn.style.color = '#991b1b';
+    warn.innerHTML = '<i class="fas fa-ban"></i> <strong>' + val + '</strong> does not have an active <strong>' + lineType + '</strong> line on the register. Please register the line first.';
+    // Disable save button
+    var saveBtn = document.querySelector('#' + (prefix==='pf'?'portFlushModal':'piccFlushModal') + ' .modal-footer .btn-primary');
+    if (saveBtn) saveBtn.disabled = true;
+  } else {
+    warn.style.display = '';
+    warn.style.background = '#d1fae5';
+    warn.style.borderColor = '#10b981';
+    warn.style.color = '#065f46';
+    warn.innerHTML = '<i class="fas fa-check-circle"></i> Active <strong>' + lineType + '</strong> line found — inserted on <strong>' + (onRegister.dateOfInsertion||'N/A') + '</strong>' + (onRegister.insertedBy ? ' by ' + onRegister.insertedBy : '') + '.';
+    var saveBtn = document.querySelector('#' + (prefix==='pf'?'portFlushModal':'piccFlushModal') + ' .modal-footer .btn-primary');
+    if (saveBtn) saveBtn.disabled = false;
+  }
 }
 
 // ── LINE REGISTER ──
@@ -6464,6 +6496,8 @@ function openPortFlushModal(id) {
   fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) el.value = ''; });
   document.getElementById('portFlushModalTitle').textContent = id ? 'Edit Flush Record' : 'Add Port Flush & Dressing Record';
   document.getElementById('pf_dateOfFlush').value = new Date().toISOString().slice(0,10);
+  var pfWarn = document.getElementById('pf_lineWarn'); if (pfWarn) pfWarn.style.display = 'none';
+  var pfSave = document.querySelector('#portFlushModal .modal-footer .btn-primary'); if (pfSave) pfSave.disabled = false;
   if (id) {
     var r = DB.portFlush.find(function(x) { return x.id === id; });
     if (r) fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) el.value = r[f]||''; });
@@ -6475,6 +6509,11 @@ function savePortFlush() {
   var idNo = document.getElementById('pf_idNo').value.trim();
   var date = document.getElementById('pf_dateOfFlush').value;
   if (!idNo || !date) { toast('ID No and Date are required', 'error'); return; }
+  // Validate patient has active PORT line
+  if (!state.editId) {
+    var onReg = DB.portpiccRegister.find(function(x) { return x.idNo === idNo && x.lineType === 'PORT' && !x.dateOfRemoval; });
+    if (!onReg) { toast('⚠️ ' + idNo + ' does not have an active PORT line on the register!', 'error'); return; }
+  }
   var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
   var obj = { id: state.editId || genId('PFL') };
   fields.forEach(function(f) { var el = document.getElementById('pf_' + f); if (el) obj[f] = el.value; });
@@ -6562,6 +6601,8 @@ function openPiccFlushModal(id) {
   fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) el.value = ''; });
   document.getElementById('piccFlushModalTitle').textContent = id ? 'Edit PICC Flush Record' : 'Add PICC Flush & Dressing Record';
   document.getElementById('pc_dateOfFlush').value = new Date().toISOString().slice(0,10);
+  var pcWarn = document.getElementById('pc_lineWarn'); if (pcWarn) pcWarn.style.display = 'none';
+  var pcSave = document.querySelector('#piccFlushModal .modal-footer .btn-primary'); if (pcSave) pcSave.disabled = false;
   if (id) {
     var r = DB.piccFlush.find(function(x) { return x.id === id; });
     if (r) fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) el.value = r[f]||''; });
@@ -6573,6 +6614,11 @@ function savePiccFlush() {
   var idNo = document.getElementById('pc_idNo').value.trim();
   var date = document.getElementById('pc_dateOfFlush').value;
   if (!idNo || !date) { toast('ID No and Date are required', 'error'); return; }
+  // Validate patient has active PICC line
+  if (!state.editId) {
+    var onReg = DB.portpiccRegister.find(function(x) { return x.idNo === idNo && x.lineType === 'PICC' && !x.dateOfRemoval; });
+    if (!onReg) { toast('⚠️ ' + idNo + ' does not have an active PICC line on the register!', 'error'); return; }
+  }
   var fields = ['idNo','patientName','diagnosis','dateOfFlush','dressingClean','signsOfInfection','backflowStatus','phlebitisScore','flushGiven','asepticTechnique','actionTaken','nurseInitial','remarks'];
   var obj = { id: state.editId || genId('PCF') };
   fields.forEach(function(f) { var el = document.getElementById('pc_' + f); if (el) obj[f] = el.value; });
