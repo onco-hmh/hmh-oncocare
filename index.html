@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-051336">
+<meta name="version" content="v20260712-053522">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1975,7 +1975,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
           <div class="form-group"><label class="form-label">Diagnosis Details</label><input class="form-control" id="pat_diagnosisDetails"></div>
           <div class="form-group"><label class="form-label">Date of Diagnosis</label><input type="date" class="form-control" id="pat_diagnosisDate"></div>
           <div class="form-group"><label class="form-label">Stage</label>
-            <select class="form-control" id="pat_stage"><option value="">Select Stage</option><option>Stage I</option><option>Stage II</option><option>Stage III</option><option>Stage IV</option><option>Unknown</option></select>
+            <input class="form-control" id="pat_stage" placeholder="e.g. Stage I, Stage IV, T2N1M0...">
           </div>
           <div class="form-group full"><label class="form-label">Risk Factors</label><textarea class="form-control" id="pat_riskFactors" rows="2"></textarea></div>
           <div class="form-group full"><label class="form-label">Histopathology</label><textarea class="form-control" id="pat_histopathology" rows="2"></textarea></div>
@@ -6347,7 +6347,7 @@ function renderPPRegister(search, typeFilter) {
         '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">' +
-            '<span style="font-size:15px;font-weight:700;color:var(--text)">' + (r.patientName||'Unknown') + '</span>' +
+            '<span style="font-size:15px;font-weight:700;color:var(--text)">' + (function(){ var _p=DB.patients.find(function(x){return x.hospitalNumber===r.idNo;}); return _p?_p.fullName:(r.patientName||'Unknown'); })() + '</span>' +
             '<span style="font-size:12px;color:var(--primary);font-weight:600">' + r.idNo + '</span>' +
             badges +
           '</div>' +
