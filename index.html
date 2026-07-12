@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-064637">
+<meta name="version" content="v20260712-072945">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6458,7 +6458,7 @@ function renderPortFlush(search) {
       {label:'Total Flushes',val:total,icon:'fa-tint',color:'#0F766E',bg:'#f0fdfa'},
       {label:'Signs of Infection',val:infections,icon:'fa-exclamation-circle',color:'#EF4444',bg:'#fee2e2'},
       {label:'Phlebitis >= 2',val:highPh,icon:'fa-thermometer-half',color:'#F59E0B',bg:'#fef3c7'}
-    ].map(function(k) { return '<div class="kpi-card" style="--kpi-color:' + k.color + ';--kpi-bg:' + k.bg + '"><div class="kpi-icon"><i class="fas ' + k.icon + '"></i></div><div class="kpi-value">' + k.val + '</div><div class="kpi-label">' + k.label + '</div></div>'; }).join('');
+    ].map(function(k) { return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:' + k.bg + ';border-radius:10px;min-width:140px"><div style="width:36px;height:36px;border-radius:8px;background:' + k.color + '20;color:' + k.color + ';display:flex;align-items:center;justify-content:center"><i class="fas ' + k.icon + '"></i></div><div><div style="font-size:20px;font-weight:700;color:' + k.color + '">' + k.val + '</div><div style="font-size:11px;color:' + k.color + ';opacity:0.8">' + k.label + '</div></div></div>'; }).join('');
   }
 
   var container = document.getElementById('portFlushCards');
