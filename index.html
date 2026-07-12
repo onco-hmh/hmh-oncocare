@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-075628">
+<meta name="version" content="v20260712-083211">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1603,7 +1603,164 @@ body.dark .login-input:focus { background: var(--card-bg); }
 </div>
 
 
+
+<!-- ==================== AUTOIMMUNE REGISTRY PAGE ==================== -->
+<div class="page" id="page-autoimmune">
+  <div class="page-header flex justify-between items-center">
+    <div>
+      <h1>Autoimmune Registry</h1>
+      <p>Autoimmune disease patient records</p>
+    </div>
+    <div class="flex gap-2 no-print">
+      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-outline btn-sm" onclick="exportAutoimmune()"><i class="fas fa-file-export"></i> Export</button>
+      <button class="btn btn-primary btn-sm" onclick="openAutoimmuneModal()"><i class="fas fa-plus"></i> Add Patient</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-search"><i class="fas fa-search"></i>
+      <input type="text" placeholder="Search by name, ID or diagnosis..." oninput="filterTable('autoimmune',this.value)">
+    </div>
+    <select class="filter-select" onchange="filterTable('autoimmune',null,'status',this.value)">
+      <option value="">All Statuses</option>
+      <option>Active</option><option>In Remission</option><option>Palliative Care</option>
+      <option>Lost to Follow-up</option><option>Transferred Out</option><option>Expired</option>
+    </select>
+  </div>
+
+  <div class="card" style="padding:0">
+    <div class="table-wrapper">
+      <table id="autoimmuneTable">
+        <thead><tr>
+          <th>Registry No</th>
+          <th>Hospital No</th>
+          <th>Full Name</th>
+          <th>Gender</th>
+          <th>Age</th>
+          <th>Diagnosis</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody id="autoimmuneTbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination-wrap" id="autoimmunePagination"></div>
+  </div>
+</div>
+
+
 </main>
+<!-- AUTOIMMUNE PATIENT MODAL -->
+<div class="modal-overlay" id="autoimmuneModal" style="display:none">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <span class="modal-title" id="autoimmuneModalTitle">Add Autoimmune Patient</span>
+      <button class="modal-close" onclick="closeModal('autoimmuneModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border)">
+        <button class="ar-tab active-ar-tab" onclick="switchARTab('basic')" id="arTab_basic" style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer;margin-bottom:-2px">Basic Info</button>
+        <button class="ar-tab" onclick="switchARTab('medical')" id="arTab_medical" style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer">Medical Details</button>
+        <button class="ar-tab" onclick="switchARTab('status')" id="arTab_status" style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer">Status</button>
+      </div>
+
+      <!-- Basic Info Tab -->
+      <div id="arPanel_basic">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Hospital Number</label>
+            <input class="form-control" id="ar_hospitalNumber" placeholder="Hospital Number">
+          </div>
+          <div class="form-group"><label class="form-label">Registry Number</label>
+            <input class="form-control" id="ar_registryNumber" placeholder="Auto-generated" readonly>
+          </div>
+          <div class="form-group"><label class="form-label">Registration Date</label>
+            <input type="date" class="form-control" id="ar_registrationDate">
+          </div>
+          <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label>
+            <input class="form-control" id="ar_fullName" placeholder="Full name">
+          </div>
+          <div class="form-group"><label class="form-label">Gender</label>
+            <select class="form-control" id="ar_gender">
+              <option value="">Select</option><option>Male</option><option>Female</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Date of Birth</label>
+            <input type="date" class="form-control" id="ar_dob">
+          </div>
+          <div class="form-group"><label class="form-label">Age</label>
+            <input class="form-control" id="ar_age" placeholder="Age">
+          </div>
+          <div class="form-group"><label class="form-label">Blood Group</label>
+            <select class="form-control" id="ar_bloodGroup">
+              <option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Unknown</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Nationality</label>
+            <input class="form-control" id="ar_nationality" placeholder="Nationality">
+          </div>
+          <div class="form-group"><label class="form-label">National ID</label>
+            <input class="form-control" id="ar_nationalId" placeholder="National ID">
+          </div>
+          <div class="form-group"><label class="form-label">Contact Number</label>
+            <input class="form-control" id="ar_contactNumber" placeholder="Contact number">
+          </div>
+          <div class="form-group"><label class="form-label">Atoll</label>
+            <select class="form-control" id="ar_atoll" onchange="populateARIsland(this.value)">
+              <option value="">Select Atoll</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Island</label>
+            <select class="form-control" id="ar_island">
+              <option value="">Select Island</option>
+            </select>
+          </div>
+          <div class="form-group full"><label class="form-label">Address</label>
+            <input class="form-control" id="ar_address" placeholder="Address">
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical Details Tab -->
+      <div id="arPanel_medical" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Diagnosis <span class="req">*</span></label>
+            <input class="form-control" id="ar_diagnosis" placeholder="Autoimmune diagnosis">
+          </div>
+          <div class="form-group"><label class="form-label">Diagnosis Details</label>
+            <input class="form-control" id="ar_diagnosisDetails" placeholder="Additional details">
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Tab -->
+      <div id="arPanel_status" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Status</label>
+            <select class="form-control" id="ar_status">
+              <option value="">Select</option>
+              <option>Active</option><option>In Remission</option><option>Palliative Care</option>
+              <option>Lost to Follow-up</option><option>Transferred Out</option><option>Expired</option>
+            </select>
+          </div>
+          <div class="form-group" id="ar_expiredGroup" style="display:none">
+            <label class="form-label">Date of Expiry</label>
+            <input type="date" class="form-control" id="ar_expiredDate">
+          </div>
+          <div class="form-group full"><label class="form-label">Remarks</label>
+            <textarea class="form-control" id="ar_remarks" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('autoimmuneModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAutoimmune()"><i class="fas fa-save"></i> Save Patient</button>
+    </div>
+  </div>
+</div>
+
 <!-- PORT & PICC LINE REGISTER MODAL -->
 <div class="modal-overlay" id="ppRegisterModal" style="display:none">
   <div class="modal" style="max-width:800px">
@@ -6919,161 +7076,6 @@ function confirmDeleteAR(id) {
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('userFormModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveUserForm()"><i class="fas fa-save"></i> Save User</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== AUTOIMMUNE REGISTRY PAGE ==================== -->
-<div class="page" id="page-autoimmune">
-  <div class="page-header flex justify-between items-center">
-    <div>
-      <h1>Autoimmune Registry</h1>
-      <p>Autoimmune disease patient records</p>
-    </div>
-    <div class="flex gap-2 no-print">
-      <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
-      <button class="btn btn-outline btn-sm" onclick="exportAutoimmune()"><i class="fas fa-file-export"></i> Export</button>
-      <button class="btn btn-primary btn-sm" onclick="openAutoimmuneModal()"><i class="fas fa-plus"></i> Add Patient</button>
-    </div>
-  </div>
-
-  <div class="toolbar">
-    <div class="toolbar-search"><i class="fas fa-search"></i>
-      <input type="text" placeholder="Search by name, ID or diagnosis..." oninput="filterTable('autoimmune',this.value)">
-    </div>
-    <select class="filter-select" onchange="filterTable('autoimmune',null,'status',this.value)">
-      <option value="">All Statuses</option>
-      <option>Active</option><option>In Remission</option><option>Palliative Care</option>
-      <option>Lost to Follow-up</option><option>Transferred Out</option><option>Expired</option>
-    </select>
-  </div>
-
-  <div class="card" style="padding:0">
-    <div class="table-wrapper">
-      <table id="autoimmuneTable">
-        <thead><tr>
-          <th>Registry No</th>
-          <th>Hospital No</th>
-          <th>Full Name</th>
-          <th>Gender</th>
-          <th>Age</th>
-          <th>Diagnosis</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr></thead>
-        <tbody id="autoimmuneTbody"></tbody>
-      </table>
-    </div>
-    <div class="pagination-wrap" id="autoimmunePagination"></div>
-  </div>
-</div>
-
-<!-- AUTOIMMUNE PATIENT MODAL -->
-<div class="modal-overlay" id="autoimmuneModal" style="display:none">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-header">
-      <span class="modal-title" id="autoimmuneModalTitle">Add Autoimmune Patient</span>
-      <button class="modal-close" onclick="closeModal('autoimmuneModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <!-- Tabs -->
-      <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border)">
-        <button class="ar-tab active-ar-tab" onclick="switchARTab('basic')" id="arTab_basic" style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer;margin-bottom:-2px">Basic Info</button>
-        <button class="ar-tab" onclick="switchARTab('medical')" id="arTab_medical" style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer">Medical Details</button>
-        <button class="ar-tab" onclick="switchARTab('status')" id="arTab_status" style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer">Status</button>
-      </div>
-
-      <!-- Basic Info Tab -->
-      <div id="arPanel_basic">
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Hospital Number</label>
-            <input class="form-control" id="ar_hospitalNumber" placeholder="Hospital Number">
-          </div>
-          <div class="form-group"><label class="form-label">Registry Number</label>
-            <input class="form-control" id="ar_registryNumber" placeholder="Auto-generated" readonly>
-          </div>
-          <div class="form-group"><label class="form-label">Registration Date</label>
-            <input type="date" class="form-control" id="ar_registrationDate">
-          </div>
-          <div class="form-group"><label class="form-label">Full Name <span class="req">*</span></label>
-            <input class="form-control" id="ar_fullName" placeholder="Full name">
-          </div>
-          <div class="form-group"><label class="form-label">Gender</label>
-            <select class="form-control" id="ar_gender">
-              <option value="">Select</option><option>Male</option><option>Female</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Date of Birth</label>
-            <input type="date" class="form-control" id="ar_dob">
-          </div>
-          <div class="form-group"><label class="form-label">Age</label>
-            <input class="form-control" id="ar_age" placeholder="Age">
-          </div>
-          <div class="form-group"><label class="form-label">Blood Group</label>
-            <select class="form-control" id="ar_bloodGroup">
-              <option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Unknown</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Nationality</label>
-            <input class="form-control" id="ar_nationality" placeholder="Nationality">
-          </div>
-          <div class="form-group"><label class="form-label">National ID</label>
-            <input class="form-control" id="ar_nationalId" placeholder="National ID">
-          </div>
-          <div class="form-group"><label class="form-label">Contact Number</label>
-            <input class="form-control" id="ar_contactNumber" placeholder="Contact number">
-          </div>
-          <div class="form-group"><label class="form-label">Atoll</label>
-            <select class="form-control" id="ar_atoll" onchange="populateARIsland(this.value)">
-              <option value="">Select Atoll</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Island</label>
-            <select class="form-control" id="ar_island">
-              <option value="">Select Island</option>
-            </select>
-          </div>
-          <div class="form-group full"><label class="form-label">Address</label>
-            <input class="form-control" id="ar_address" placeholder="Address">
-          </div>
-        </div>
-      </div>
-
-      <!-- Medical Details Tab -->
-      <div id="arPanel_medical" style="display:none">
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Diagnosis <span class="req">*</span></label>
-            <input class="form-control" id="ar_diagnosis" placeholder="Autoimmune diagnosis">
-          </div>
-          <div class="form-group"><label class="form-label">Diagnosis Details</label>
-            <input class="form-control" id="ar_diagnosisDetails" placeholder="Additional details">
-          </div>
-        </div>
-      </div>
-
-      <!-- Status Tab -->
-      <div id="arPanel_status" style="display:none">
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Status</label>
-            <select class="form-control" id="ar_status">
-              <option value="">Select</option>
-              <option>Active</option><option>In Remission</option><option>Palliative Care</option>
-              <option>Lost to Follow-up</option><option>Transferred Out</option><option>Expired</option>
-            </select>
-          </div>
-          <div class="form-group" id="ar_expiredGroup" style="display:none">
-            <label class="form-label">Date of Expiry</label>
-            <input type="date" class="form-control" id="ar_expiredDate">
-          </div>
-          <div class="form-group full"><label class="form-label">Remarks</label>
-            <textarea class="form-control" id="ar_remarks" rows="3"></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('autoimmuneModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveAutoimmune()"><i class="fas fa-save"></i> Save Patient</button>
     </div>
   </div>
 </div>
