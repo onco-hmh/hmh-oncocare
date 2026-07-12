@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-054956">
+<meta name="version" content="v20260712-063803">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1581,7 +1581,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <input type="month" class="filter-select" id="portFlushMonth" onchange="renderPortFlush()" style="max-width:160px">
       <button class="btn btn-primary btn-sm" onclick="openPortFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px" id="portFlushKPIs"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="portFlushKPIs"></div>
     <div id="portFlushCards"></div>
     <div id="portFlushPagination"></div>
   </div>
@@ -1593,7 +1593,7 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <input type="month" class="filter-select" id="piccFlushMonth" onchange="renderPiccFlush()" style="max-width:160px">
       <button class="btn btn-primary btn-sm" onclick="openPiccFlushModal()"><i class="fas fa-plus"></i> Add Flush Record</button>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px" id="piccFlushKPIs"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="piccFlushKPIs"></div>
     <div id="piccFlushCards"></div>
     <div id="piccFlushPagination"></div>
   </div>
@@ -6729,5 +6729,55 @@ function exportPortPicc() {
 
 </script>
 
+
+<!-- USER FORM MODAL -->
+<div class="modal-overlay" id="userFormModal" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="userFormTitle">Add New User</span>
+      <button class="modal-close" onclick="closeModal('userFormModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="userFormId">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Full Name <span class="req">*</span></label>
+          <input class="form-control" id="uf_fullName" placeholder="Full name">
+        </div>
+        <div class="form-group"><label class="form-label">Username <span class="req">*</span></label>
+          <input class="form-control" id="uf_username" placeholder="Username" autocomplete="off">
+        </div>
+        <div class="form-group" id="uf_passwordGroup"><label class="form-label">Password <span class="req">*</span></label>
+          <input type="password" class="form-control" id="uf_password" placeholder="Password" autocomplete="new-password">
+        </div>
+        <div class="form-group"><label class="form-label">Role</label>
+          <select class="form-control" id="uf_role">
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+            <option value="superadmin">Super Admin</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-control" id="uf_status">
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label>
+          <input class="form-control" id="uf_email" placeholder="Email address">
+        </div>
+        <div class="form-group"><label class="form-label">Phone</label>
+          <input class="form-control" id="uf_phone" placeholder="Phone number">
+        </div>
+        <div class="form-group full"><label class="form-label">Department</label>
+          <input class="form-control" id="uf_department" placeholder="Department">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('userFormModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()"><i class="fas fa-save"></i> Save User</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
