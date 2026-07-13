@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260712-083211">
+<meta name="version" content="v20260713-041107">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1738,10 +1738,11 @@ body.dark .login-input:focus { background: var(--card-bg); }
       <div id="arPanel_status" style="display:none">
         <div class="form-grid">
           <div class="form-group"><label class="form-label">Status</label>
-            <select class="form-control" id="ar_status">
+            <select class="form-control" id="ar_status" onchange="document.getElementById('ar_expiredGroup').style.display=this.value==='Expired'?'':'none'">
               <option value="">Select</option>
-              <option>Active</option><option>In Remission</option><option>Palliative Care</option>
-              <option>Lost to Follow-up</option><option>Transferred Out</option><option>Expired</option>
+              <option>On Chemo</option>
+              <option>Completed</option>
+              <option>Expired</option>
             </select>
           </div>
           <div class="form-group" id="ar_expiredGroup" style="display:none">
@@ -4871,6 +4872,7 @@ const tableConfigs = {
         '<td>' + (r.diagnosis||'-') + '</td>' +
         '<td>' + statusBadge(r.status) + '</td>' +
         '<td class="no-print"><div class="flex gap-2">' +
+          '<button class="btn btn-xs btn-outline" onclick="viewAutoimmuneProfile(\'' + r.id + '\')"><i class="fas fa-eye"></i></button>' +
           '<button class="btn btn-xs btn-outline" onclick="openAutoimmuneModal(\'' + r.id + '\')"><i class="fas fa-edit"></i></button>' +
           '<button class="btn btn-xs btn-danger" onclick="confirmDeleteAR(\'' + r.id + '\')"><i class="fas fa-trash"></i></button>' +
         '</div></td>';
@@ -7019,6 +7021,42 @@ function exportAutoimmune() {
   toast('Exported successfully');
 }
 
+
+function viewAutoimmuneProfile(id) {
+  var r = DB.autoimmune.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var row = function(label, val) {
+    return val ? '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="min-width:160px;font-size:12px;color:var(--text-muted);font-weight:500">' + label + '</span><span style="font-size:13px;color:var(--text)">' + val + '</span></div>' : '';
+  };
+  var html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--primary)">' +
+    '<div style="width:48px;height:48px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">' + (r.fullName||'?').charAt(0) + '</div>' +
+    '<div><div style="font-size:16px;font-weight:700;color:var(--text)">' + (r.fullName||'—') + '</div>' +
+    '<div style="font-size:12px;color:var(--text-muted)">' + (r.hospitalNumber||'') + (r.registryNumber?' · '+r.registryNumber:'') + '</div></div>' +
+    '<span class="badge badge-primary" style="margin-left:auto">Autoimmune</span>' +
+  '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">';
+  html += row('Registry No', r.registryNumber);
+  html += row('Hospital No', r.hospitalNumber);
+  html += row('Registration Date', fmtDate(r.registrationDate));
+  html += row('Gender', r.gender);
+  html += row('Age', r.age ? r.age + ' years' : '');
+  html += row('Date of Birth', fmtDate(r.dob));
+  html += row('Blood Group', r.bloodGroup);
+  html += row('National ID', r.nationalId);
+  html += row('Contact', r.contactNumber);
+  html += row('Nationality', r.nationality);
+  html += row('Atoll', r.atoll);
+  html += row('Island', r.island);
+  html += row('Address', r.address);
+  html += row('Diagnosis', r.diagnosis);
+  html += row('Diagnosis Details', r.diagnosisDetails);
+  html += row('Status', r.status);
+  html += row('Date of Expiry', fmtDate(r.expiredDate));
+  html += row('Remarks', r.remarks);
+  html += '</div>';
+  document.getElementById('profileContent').innerHTML = html;
+  openModal('profileModal');
+}
 
 function confirmDeleteAR(id) {
   if (!confirm('Delete this patient from Autoimmune Registry?')) return;
