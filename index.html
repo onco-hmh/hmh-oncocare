@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260713-041107">
+<meta name="version" content="v20260729-074837">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2666,7 +2666,30 @@ const LISTS = {
   })(),
 };
 
-function saveList(key) { localStorage.setItem('oms_list_' + (key === 'patientStatuses' ? 'statuses' : key), JSON.stringify(LISTS[key])); }
+function saveList(key) {
+  const storageKey = 'oms_list_' + (key === 'patientStatuses' ? 'statuses' : key);
+  localStorage.setItem(storageKey, JSON.stringify(LISTS[key]));
+  // Sync to Supabase so all users get the update
+  if (GS_ENABLED) {
+    const settingKey = 'list_' + key;
+    const val = JSON.stringify(LISTS[key]);
+    fetch(SB_URL + '/rest/v1/settings?key=eq.' + encodeURIComponent(settingKey), {
+      method: 'GET',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    }).then(r => r.json()).then(rows => {
+      const method = rows.length > 0 ? 'PATCH' : 'POST';
+      const url = rows.length > 0
+        ? SB_URL + '/rest/v1/settings?key=eq.' + encodeURIComponent(settingKey)
+        : SB_URL + '/rest/v1/settings';
+      return fetch(url, {
+        method: method,
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ key: settingKey, value: val })
+      });
+    }).then(() => console.log('List synced to Supabase: ' + key))
+    .catch(e => console.warn('List sync failed:', e));
+  }
+}
 
 function addListItem(listKey, inputId) {
   const val = document.getElementById(inputId).value.trim();
@@ -4140,15 +4163,44 @@ async function gsLoadAll(forceRefresh = false) {
 }
 
 // Background sync - no overlay, no blocking
+async function syncListsFromSupabase() {
+  if (!GS_ENABLED) return;
+  try {
+    const res = await fetch(SB_URL + '/rest/v1/settings?key=like.list_%', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!res.ok) return;
+    const rows = await res.json();
+    rows.forEach(function(row) {
+      const listKey = row.key.replace('list_', '');
+      const storageKey = 'oms_list_' + (listKey === 'patientStatuses' ? 'statuses' : listKey);
+      try {
+        const data = JSON.parse(row.value);
+        if (Array.isArray(data) && data.length > 0) {
+          LISTS[listKey] = data;
+          localStorage.setItem(storageKey, row.value);
+        }
+      } catch(e) {}
+    });
+    if (rows.length > 0) {
+      populateDynamicSelects();
+      console.log('Lists synced from Supabase');
+    }
+  } catch(e) {
+    console.warn('List sync from Supabase failed:', e);
+  }
+}
+
 async function gsSyncBackground() {
   if (!GS_ENABLED) return;
-  // Don't sync if user just saved something in the last 10 seconds
   const lastSave = parseInt(localStorage.getItem('oms_last_save_time') || '0');
   if (Date.now() - lastSave < 10000) {
     console.log('Skipping sync - recent save detected');
     return;
   }
   try {
+    // Sync lists from Supabase (so all users see admin changes)
+    await syncListsFromSupabase();
     const allKeys = ['patients','chemo','adr','extravasation','spill','incident','opPatients','opSchedule','portpiccRegister','portFlush','piccFlush','autoimmune'];
     for (const key of allKeys) {
       const table = SB_TABLES[key];
@@ -6156,6 +6208,8 @@ async function doLogin() {
   populateFilters();
   Object.keys(tableConfigs).forEach(t => renderTable(t));
   navigate('dashboard');
+  // Sync lists first so dropdowns are up to date
+  syncListsFromSupabase();
   // Sync with Supabase
   gsLoadAll().then(() => {
     refreshDashboard();
