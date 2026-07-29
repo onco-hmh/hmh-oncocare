@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260729-074837">
+<meta name="version" content="v20260729-075634">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4166,7 +4166,8 @@ async function gsLoadAll(forceRefresh = false) {
 async function syncListsFromSupabase() {
   if (!GS_ENABLED) return;
   try {
-    const res = await fetch(SB_URL + '/rest/v1/settings?key=like.list_%', {
+    const keys = ['list_diagnoses','list_patientStatuses','list_chemoStatuses','list_atolls','list_islands'].map(k => '"' + k + '"').join(',');
+    const res = await fetch(SB_URL + '/rest/v1/settings?key=in.(' + keys + ')', {
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
     });
     if (!res.ok) return;
