@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260806-010210">
+<meta name="version" content="v20260806-011415">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4555,10 +4555,10 @@ function openPatientModal(id = null) {
   if (!id) {
     const existingNums = DB.patients
       .map(p => p.registryNumber)
-      .filter(r => r && r.startsWith('CR'))
-      .map(r => parseInt(r.replace('CR','')) || 0);
+      .filter(r => r && r.startsWith('ONC'))
+      .map(r => parseInt(r.replace('ONC','')) || 0);
     const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
-    document.getElementById('pat_registryNumber').value = 'CR' + String(nextNum).padStart(4,'0');
+    document.getElementById('pat_registryNumber').value = 'ONC' + String(nextNum).padStart(4,'0');
   }
   // Show first tab
   document.querySelectorAll('[id^="patTab"]').forEach((t, i) => t.style.display = i === 0 ? '' : 'none');
