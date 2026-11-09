@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20261109-123745">
+<meta name="version" content="v20261109-131820">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4401,8 +4401,8 @@ async function checkGsStatus() {
 const state = {
   editId: null,
   currentPage: {},
-  sortKey: {},
-  sortDir: {},
+  sortKey: { patients: 'registryNumber' },
+  sortDir: { patients: 'asc' },
   filters: {},
   fieldFilters: {}, // supports multiple field filters per table
   charts: {},
@@ -4429,6 +4429,11 @@ function navigate(page) {
     pageDiv.querySelectorAll('.toolbar-search input').forEach(inp => inp.value = '');
   }
 
+  // Set default sort for patients by registry number
+  if (page === 'patients' && !state.sortKey['patients']) {
+    state.sortKey['patients'] = 'registryNumber';
+    state.sortDir['patients'] = 'asc';
+  }
   if (page === 'dashboard') refreshDashboard();
   else if (page === 'opinjection') {
     renderOPRegister();
