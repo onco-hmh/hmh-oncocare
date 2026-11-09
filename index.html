@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20260806-011415">
+<meta name="version" content="v20261109-123745">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4438,6 +4438,16 @@ function navigate(page) {
   }
   else if (page === 'autoimmune') {
     renderTable('autoimmune');
+    // If local cache is empty, try fetching from Supabase
+    if (DB.autoimmune.length === 0 && GS_ENABLED) {
+      sbFetchAll(SB_TABLES.autoimmune).then(function(rows) {
+        if (rows && rows.length > 0) {
+          DB.autoimmune = rows;
+          save('autoimmune');
+          renderTable('autoimmune');
+        }
+      }).catch(function(){});
+    }
   }
   else if (page === 'admin') {
     const isSA = isSuperAdmin();
@@ -4557,7 +4567,10 @@ function openPatientModal(id = null) {
       .map(p => p.registryNumber)
       .filter(r => r && r.startsWith('ONC'))
       .map(r => parseInt(r.replace('ONC','')) || 0);
-    const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    // Gap-safe: find next number not already used
+    var usedSet = new Set(existingNums);
+    var nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    while (usedSet.has(nextNum)) nextNum++;
     document.getElementById('pat_registryNumber').value = 'ONC' + String(nextNum).padStart(4,'0');
   }
   // Show first tab
