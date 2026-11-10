@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v20261109-131820">
+<meta name="version" content="v20261110-080150">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4091,6 +4091,10 @@ async function sbBatchUpsert(sheetKey, records) {
   if (!GS_ENABLED || !records || !records.length) return;
   const table = SB_TABLES[sheetKey];
   if (!table) return;
+  // Filter out blacklisted (deleted) records so they never get re-synced
+  var blacklist = JSON.parse(localStorage.getItem('oms_delete_blacklist') || '[]');
+  if (blacklist.length > 0) records = records.filter(function(r) { return !blacklist.includes(r.id); });
+  if (!records.length) return;
   let success = 0, failed = 0;
   for (let i = 0; i < records.length; i++) {
     try {
@@ -4115,6 +4119,9 @@ async function sbBatchUpsert(sheetKey, records) {
 
 // Delete a single record from Supabase
 async function gsDeleteRecord(sheetKey, id) {
+  // Add to blacklist so this record never syncs back
+  var bl = JSON.parse(localStorage.getItem('oms_delete_blacklist') || '[]');
+  if (!bl.includes(id)) { bl.push(id); localStorage.setItem('oms_delete_blacklist', JSON.stringify(bl)); }
   if (!GS_ENABLED) return;
   const table = SB_TABLES[sheetKey];
   if (!table) return;
@@ -4212,7 +4219,9 @@ async function gsSyncBackground() {
         if (rows.length > localCount) {
           // Supabase has MORE records - merge new ones in without overwriting existing
           const localIds = new Set((DB[key] || []).map(r => r.id));
-          let newRows = rows.filter(r => !localIds.has(r.id));
+          // Also filter out blacklisted records
+          var blklist = JSON.parse(localStorage.getItem('oms_delete_blacklist') || '[]');
+          let newRows = rows.filter(r => !localIds.has(r.id) && !blklist.includes(r.id));
           // Normalize chemoStatus - status for chemo records
           if (key === 'chemo') newRows = newRows.map(r => { if (r.chemoStatus && !r.status) r.status = r.chemoStatus; return r; });
           if (newRows.length > 0) {
@@ -4280,7 +4289,10 @@ async function gsFetchFromSheets() {
 
       if (remoteCount > localCount) {
         // Supabase has more - use Supabase data
-        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
+        // Filter blacklisted records before storing
+        var blkl = JSON.parse(localStorage.getItem('oms_delete_blacklist') || '[]');
+        var filtRows = blkl.length > 0 ? rows.filter(function(r){ return !blkl.includes(r.id); }) : rows;
+        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(filtRows) : filtRows;
         save(key);
         console.log(`- ${key}: loaded ${remoteCount} from Supabase`);
       } else if (localCount > remoteCount && localCount > 0) {
@@ -4292,7 +4304,10 @@ async function gsFetchFromSheets() {
         console.log(`- ${key}: pushed ${localCount} records to Supabase`);
       } else if (remoteCount === localCount && remoteCount > 0) {
         // Same count - use Supabase (most up to date)
-        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(rows) : rows;
+        // Filter blacklisted records before storing
+        var blkl = JSON.parse(localStorage.getItem('oms_delete_blacklist') || '[]');
+        var filtRows = blkl.length > 0 ? rows.filter(function(r){ return !blkl.includes(r.id); }) : rows;
+        DB[key] = key === 'opSchedule' ? parseOPScheduleFromSheets(filtRows) : filtRows;
         save(key);
       }
       // If both are 0 - do nothing
